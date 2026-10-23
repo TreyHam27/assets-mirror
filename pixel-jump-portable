@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.29.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.29.1, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -3255,7 +3255,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.29.0';
+    const EMBEDDED = '1.29.1';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -3453,7 +3453,7 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.29.0';
+const GAME_VERSION = '1.29.1';
 const NET_PROTOCOL = 9;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
@@ -6478,6 +6478,15 @@ class Player extends Entity {
         }
     }
 
+    // The spring launch, shared by spring platforms and boss stomps: throws
+    // the Pixel up at SPRING_FORCE with a fresh double jump and a big squash.
+    springLaunch() {
+        this.vy = CONFIG.SPRING_FORCE;
+        this.coyote = 0;
+        this.doubleReady = true;
+        this.bump(0.26);
+    }
+
     // Kicks the squash spring: positive stretches taller, negative squashes.
     bump(amount) {
         this.squash = amount;
@@ -6650,10 +6659,7 @@ class Player extends Entity {
                         if (p.type === 'spring') {
                             // Never stood on: it throws the Pixel straight up.
                             this.y = p.y - this.h;
-                            this.vy = CONFIG.SPRING_FORCE;
-                            this.coyote = 0;
-                            this.doubleReady = true;
-                            this.bump(0.26);
+                            this.springLaunch();
                             p.sprung = 14;
                             sprung = true;
                             break;
@@ -11360,7 +11366,8 @@ class Game {
 
     // Touching the boss. Landing on top of it (falling, feet near its top edge,
     // or feet above it last frame so a fast fall can't tunnel through) deals a
-    // hit and bounces you high. Otherwise a jetpack or HARD SHIELD absorbs the
+    // hit (unless it is mid-flash) and launches you like a spring platform.
+    // Otherwise a jetpack or HARD SHIELD absorbs the
     // crash (the boss survives: it can't be rammed to death), and while it's
     // exposed at your level a side bump only knocks you back. Anything else
     // is fatal.
@@ -11370,28 +11377,23 @@ class Game {
         const onTop = p.vy > 0 && (feet < boss.y + 40 || (p.prevBottom !== undefined && p.prevBottom <= boss.y + 12));
         if (onTop) {
             p.y = boss.y - p.h;
+            // Damaging or not, a stomp always throws you up like a spring.
+            let shake = false;
             if (!this.isAuthority()) {
-                // Co-op guest: the host owns the boss's health. Bounce now,
-                // report the stomp, and don't re-report during its flash.
-                if (boss.invuln > 0 || boss.localInvuln > 0) {
-                    p.vy = CONFIG.JUMP_FORCE;
-                    return;
+                // Co-op guest: the host owns the boss's health. Report the
+                // stomp, but not again during its flash.
+                if (!(boss.invuln > 0 || boss.localInvuln > 0)) {
+                    boss.localInvuln = BOSS.HIT_INVULN;
+                    window.network.send({ type: 'stomp', nid: boss.nid });
+                    this.particles.spawn(boss.x + boss.w / 2, boss.y + boss.h / 2, "#fff", 30, "blast");
+                    shake = true;
                 }
-                boss.localInvuln = BOSS.HIT_INVULN;
-                window.network.send({ type: 'stomp', nid: boss.nid });
-                this.particles.spawn(boss.x + boss.w / 2, boss.y + boss.h / 2, "#fff", 30, "blast");
-                p.vy = CONFIG.BOUNCE_FORCE;
-                this.addShake(8);
-                sounds.play('jump');
-                return;
-            }
-            if (boss.takeDamage(this.particles)) {
-                p.vy = CONFIG.BOUNCE_FORCE;
-                this.addShake(8);
-                sounds.play('jump');
             } else {
-                p.vy = CONFIG.JUMP_FORCE; // still flashing: a harmless hop
+                shake = boss.takeDamage(this.particles);
             }
+            p.springLaunch();
+            sounds.play('spring');
+            if (shake) this.addShake(8);
             return;
         }
         if (p.activePower === POWERS.ROCKET || p.activePower === POWERS.SHIELD) {

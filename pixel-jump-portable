@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.29.1, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.30.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -2766,6 +2766,86 @@ body.reduce-motion *::after {
 }
 
 
+/* Settings > SAVE DATA (js/saves.js SaveBackupUI), site and portable */
+.save-backup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+}
+.save-backup-title {
+    color: var(--gold);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: left;
+}
+.save-backup-code {
+    display: block;
+    width: 100%;
+    min-height: 82px;
+    padding: 8px;
+    border: 1px solid rgba(var(--teal-rgb), 0.45);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #dfe6f5;
+    font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    resize: vertical;
+    word-break: break-all;
+}
+.save-backup-code[hidden] {
+    display: none;
+}
+/* One button per row: the labels are long, and two columns overlap inside the
+   narrow settings panel on phones. */
+.save-backup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.save-backup-actions .btn {
+    width: 100%;
+}
+.save-backup-note {
+    margin: 0;
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: left;
+}
+/* VERSION row (index.html) and the status lines under the portable update
+   check and the SAVE DATA buttons. */
+.settings-version {
+    border-bottom: none;
+    color: var(--muted);
+    font-size: 14px;
+    cursor: default;
+}
+.settings-version strong {
+    color: var(--teal);
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+.settings-status {
+    min-height: 1.2em;
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+.settings-status[data-state="update"] {
+    color: var(--teal);
+}
+.settings-status[data-state="error"] {
+    color: var(--pixel);
+}
+
 
 /* ---- tools/portable/portable.css ---- */
 /* Portable-build-only UI (js/portable.js). tools/build-portable.mjs appends
@@ -2826,86 +2906,11 @@ body.reduce-motion *::after {
     color: #fff;
 }
 
-/* Settings: the version line, the check row and the save section. */
-.portable-version {
-    border-bottom: none;
-    color: var(--muted);
-    font-size: 14px;
-}
-.portable-version strong {
-    color: var(--teal);
-    font-family: var(--font-display);
-    font-weight: 700;
-}
+/* Settings: the check row (VERSION and status styles live in style.css). */
 .portable-check-row {
     display: flex;
     flex-direction: column;
     gap: 6px;
-}
-.portable-update-status {
-    min-height: 1.2em;
-    color: var(--muted);
-    font-family: var(--font-text);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-.portable-update-status[data-state="update"] {
-    color: var(--teal);
-}
-.portable-update-status[data-state="error"] {
-    color: var(--pixel);
-}
-.portable-save {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--line);
-}
-.portable-save-title {
-    color: var(--gold);
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-align: left;
-}
-.portable-save-code {
-    display: block;
-    width: 100%;
-    min-height: 82px;
-    padding: 8px;
-    border: 1px solid rgba(var(--teal-rgb), 0.45);
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.45);
-    color: #dfe6f5;
-    font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.4;
-    resize: vertical;
-    word-break: break-all;
-}
-.portable-save-code[hidden] {
-    display: none;
-}
-/* One button per row: the labels are long, and two columns overlap inside the
-   narrow settings panel on phones. */
-.portable-save-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.portable-save-actions .btn {
-    width: 100%;
-}
-.portable-save-note {
-    margin: 0;
-    color: var(--muted);
-    font-family: var(--font-text);
-    font-size: 12px;
-    line-height: 1.4;
-    text-align: left;
 }
 
     </style>
@@ -3215,6 +3220,7 @@ body.reduce-motion *::after {
                     <input type="checkbox" id="set-tips"></label>
                 <label class="setting-row" id="set-touch-row" for="set-touch"><span>TOUCH BUTTONS</span>
                     <input type="checkbox" id="set-touch"></label>
+                <div class="setting-row settings-version"><span>VERSION</span><strong id="set-version"></strong></div>
                 <button id="settings-close-btn" class="btn btn--primary overlay-btn">DONE</button>
             </div>
         </div>
@@ -3255,7 +3261,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.29.1';
+    const EMBEDDED = '1.30.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -3453,7 +3459,7 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.29.1';
+const GAME_VERSION = '1.30.0';
 const NET_PROTOCOL = 9;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
@@ -3919,28 +3925,41 @@ const ACHIEVEMENTS = [
 <script>/* ---- js/saves.js ---- */
 // Save data shared by the site and the portable build: the backup code format
 // (also used by the old-host save transfer) and the rules for what may be
-// written back. Pure helpers only: no DOM, no network, no Game.
+// written back, plus the SAVE DATA section of Settings (SaveBackupUI, at the
+// end; it touches the DOM only when mount()/build() run).
 //
 // The code is base64url JSON: { v: 1, d: { lp_key: "value", ... } }. The
-// transfer hash (js/migrate.js) uses this format. The portable build wraps the
-// same string in an encrypted envelope (js/portable.js), so its backup codes are
-// not interchangeable with the site transfer.
+// transfer hash (js/migrate.js) uses this format. The SAVE DATA backup codes
+// (site and portable build) wrap the same string in an encrypted envelope, so
+// they are not interchangeable with the site transfer hash.
 
 // The daily ghost is large and only good for today; everything else moves.
 const SAVE_TRANSFER_SKIP = ['lp_ghost'];
 const SAVE_TRANSFER_MAX_VALUE = 64 * 1024;
 const SAVE_TRANSFER_MAX_TOTAL = 256 * 1024;
 
-function toBase64Url(text) {
-    const bytes = new TextEncoder().encode(text);
+function bytesToBase64Url(bytes) {
     let bin = '';
-    for (const b of bytes) bin += String.fromCharCode(b);
+    // Chunked: one apply() for a 500 KB array can exceed the argument limit.
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
     return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+function base64UrlToBytes(text) {
+    const bin = atob(text.replace(/-/g, '+').replace(/_/g, '/'));
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+}
+
+function toBase64Url(text) {
+    return bytesToBase64Url(new TextEncoder().encode(text));
+}
+
 function fromBase64Url(s) {
-    const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
-    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+    return new TextDecoder().decode(base64UrlToBytes(s));
 }
 
 function exportSaves(storage) {
@@ -4000,6 +4019,331 @@ function importSaves(storage, payload, ask = null) {
     } catch (e) { return false; }
     return true;
 }
+
+// Save-code envelope, used by the site and the portable build alike:
+// 'PJSAVE1.' + base64url(IV || AES-256-GCM(exportSaves())).
+//
+// HARDENING BOOKMARK (2026-10-21): the key below ships inside this file, and the
+// real save is plain localStorage. This only stops casual editing of a copied
+// code; a determined player can recover the key or edit localStorage directly.
+// If cheating becomes a real problem, validate scores server-side in
+// cloudflare/score-worker/ and/or offer passphrase-derived codes
+// (PBKDF2 + AES-GCM, with no stored key). Do not treat this as anti-cheat.
+//
+// Never change these fragments in place: bump the prefix and keep the old
+// decrypt path if the key ever has to rotate.
+const SAVE_CODE_PREFIX = 'PJSAVE1.';
+const SAVE_CODE_KEY_PARTS = [
+    'pixel-jump',
+    '::portable-save::',
+    'v1',
+    '::backup'
+];
+const SAVE_CODE_IV_BYTES = 12;
+const SAVE_CODE_TAG_BITS = 128;
+const SAVE_CODE_MAX_CODE = 1024 * 1024;
+
+function saveCodeCrypto() {
+    return typeof crypto !== 'undefined' && crypto && crypto.subtle &&
+        typeof crypto.getRandomValues === 'function' ? crypto : null;
+}
+
+let saveCodeKeyPromise = null;
+
+function saveCodeKey() {
+    if (!saveCodeKeyPromise) {
+        const c = saveCodeCrypto();
+        if (!c) return Promise.reject(new Error('no webcrypto'));
+        const material = SAVE_CODE_KEY_PARTS.join('');
+        saveCodeKeyPromise = c.subtle.digest('SHA-256', new TextEncoder().encode(material))
+            .then(raw => c.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false,
+                ['encrypt', 'decrypt']))
+            .catch(err => {
+                saveCodeKeyPromise = null;
+                throw err;
+            });
+    }
+    return saveCodeKeyPromise;
+}
+
+async function encryptSaveCode(plain) {
+    const c = saveCodeCrypto();
+    if (!c) throw new Error('no webcrypto');
+    const key = await saveCodeKey();
+    const iv = c.getRandomValues(new Uint8Array(SAVE_CODE_IV_BYTES));
+    const sealed = new Uint8Array(await c.subtle.encrypt(
+        { name: 'AES-GCM', iv, tagLength: SAVE_CODE_TAG_BITS },
+        key, new TextEncoder().encode(String(plain))));
+    const out = new Uint8Array(iv.length + sealed.length);
+    out.set(iv, 0);
+    out.set(sealed, iv.length);
+    return SAVE_CODE_PREFIX + bytesToBase64Url(out);
+}
+
+// Returns the plaintext save code, or null for anything that is not a valid
+// envelope from this version. Never falls back to treating the input as plain
+// base64: old codes are rejected by the UI on purpose.
+async function decryptSaveCode(code) {
+    if (typeof code !== 'string' || !code.startsWith(SAVE_CODE_PREFIX)) return null;
+    if (code.length > SAVE_CODE_MAX_CODE) return null;
+    const c = saveCodeCrypto();
+    if (!c) return null;
+    let bytes;
+    try { bytes = base64UrlToBytes(code.slice(SAVE_CODE_PREFIX.length)); }
+    catch (e) { return null; }
+    if (bytes.length <= SAVE_CODE_IV_BYTES) return null;
+    const iv = bytes.subarray(0, SAVE_CODE_IV_BYTES);
+    const sealed = bytes.subarray(SAVE_CODE_IV_BYTES);
+    try {
+        const plain = await c.subtle.decrypt(
+            { name: 'AES-GCM', iv, tagLength: SAVE_CODE_TAG_BITS },
+            await saveCodeKey(), sealed);
+        return new TextDecoder().decode(plain);
+    } catch (e) {
+        return null;
+    }
+}
+
+// The SAVE DATA section of Settings, shared by the site and the portable build
+// (never CrazyGames, which has its own cloud save backups). The portable build
+// calls build() from js/portable.js; the site calls mount(). Codes move saves
+// between the site's addresses and the portable copy in both directions. The
+// caller supplies the note text, the "secure page" hint and how to reload.
+const SaveBackupUI = {
+    saveStatus: null,
+    saveBusy: false,
+
+    resetSection: null,
+
+    reset() {
+        if (this.resetSection) this.resetSection();
+    },
+
+    say(text) {
+        if (this.saveStatus) this.saveStatus.textContent = text;
+    },
+
+    // Web: adds the section to Settings, once. The portable build calls build() itself.
+    mount() {
+        if (PLATFORM !== 'web' || this.saveStatus || typeof document === 'undefined') return false;
+        const close = document.getElementById('settings-close-btn');
+        if (!close || !close.parentNode || typeof close.parentNode.insertBefore !== 'function') return false;
+        close.parentNode.insertBefore(this.build({
+            note: 'The code carries your best height, gems, Pixels and records, and moves them between this site and the portable copy. It is locked to Pixel Jump: an edited or damaged code will not restore.',
+            secureHint: 'OPEN THE SITE OVER HTTPS',
+            reload: () => { try { location.reload(); } catch (e) { /* no reload */ } }
+        }), close);
+        return true;
+    },
+
+    build(opts) {
+        const { note: noteText, secureHint, reload } = opts;
+        const section = document.createElement('div');
+        section.className = 'save-backup';
+
+        const title = document.createElement('div');
+        title.className = 'save-backup-title';
+        title.textContent = 'SAVE DATA';
+
+        const actions = document.createElement('div');
+        actions.className = 'save-backup-actions';
+        const backup = document.createElement('button');
+        backup.type = 'button';
+        backup.className = 'btn';
+        backup.textContent = 'BACK UP SAVE';
+        const restore = document.createElement('button');
+        restore.type = 'button';
+        restore.className = 'btn';
+        restore.textContent = 'RESTORE SAVE';
+        actions.appendChild(backup);
+        actions.appendChild(restore);
+
+        const code = document.createElement('textarea');
+        code.className = 'save-backup-code';
+        code.readOnly = true;
+        code.spellcheck = false;
+        code.hidden = true;
+        code.setAttribute('aria-label', 'Save backup code');
+
+        const tools = document.createElement('div');
+        tools.className = 'save-backup-actions';
+        tools.hidden = true;
+        const copy = document.createElement('button');
+        copy.type = 'button';
+        copy.className = 'btn';
+        copy.textContent = 'COPY';
+        const download = document.createElement('button');
+        download.type = 'button';
+        download.className = 'btn';
+        download.textContent = 'DOWNLOAD .TXT';
+        tools.appendChild(copy);
+        tools.appendChild(download);
+
+        const restoreRow = document.createElement('div');
+        restoreRow.className = 'save-backup-actions';
+        restoreRow.hidden = true;
+        const restoreNow = document.createElement('button');
+        restoreNow.type = 'button';
+        restoreNow.className = 'btn btn--primary';
+        restoreNow.textContent = 'RESTORE THIS SAVE';
+        restoreRow.appendChild(restoreNow);
+
+        const note = document.createElement('p');
+        note.className = 'save-backup-note';
+        note.textContent = noteText;
+
+        const noSecure = 'SAVE CODES NEED A SECURE PAGE \u2014 ' + secureHint;
+        const saveStatus = document.createElement('div');
+        saveStatus.className = 'settings-status';
+        saveStatus.setAttribute('role', 'status');
+        saveStatus.setAttribute('aria-live', 'polite');
+        this.saveStatus = saveStatus;
+
+        const setSaveMode = mode => {
+            code.hidden = mode === 'none';
+            tools.hidden = mode !== 'backup';
+            restoreRow.hidden = mode !== 'restore';
+            if (mode === 'none') code.value = '';
+        };
+        // Settings opens fresh: no old code on screen, no stale message.
+        this.resetSection = () => {
+            setSaveMode('none');
+            saveStatus.textContent = '';
+        };
+
+        backup.addEventListener('click', async () => {
+            if (this.saveBusy) return;
+            if (!saveCodeCrypto()) {
+                setSaveMode('none');
+                this.say(noSecure);
+                return;
+            }
+            let payload = '';
+            try { payload = exportSaves(localStorage); } catch (e) { payload = ''; }
+            if (!payload) {
+                setSaveMode('none');
+                this.say('NO SAVE DATA YET');
+                return;
+            }
+            this.saveBusy = true;
+            backup.disabled = true;
+            restore.disabled = true;
+            try {
+                code.value = await encryptSaveCode(payload);
+                code.readOnly = true;
+                setSaveMode('backup');
+                this.say('BACKUP READY \u2014 COPY OR DOWNLOAD IT');
+            } catch (e) {
+                setSaveMode('none');
+                this.say("COULDN'T BUILD A BACKUP CODE");
+            } finally {
+                this.saveBusy = false;
+                backup.disabled = false;
+                restore.disabled = false;
+            }
+        });
+
+        restore.addEventListener('click', () => {
+            if (this.saveBusy) return;
+            if (!saveCodeCrypto()) {
+                this.say(noSecure);
+                return;
+            }
+            code.value = '';
+            code.readOnly = false;
+            setSaveMode('restore');
+            this.say('PASTE YOUR BACKUP CODE, THEN RESTORE');
+            try { code.focus(); } catch (e) { /* no focus */ }
+        });
+
+        restoreNow.addEventListener('click', async () => {
+            if (this.saveBusy) return;
+            // Base64url never contains whitespace; stripping it tolerates wrapped pastes.
+            const payload = String(code.value || '').replace(/\s+/g, '');
+            if (!payload) {
+                this.say('PASTE A BACKUP CODE FIRST');
+                return;
+            }
+            if (!payload.startsWith(SAVE_CODE_PREFIX)) {
+                this.say(/^PJSAVE\d+\./.test(payload)
+                    ? 'THIS CODE IS FROM ANOTHER VERSION'
+                    : 'THIS CODE IS FROM AN OLDER VERSION AND CANNOT BE RESTORED');
+                return;
+            }
+            if (!saveCodeCrypto()) {
+                this.say(noSecure);
+                return;
+            }
+            this.saveBusy = true;
+            restoreNow.disabled = true;
+            try {
+                const plain = await decryptSaveCode(payload);
+                if (!plain) {
+                    this.say("COULDN'T RESTORE THAT CODE");
+                    return;
+                }
+                let ok = false;
+                try {
+                    ok = importSaves(localStorage, plain,
+                        typeof confirm === 'function' ? m => confirm(m) : null);
+                } catch (e) { ok = false; }
+                if (!ok) {
+                    this.say("COULDN'T RESTORE THAT CODE");
+                    return;
+                }
+                this.say('SAVE RESTORED \u2014 RELOADING\u2026');
+                reload();
+            } finally {
+                this.saveBusy = false;
+                restoreNow.disabled = false;
+            }
+        });
+
+        copy.addEventListener('click', () => {
+            const text = String(code.value || '');
+            const done = () => this.say('COPIED');
+            const fallback = () => {
+                try {
+                    code.focus();
+                    code.select();
+                    if (document.execCommand && document.execCommand('copy')) { done(); return; }
+                } catch (e) { /* no selection or clipboard */ }
+                this.say('COPY FAILED \u2014 SELECT THE CODE');
+            };
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done, fallback);
+            } else {
+                fallback();
+            }
+        });
+
+        download.addEventListener('click', () => {
+            try {
+                const blob = new Blob([String(code.value || '')], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'pixel-jump-save.txt';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                this.say('DOWNLOAD STARTED');
+            } catch (e) {
+                this.say("COULDN'T DOWNLOAD \u2014 COPY THE CODE");
+            }
+        });
+
+        section.appendChild(title);
+        section.appendChild(actions);
+        section.appendChild(code);
+        section.appendChild(tools);
+        section.appendChild(restoreRow);
+        section.appendChild(note);
+        section.appendChild(saveStatus);
+        return section;
+    }
+};
 
 </script>
 <script>/* ---- js/perf.js ---- */
@@ -10532,6 +10876,7 @@ class Game {
             setTouch: document.getElementById("set-touch"),
             setTouchRow: document.getElementById("set-touch-row"),
             setTips: document.getElementById("set-tips"),
+            setVersion: document.getElementById("set-version"),
             challengeHud: document.getElementById("challenge-hud"),
             runShareBtn: document.getElementById("run-share-btn"),
             runBoostBtn: document.getElementById("run-boost-btn"),
@@ -10895,6 +11240,8 @@ class Game {
         if (this.ui.setTouch) this.ui.setTouch.checked = s.touchControls;
         if (this.ui.setTips) this.ui.setTips.checked = s.showTips;
         this.updateTouchSettingRow();
+        if (this.ui.setVersion) this.ui.setVersion.textContent = GAME_VERSION;
+        if (typeof SaveBackupUI !== 'undefined') SaveBackupUI.reset();
         this.ui.settingsOverlay.hidden = false;
         this.settingsOpen = true;
     }
@@ -13312,6 +13659,7 @@ async function bootGame() {
     const game = new Game();
     portal.loading(false);
     if (transfer === 'imported') game.notify('PROGRESS TRANSFERRED', 'success');
+    SaveBackupUI.mount();
 
     // Installable / offline play. Only on the live https site (or a local
     // server opened with ?sw), so local development never serves stale
@@ -13361,7 +13709,7 @@ window.onload = bootGame;
 //    plus a manual check and an opt-out in Settings;
 //  - a menu chip linking to PORTABLE_PAGE_URL when a newer version exists;
 //  - BACK UP SAVE / RESTORE SAVE. The displayed code is an encrypted envelope
-//    around the shared save format (js/saves.js); see PORTABLE_SAVE_PREFIX below
+//    around the shared save format (js/saves.js); see SAVE_CODE_PREFIX below
 //    for the honesty note about what that does and does not protect.
 //
 // Failure is always silent: offline, CORS (file://), a challenge page or
@@ -13387,28 +13735,6 @@ const PORTABLE_BUILD_FILE = 'pixel-jump-portable';
 const PORTABLE_RETRY_MS = 120000;
 const PORTABLE_RETRY_MAX = 10;
 
-// Save-code envelope: 'PJSAVE1.' + base64url(IV || AES-256-GCM(exportSaves())).
-//
-// HARDENING BOOKMARK (2026-10-21): the key below ships inside this file, and the
-// real save is plain localStorage. This only stops casual editing of a copied
-// code; a determined player can recover the key or edit localStorage directly.
-// If cheating becomes a real problem, validate scores server-side in
-// cloudflare/score-worker/ and/or offer passphrase-derived codes
-// (PBKDF2 + AES-GCM, with no stored key). Do not treat this as anti-cheat.
-//
-// Never change these fragments in place: bump the prefix and keep the old
-// decrypt path if the key ever has to rotate.
-const PORTABLE_SAVE_PREFIX = 'PJSAVE1.';
-const PORTABLE_SAVE_KEY_PARTS = [
-    'pixel-jump',
-    '::portable-save::',
-    'v1',
-    '::backup'
-];
-const PORTABLE_SAVE_IV_BYTES = 12;
-const PORTABLE_SAVE_TAG_BITS = 128;
-const PORTABLE_SAVE_MAX_CODE = 1024 * 1024;
-
 function portableRead(key) {
     try { return localStorage.getItem(key); } catch (e) { return null; }
 }
@@ -13432,83 +13758,6 @@ function portableNoUpdate(search) {
 }
 function portableSearch() {
     return typeof location !== 'undefined' && typeof location.search === 'string' ? location.search : '';
-}
-
-function portableSaveCrypto() {
-    return typeof crypto !== 'undefined' && crypto && crypto.subtle &&
-        typeof crypto.getRandomValues === 'function' ? crypto : null;
-}
-
-function portableSaveBytesToBase64Url(bytes) {
-    let bin = '';
-    // Chunked: one apply() for a 500 KB array can exceed the argument limit.
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    }
-    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function portableSaveBase64UrlToBytes(text) {
-    const bin = atob(text.replace(/-/g, '+').replace(/_/g, '/'));
-    const out = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-    return out;
-}
-
-let portableSaveKeyPromise = null;
-
-function portableSaveKey() {
-    if (!portableSaveKeyPromise) {
-        const c = portableSaveCrypto();
-        if (!c) return Promise.reject(new Error('no webcrypto'));
-        const material = PORTABLE_SAVE_KEY_PARTS.join('');
-        portableSaveKeyPromise = c.subtle.digest('SHA-256', new TextEncoder().encode(material))
-            .then(raw => c.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false,
-                ['encrypt', 'decrypt']))
-            .catch(err => {
-                portableSaveKeyPromise = null;
-                throw err;
-            });
-    }
-    return portableSaveKeyPromise;
-}
-
-async function encryptSaveCode(plain) {
-    const c = portableSaveCrypto();
-    if (!c) throw new Error('no webcrypto');
-    const key = await portableSaveKey();
-    const iv = c.getRandomValues(new Uint8Array(PORTABLE_SAVE_IV_BYTES));
-    const sealed = new Uint8Array(await c.subtle.encrypt(
-        { name: 'AES-GCM', iv, tagLength: PORTABLE_SAVE_TAG_BITS },
-        key, new TextEncoder().encode(String(plain))));
-    const out = new Uint8Array(iv.length + sealed.length);
-    out.set(iv, 0);
-    out.set(sealed, iv.length);
-    return PORTABLE_SAVE_PREFIX + portableSaveBytesToBase64Url(out);
-}
-
-// Returns the plaintext save code, or null for anything that is not a valid
-// envelope from this version. Never falls back to treating the input as plain
-// base64: old codes are rejected by the UI on purpose.
-async function decryptSaveCode(code) {
-    if (typeof code !== 'string' || !code.startsWith(PORTABLE_SAVE_PREFIX)) return null;
-    if (code.length > PORTABLE_SAVE_MAX_CODE) return null;
-    const c = portableSaveCrypto();
-    if (!c) return null;
-    let bytes;
-    try { bytes = portableSaveBase64UrlToBytes(code.slice(PORTABLE_SAVE_PREFIX.length)); }
-    catch (e) { return null; }
-    if (bytes.length <= PORTABLE_SAVE_IV_BYTES) return null;
-    const iv = bytes.subarray(0, PORTABLE_SAVE_IV_BYTES);
-    const sealed = bytes.subarray(PORTABLE_SAVE_IV_BYTES);
-    try {
-        const plain = await c.subtle.decrypt(
-            { name: 'AES-GCM', iv, tagLength: PORTABLE_SAVE_TAG_BITS },
-            await portableSaveKey(), sealed);
-        return new TextDecoder().decode(plain);
-    } catch (e) {
-        return null;
-    }
 }
 
 // "1.25.0" -> [1, 25, 0], or null for anything else.
@@ -13564,14 +13813,14 @@ function portableDeclaredVersion(html) {
 // Resolves to the build's HTML only if length, SHA-256, ECDSA signature and
 // declared version all match the manifest; otherwise rejects.
 async function portableVerifyBuild(manifest, bytes, sigText) {
-    const c = portableSaveCrypto();
+    const c = saveCodeCrypto();
     if (!c) throw new Error('no webcrypto');
     if (!manifest.bytes || !manifest.sha256 || !manifest.sig) throw new Error('unsigned manifest');
     if (bytes.byteLength !== manifest.bytes) throw new Error('wrong size');
     if (portableHex(await c.subtle.digest('SHA-256', bytes)) !== manifest.sha256) throw new Error('wrong hash');
-    const key = await c.subtle.importKey('spki', portableSaveBase64UrlToBytes(PORTABLE_SIGNING_PUBKEY),
+    const key = await c.subtle.importKey('spki', base64UrlToBytes(PORTABLE_SIGNING_PUBKEY),
         { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
-    const sig = portableSaveBase64UrlToBytes(String(sigText).trim());
+    const sig = base64UrlToBytes(String(sigText).trim());
     if (!await c.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, sig, bytes)) throw new Error('bad signature');
     const html = new TextDecoder().decode(bytes);
     if (portableDeclaredVersion(html) !== manifest.version) throw new Error('wrong declared version');
@@ -13650,8 +13899,6 @@ const PortableUI = {
     status: null,
     checkBtn: null,
     restartBtn: null,
-    saveStatus: null,
-    saveBusy: false,
 
     // Idempotent; the platform guard keeps the web build out entirely.
     init(game) {
@@ -13741,16 +13988,6 @@ const PortableUI = {
         const box = close.parentNode;
         const insert = el => box.insertBefore(el, close);
 
-        const versionRow = document.createElement('div');
-        versionRow.className = 'setting-row portable-version';
-        const versionLabel = document.createElement('span');
-        versionLabel.textContent = 'VERSION';
-        const versionValue = document.createElement('strong');
-        versionValue.textContent = GAME_VERSION;
-        versionRow.appendChild(versionLabel);
-        versionRow.appendChild(versionValue);
-        insert(versionRow);
-
         const autoRow = document.createElement('label');
         autoRow.className = 'setting-row';
         const autoLabel = document.createElement('span');
@@ -13774,7 +14011,7 @@ const PortableUI = {
         checkBtn.className = 'btn overlay-btn';
         checkBtn.textContent = 'CHECK FOR UPDATES';
         const status = document.createElement('div');
-        status.className = 'portable-update-status';
+        status.className = 'settings-status';
         status.setAttribute('role', 'status');
         status.setAttribute('aria-live', 'polite');
         checkBtn.addEventListener('click', () => this.check(true));
@@ -13792,7 +14029,11 @@ const PortableUI = {
         this.checkBtn = checkBtn;
         this.status = status;
 
-        insert(this.buildSaveSection());
+        insert(SaveBackupUI.build({
+            note: 'Back up before you replace the file. The code carries your best height, gems, Pixels and records. It is locked to Pixel Jump: an edited or damaged code will not restore.',
+            secureHint: 'OPEN THE FILE DIRECTLY',
+            reload: portableReload
+        }));
     },
 
     setStatus(state) {
@@ -13806,211 +14047,6 @@ const PortableUI = {
             : state === 'update' ? 'UPDATE v' + (this.update ? this.update.version : '')
             : state === 'error' ? "COULDN'T CHECK"
             : '';
-    },
-
-    say(text) {
-        if (this.saveStatus) this.saveStatus.textContent = text;
-    },
-
-    buildSaveSection() {
-        const section = document.createElement('div');
-        section.className = 'portable-save';
-
-        const title = document.createElement('div');
-        title.className = 'portable-save-title';
-        title.textContent = 'SAVE DATA';
-
-        const actions = document.createElement('div');
-        actions.className = 'portable-save-actions';
-        const backup = document.createElement('button');
-        backup.type = 'button';
-        backup.className = 'btn';
-        backup.textContent = 'BACK UP SAVE';
-        const restore = document.createElement('button');
-        restore.type = 'button';
-        restore.className = 'btn';
-        restore.textContent = 'RESTORE SAVE';
-        actions.appendChild(backup);
-        actions.appendChild(restore);
-
-        const code = document.createElement('textarea');
-        code.className = 'portable-save-code';
-        code.readOnly = true;
-        code.spellcheck = false;
-        code.hidden = true;
-        code.setAttribute('aria-label', 'Save backup code');
-
-        const tools = document.createElement('div');
-        tools.className = 'portable-save-actions';
-        tools.hidden = true;
-        const copy = document.createElement('button');
-        copy.type = 'button';
-        copy.className = 'btn';
-        copy.textContent = 'COPY';
-        const download = document.createElement('button');
-        download.type = 'button';
-        download.className = 'btn';
-        download.textContent = 'DOWNLOAD .TXT';
-        tools.appendChild(copy);
-        tools.appendChild(download);
-
-        const restoreRow = document.createElement('div');
-        restoreRow.className = 'portable-save-actions';
-        restoreRow.hidden = true;
-        const restoreNow = document.createElement('button');
-        restoreNow.type = 'button';
-        restoreNow.className = 'btn btn--primary';
-        restoreNow.textContent = 'RESTORE THIS SAVE';
-        restoreRow.appendChild(restoreNow);
-
-        const note = document.createElement('p');
-        note.className = 'portable-save-note';
-        note.textContent = 'Back up before you replace the file. The code carries your best height, gems, Pixels and records. It is locked to Pixel Jump: an edited or damaged code will not restore.';
-
-        const saveStatus = document.createElement('div');
-        saveStatus.className = 'portable-update-status';
-        saveStatus.setAttribute('role', 'status');
-        saveStatus.setAttribute('aria-live', 'polite');
-        this.saveStatus = saveStatus;
-
-        const setSaveMode = mode => {
-            code.hidden = mode === 'none';
-            tools.hidden = mode !== 'backup';
-            restoreRow.hidden = mode !== 'restore';
-            if (mode === 'none') code.value = '';
-        };
-
-        backup.addEventListener('click', async () => {
-            if (this.saveBusy) return;
-            if (!portableSaveCrypto()) {
-                setSaveMode('none');
-                this.say('SAVE CODES NEED A SECURE PAGE \u2014 OPEN THE FILE DIRECTLY');
-                return;
-            }
-            let payload = '';
-            try { payload = exportSaves(localStorage); } catch (e) { payload = ''; }
-            if (!payload) {
-                setSaveMode('none');
-                this.say('NO SAVE DATA YET');
-                return;
-            }
-            this.saveBusy = true;
-            backup.disabled = true;
-            restore.disabled = true;
-            try {
-                code.value = await encryptSaveCode(payload);
-                code.readOnly = true;
-                setSaveMode('backup');
-                this.say('BACKUP READY \u2014 COPY OR DOWNLOAD IT');
-            } catch (e) {
-                setSaveMode('none');
-                this.say("COULDN'T BUILD A BACKUP CODE");
-            } finally {
-                this.saveBusy = false;
-                backup.disabled = false;
-                restore.disabled = false;
-            }
-        });
-
-        restore.addEventListener('click', () => {
-            if (this.saveBusy) return;
-            if (!portableSaveCrypto()) {
-                this.say('SAVE CODES NEED A SECURE PAGE \u2014 OPEN THE FILE DIRECTLY');
-                return;
-            }
-            code.value = '';
-            code.readOnly = false;
-            setSaveMode('restore');
-            this.say('PASTE YOUR BACKUP CODE, THEN RESTORE');
-            try { code.focus(); } catch (e) { /* no focus */ }
-        });
-
-        restoreNow.addEventListener('click', async () => {
-            if (this.saveBusy) return;
-            // Base64url never contains whitespace; stripping it tolerates wrapped pastes.
-            const payload = String(code.value || '').replace(/\s+/g, '');
-            if (!payload) {
-                this.say('PASTE A BACKUP CODE FIRST');
-                return;
-            }
-            if (!payload.startsWith(PORTABLE_SAVE_PREFIX)) {
-                this.say(/^PJSAVE\d+\./.test(payload)
-                    ? 'THIS CODE IS FROM ANOTHER VERSION'
-                    : 'THIS CODE IS FROM AN OLDER VERSION AND CANNOT BE RESTORED');
-                return;
-            }
-            if (!portableSaveCrypto()) {
-                this.say('SAVE CODES NEED A SECURE PAGE \u2014 OPEN THE FILE DIRECTLY');
-                return;
-            }
-            this.saveBusy = true;
-            restoreNow.disabled = true;
-            try {
-                const plain = await decryptSaveCode(payload);
-                if (!plain) {
-                    this.say("COULDN'T RESTORE THAT CODE");
-                    return;
-                }
-                let ok = false;
-                try {
-                    ok = importSaves(localStorage, plain,
-                        typeof confirm === 'function' ? m => confirm(m) : null);
-                } catch (e) { ok = false; }
-                if (!ok) {
-                    this.say("COULDN'T RESTORE THAT CODE");
-                    return;
-                }
-                this.say('SAVE RESTORED \u2014 RELOADING\u2026');
-                portableReload();
-            } finally {
-                this.saveBusy = false;
-                restoreNow.disabled = false;
-            }
-        });
-
-        copy.addEventListener('click', () => {
-            const text = String(code.value || '');
-            const done = () => this.say('COPIED');
-            const fallback = () => {
-                try {
-                    code.focus();
-                    code.select();
-                    if (document.execCommand && document.execCommand('copy')) { done(); return; }
-                } catch (e) { /* no selection or clipboard */ }
-                this.say('COPY FAILED \u2014 SELECT THE CODE');
-            };
-            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(done, fallback);
-            } else {
-                fallback();
-            }
-        });
-
-        download.addEventListener('click', () => {
-            try {
-                const blob = new Blob([String(code.value || '')], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'pixel-jump-save.txt';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-                this.say('DOWNLOAD STARTED');
-            } catch (e) {
-                this.say("COULDN'T DOWNLOAD \u2014 COPY THE CODE");
-            }
-        });
-
-        section.appendChild(title);
-        section.appendChild(actions);
-        section.appendChild(code);
-        section.appendChild(tools);
-        section.appendChild(restoreRow);
-        section.appendChild(note);
-        section.appendChild(saveStatus);
-        return section;
     },
 
     // ------------------------------------------------------------ update check

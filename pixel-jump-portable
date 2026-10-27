@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.31.1, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.31.2, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -3320,9 +3320,9 @@ body.reduce-motion *::after {
 // Launch handoff. When an earlier run cached a newer, signed build in
 // IndexedDB (js/portable.js stores it), this opens that build instead of the
 // embedded one:
-//  - it runs only in the top window, with updates on, without ?noupdate, and
-//    when the lp_update_ready pointer is newer than the embedded version and
-//    not on the bad list;
+//  - it runs only in the top window, without ?noupdate, and when the
+//    lp_update_ready pointer is newer than the embedded version and not on
+//    the bad list;
 //  - it re-verifies the cached record's ECDSA signature on every launch;
 //  - the portable onload wrapper (js/portable.js) awaits `ready`, and on a
 //    result calls mount(): a full-viewport srcdoc iframe. srcdoc inherits this
@@ -3344,7 +3344,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.31.1';
+    const EMBEDDED = '1.31.2';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -3456,6 +3456,7 @@ const PortableLoader = (() => {
         // Only the top window decides; the child must not trip its own guard.
         if (typeof window === 'undefined' || (window.parent && window.parent !== window)) return null;
 
+        lsDel(UPDATES_OFF_KEY); // retired opt-out
         const marker = parseBooting(lsGet(BOOTING));
         if (marker && Date.now() - marker.at >= BOOT_WINDOW_MS) {
             markBad(marker.version);
@@ -3463,7 +3464,6 @@ const PortableLoader = (() => {
             await purge();
             return null;
         }
-        if (lsGet(UPDATES_OFF_KEY) === '1') return null;
         if (typeof location !== 'undefined' && /(?:^\?|&)noupdate(?:&|=|$)/.test(String(location.search || ''))) return null;
         const version = lsGet(READY_KEY);
         if (!version || !newer(version, EMBEDDED) || isBad(version)) return null;
@@ -3542,7 +3542,7 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.31.1';
+const GAME_VERSION = '1.31.2';
 const NET_PROTOCOL = 10;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
@@ -13976,7 +13976,7 @@ window.onload = bootGame;
 //
 // What it adds to a downloaded copy:
 //  - an update check about 2 s after boot, at most once per UPDATE_CHECK_MS,
-//    plus a manual check and an opt-out in Settings;
+//    plus a manual check in Settings (automatic updates are not optional);
 //  - a menu chip linking to PORTABLE_PAGE_URL when a newer version exists;
 //  - BACK UP SAVE / RESTORE SAVE. The displayed code is an encrypted envelope
 //    around the shared save format (js/saves.js); see SAVE_CODE_PREFIX below
@@ -13988,6 +13988,7 @@ window.onload = bootGame;
 
 const PORTABLE_SEEN_KEY = 'lp_update_seen';
 const PORTABLE_CHECKED_KEY = 'lp_update_checked';
+// Retired opt-out; cleared at boot so a stale value cannot linger.
 const PORTABLE_OFF_KEY = 'lp_update_off';
 // Pointer to the version cached in IndexedDB; js/portable-loader.js reads it at
 // launch. The build itself lives in IndexedDB db PORTABLE_IDB_NAME, store
@@ -14145,11 +14146,10 @@ async function portableReadBuild() {
     }
 }
 
-// The automatic check is due unless it is off, ?noupdate is in the address,
-// or the last successful check is under UPDATE_CHECK_MS old. A clock set back
+// The automatic check is due unless ?noupdate is in the address (developer
+// escape) or the last successful check is under UPDATE_CHECK_MS old. A clock set back
 // also counts as due.
-function updateCheckDue(now, lastChecked, off, search) {
-    if (off) return false;
+function updateCheckDue(now, lastChecked, search) {
     if (portableNoUpdate(search)) return false;
     return !(Number.isFinite(lastChecked) && now - lastChecked < UPDATE_CHECK_MS);
 }
@@ -14176,6 +14176,7 @@ const PortableUI = {
         if (typeof document === 'undefined' || typeof document.createElement !== 'function') return false;
         this.ready = true;
         this.game = game || null;
+        portableRemove(PORTABLE_OFF_KEY);
         // This build came up: tell the launch crash guard (see portable-loader.js).
         if (typeof PortableLoader !== 'undefined') PortableLoader.clearBooting();
         this.buildChip();
@@ -14258,22 +14259,6 @@ const PortableUI = {
         const box = close.parentNode;
         const insert = el => box.insertBefore(el, close);
 
-        const autoRow = document.createElement('label');
-        autoRow.className = 'setting-row';
-        const autoLabel = document.createElement('span');
-        autoLabel.textContent = 'AUTOMATIC UPDATES';
-        const autoBox = document.createElement('input');
-        autoBox.type = 'checkbox';
-        autoBox.checked = portableRead(PORTABLE_OFF_KEY) !== '1';
-        autoBox.addEventListener('change', () => {
-            if (autoBox.checked) portableRemove(PORTABLE_OFF_KEY);
-            else portableStore(PORTABLE_OFF_KEY, '1');
-            this.setStatus('idle');
-        });
-        autoRow.appendChild(autoLabel);
-        autoRow.appendChild(autoBox);
-        insert(autoRow);
-
         const checkRow = document.createElement('div');
         checkRow.className = 'portable-check-row';
         const checkBtn = document.createElement('button');
@@ -14323,7 +14308,7 @@ const PortableUI = {
     scheduleCheck() {
         if (typeof setTimeout !== 'function') return;
         const last = parseInt(portableRead(PORTABLE_CHECKED_KEY), 10) || 0;
-        if (!updateCheckDue(Date.now(), last, portableRead(PORTABLE_OFF_KEY) === '1', portableSearch())) return;
+        if (!updateCheckDue(Date.now(), last, portableSearch())) return;
         this.timer = setTimeout(() => {
             this.timer = null;
             if (this.runActive()) this.scheduleRetry();
@@ -14406,8 +14391,7 @@ const PortableUI = {
         if (PLATFORM !== 'portable' || this.checking) return null;
         if (!manual) {
             const last = parseInt(portableRead(PORTABLE_CHECKED_KEY), 10) || 0;
-            const off = portableRead(PORTABLE_OFF_KEY) === '1';
-            if (!updateCheckDue(Date.now(), last, off, portableSearch()) || this.runActive()) return null;
+            if (!updateCheckDue(Date.now(), last, portableSearch()) || this.runActive()) return null;
         }
         this.checking = true;
         this.setStatus('checking');

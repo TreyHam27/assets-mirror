@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.30.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.31.1, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -59,6 +59,10 @@
     --ink: #02211b;                   /* text on a filled teal cap */
     --pixel: #ff3366;                 /* hearts, danger, your best score */
     --pixel-rgb: 255, 51, 102;
+    --tier-uncommon: #7bd88f;           /* Pixel tiers: a rarity label, nothing else */
+    --tier-rare: #4da3ff;
+    --tier-epic: #c06bff;
+    --tier-legendary: #ff9a2e;
     --pixel-deep: #a31440;
     --gem: #33e0ff;                   /* gems and prices */
     --gem-rgb: 51, 224, 255;
@@ -1156,6 +1160,7 @@ body {
 
 /* Shop and Records slide up over the home page. */
 #shop-menu-layer,
+#pixels-menu-layer,
 #records-menu-layer {
     transform: translateY(100%);
     z-index: 25;
@@ -1163,6 +1168,7 @@ body {
 }
 
 #shop-menu-layer > .panel,
+#shop-menu-layer > .btn,
 #records-menu-layer > .panel,
 .records-stats {
     margin-bottom: 18px;
@@ -1196,14 +1202,40 @@ body {
 }
 
 .page-title--shop { --accent: var(--gem); }
+.page-title--pixels { --accent: var(--teal); }
 .page-title--records { --accent: var(--gold); }
 
-/* The game's own name: the one violet glow in the menus. */
+/* The game's own name: white, with the one rainbow glow in the menus. The
+   glow's hue drifts slowly (the white text doesn't change); it stands still
+   under Reduced Motion and never runs during a run (menu-only). */
 .page-title--brand {
     margin-bottom: 18px;
+    color: #fff;
     font-size: clamp(30px, 8.5vw, 58px);
     letter-spacing: clamp(1px, 0.8vw, 4px);
-    text-shadow: 0 0 14px #a020f0, 0 0 28px #c04dff;
+    text-shadow:
+        -6px 0 14px #ff2d55,
+        -3px 0 18px #ffb000,
+        0 0 22px #3dff7a,
+        3px 0 26px #2db7ff,
+        6px 0 30px #b04dff;
+    animation: title-hue 24s linear infinite;
+}
+
+@keyframes title-hue {
+    to { filter: hue-rotate(360deg); }
+}
+
+#game-container:not(.menu-open) .page-title--brand {
+    animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-title--brand { animation: none; }
+}
+
+body.reduce-motion .page-title--brand {
+    animation: none;
 }
 
 .page-title--brand::before {
@@ -1872,117 +1904,6 @@ body {
 
 /* The Pixel carousel: the same shape as the home screen's picker, so the
    two read as one component in two places. */
-#gem-shop-carousel {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 18px 12px 14px;
-    cursor: default;
-}
-
-#gem-skin-shop {
-    flex: 1;
-    min-width: 0;
-}
-
-.gem-skin-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    text-align: center;
-}
-
-/* Tier ladder: each Pixel glows in its own colour, harder the higher its
-   tier (--tier runs 0 to 1, set inline). */
-.gem-skin-preview {
-    position: relative;
-    width: 56px;
-    height: 56px;
-    margin: 2px 0 4px;
-    border-radius: 8%;
-    box-shadow: 0 0 calc(10px + var(--tier, 0) * 26px) color-mix(in srgb, var(--skin, #000) calc(20% + var(--tier, 0) * 60%), transparent);
-}
-
-.gem-skin-name {
-    font-size: 18px;
-    font-weight: 900;
-}
-
-.gem-skin-tier {
-    color: var(--muted);
-    font-family: var(--font-text);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 1px;
-}
-
-.gem-skin-card.premium .gem-skin-tier {
-    color: var(--gold);
-}
-
-.gem-skin-perks {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    min-height: 20px;
-}
-
-.gem-skin-buy-btn {
-    width: 100%;
-    margin-top: 6px;
-}
-
-/* Carousel position markers: squares, like everything else here. */
-#gem-shop-dots {
-    display: flex;
-    gap: 0;
-    padding-bottom: 20px;
-}
-
-/* Each dot is a 24px button (a comfortable tap target) drawing an 8px
-   square marker. */
-.gem-dot {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    background: none;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.gem-dot::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: 0.2s;
-}
-
-.gem-dot.owned::before {
-    background: var(--teal);
-    border-color: var(--teal);
-}
-
-.gem-dot.active::before {
-    background: #fff;
-    border-color: #fff;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
-}
-
-/* The framed card may also be one you already own: keep the owned tint and
-   mark "current" with the ring instead, so the two states stay distinct. */
-.gem-dot.owned.active::before {
-    background: var(--teal);
-    border-color: #fff;
-    box-shadow: 0 0 10px rgba(var(--teal-rgb), 0.8);
-}
-
 /* "Can't do that" feedback on whatever was pressed (see Game.shakeUI). */
 .shake {
     animation: shake 0.4s ease-in-out;
@@ -2036,7 +1957,8 @@ body {
     }
 }
 
-#hourly-preview {
+#hourly-preview,
+.hourly-preview {
     display: flex;
     justify-content: center;
     margin: 2px 0;
@@ -2846,6 +2768,146 @@ body.reduce-motion *::after {
     color: var(--pixel);
 }
 
+/* PIXEL TIERS — a label and border in the tier's colour (PIXEL_TIERS). */
+.tier-badge {
+    display: inline-block;
+    padding: 3px 7px;
+    border: 1px solid var(--tier);
+    color: var(--tier);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    user-select: none;
+}
+.tier-uncommon { --tier: var(--tier-uncommon); }
+.tier-rare { --tier: var(--tier-rare); }
+.tier-epic { --tier: var(--tier-epic); }
+.tier-legendary { --tier: var(--tier-legendary); }
+
+/* ---- Pixel picker (ALL / OWNED / SHOP / HOUR) ---- */
+.pixel-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.pixel-tab {
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.pixel-tab.active {
+    color: #fff;
+    border-color: var(--teal);
+    background: rgba(var(--teal-rgb), 0.18);
+}
+
+.pixel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+    gap: 10px;
+    width: min(100%, 560px);
+    margin-bottom: 18px;
+}
+
+.pixel-empty {
+    grid-column: 1 / -1;
+    padding: 24px 0;
+    color: var(--muted);
+    font-family: var(--font-text);
+    text-align: center;
+}
+
+.pixel-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border: 2px solid var(--tier);
+    background: rgba(255, 255, 255, 0.04);
+    text-align: center;
+    cursor: pointer;
+    outline: none;
+}
+
+.pixel-card:focus-visible { box-shadow: 0 0 12px color-mix(in srgb, var(--tier) 60%, transparent); }
+.pixel-card.equipped { background: color-mix(in srgb, var(--tier) 18%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--tier) 45%, transparent); }
+.pixel-card.locked .pixel-card-pixel { opacity: 0.4; }
+
+.pixel-card-pixel {
+    position: relative;
+    display: block;
+    width: 44px;
+    height: 44px;
+    border-radius: 8%;
+    box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
+}
+
+.pixel-card-name {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.pixel-card-perks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+}
+
+.pixel-card-status {
+    margin-top: auto;
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.pixel-card.equipped .pixel-card-status { color: var(--teal); }
+.pixel-card-status.cant-afford { color: var(--pixel); }
+
+/* Achievements fold away inside Records: the header is the toggle. */
+.records-toggle {
+    width: 100%;
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.records-toggle .panel-count::after {
+    content: " +";
+}
+
+.records-toggle.open .panel-count::after {
+    content: " \2212";
+}
+
+.achievement-bar {
+    display: block;
+    height: 6px;
+    margin-top: 5px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.achievement-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--gold);
+}
+
 
 /* ---- tools/portable/portable.css ---- */
 /* Portable-build-only UI (js/portable.js). tools/build-portable.mjs appends
@@ -3017,7 +3079,6 @@ body.reduce-motion *::after {
 
                 <div class="home">
                     <div id="skin-container" class="panel">
-                        <button class="nav-btn" id="prev-btn" aria-label="Previous Pixel">&lt;</button>
                         <div id="skin-display">
                             <div id="skin-preview-box">
                                 <div id="skin-eyes-l" class="pixel-eye pixel-eye-l"></div>
@@ -3026,9 +3087,8 @@ body.reduce-motion *::after {
                             <div id="skin-name">Unit 734</div>
                             <div id="skin-status">UNLOCKED</div>
                             <div id="skin-ability"></div>
-                            <button id="hourly-open-btn" class="hourly-open-btn" type="button"></button>
+                            <button id="pixels-open-btn" class="btn" type="button">CHOOSE PIXEL<span class="shop-badge" hidden>NEW</span></button>
                         </div>
-                        <button class="nav-btn" id="next-btn" aria-label="Next Pixel">&gt;</button>
                     </div>
 
                     <div class="home-actions">
@@ -3057,22 +3117,32 @@ body.reduce-motion *::after {
                 <div class="panel shop-card">
                     <div class="panel-head">
                         <span class="panel-title"><svg class="ico ico-heart" aria-hidden="true"><use href="#i-heart"/></svg> Heart</span>
-                        <span class="shop-card-stock">Banked <span id="shop-life-count">0</span> / 3</span>
+                        <span class="shop-card-stock">Next run +<span id="shop-life-count">0</span> / <span id="shop-life-max">2</span></span>
                     </div>
-                    <p class="shop-card-desc">A spare life. One is spent by itself on a fall or hit that would end your run. You can also find them as you climb.</p>
+                    <p class="shop-card-desc">A spare life for your next run only, on top of the free one every run starts with. One is spent by itself on a fall or hit that would end your run. You can also find them as you climb.</p>
                     <button id="shop-life-btn" class="btn btn--primary shop-card-btn">
                         <span class="btn-label">BUY HEART</span>
                         <span class="btn-cost"></span>
                     </button>
                 </div>
 
-                <div id="gem-shop-carousel" class="panel">
-                    <button class="nav-btn" id="gem-prev-btn" aria-label="Previous tier">&lt;</button>
-                    <div id="gem-skin-shop"></div>
-                    <button class="nav-btn" id="gem-next-btn" aria-label="Next tier">&gt;</button>
+                <button id="shop-pixels-btn" class="btn">PIXEL SHOP</button>
+            </div>
+
+            <!-- PIXELS: the one place to choose a Pixel (ALL / OWNED / SHOP / HOUR) -->
+            <div id="pixels-menu-layer" class="menu-page">
+                <button id="pixels-back-btn" class="btn back-btn"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg> BACK</button>
+
+                <div class="page-title page-title--pixels">PIXELS</div>
+
+                <div id="pixel-tabs" class="pixel-tabs" role="tablist">
+                    <button class="pixel-tab active" data-tab="all" role="tab" type="button">ALL</button>
+                    <button class="pixel-tab" data-tab="owned" role="tab" type="button">OWNED</button>
+                    <button class="pixel-tab" data-tab="shop" role="tab" type="button">SHOP</button>
+                    <button class="pixel-tab" data-tab="hour" role="tab" type="button">HOUR</button>
                 </div>
 
-                <div id="gem-shop-dots"></div>
+                <div id="pixel-grid" class="pixel-grid"></div>
             </div>
 
             <!-- RECORDS: your top runs, lifetime stats and every achievement -->
@@ -3099,11 +3169,11 @@ body.reduce-motion *::after {
                 <div id="records-stats" class="records-stats"></div>
 
                 <div class="panel panel--gold records-panel">
-                    <div class="panel-head">
+                    <button id="records-toggle" class="panel-head records-toggle" type="button" aria-expanded="false" aria-controls="records-list">
                         <span class="panel-title"><svg class="ico ico-gold" aria-hidden="true"><use href="#i-medal"/></svg> Achievements</span>
                         <span id="records-count" class="panel-count"></span>
-                    </div>
-                    <div id="records-list" class="records-list"></div>
+                    </button>
+                    <div id="records-list" class="records-list" hidden></div>
                 </div>
             </div>
 
@@ -3204,6 +3274,19 @@ body.reduce-motion *::after {
             </div>
         </div>
 
+        <!-- BUY A PIXEL: asks first, since gems are hard to earn (js/shop.js) -->
+        <div id="buy-confirm-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="buy-confirm-title">
+            <div class="panel overlay-box hourly-box">
+                <div id="buy-confirm-title" class="overlay-title">BUY THIS PIXEL?</div>
+                <div id="buy-confirm-preview" class="hourly-preview"></div>
+                <div id="buy-confirm-name" class="hourly-name"></div>
+                <div id="buy-confirm-perks" class="hourly-perks"></div>
+                <div id="buy-confirm-note" class="overlay-note"></div>
+                <button id="buy-confirm-yes" class="btn btn--gem overlay-btn"></button>
+                <button id="buy-confirm-no" class="btn overlay-btn">CANCEL</button>
+            </div>
+        </div>
+
         <!-- SETTINGS (from the menu or the pause screen) -->
         <div id="settings-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
             <div class="panel overlay-box">
@@ -3261,7 +3344,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.30.0';
+    const EMBEDDED = '1.31.1';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -3459,8 +3542,8 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.30.0';
-const NET_PROTOCOL = 9;
+const GAME_VERSION = '1.31.1';
+const NET_PROTOCOL = 10;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
 // to NEW_ORIGIN and redirects there (js/migrate.js). Empty = no move yet.
@@ -3568,7 +3651,7 @@ const CONFIG = {
 
 // Level generation version: bump when spawnPlatform() would build a different
 // layout from the same seed (saved ghosts from other versions are dropped).
-const PLATFORM_GEN_VERSION = 5;
+const PLATFORM_GEN_VERSION = 6;
 // Platform types, rolled per platform from its height (see spawnPlatform):
 //  - springs launch whoever lands on them (CONFIG.SPRING_FORCE);
 //  - crumbling platforms break CRUMBLE_FRAMES after being landed on and
@@ -3603,13 +3686,18 @@ function nextMilestone(meters) {
     return (Math.floor(meters / MILESTONE_STEP) + 1) * MILESTONE_STEP;
 }
 
-// Pickups rolled per platform. The power-up chance climbs from MIN at 0m to
-// MAX at POWERUP_RAMP_METERS; hearts are rarer, and only exist for a player
-// with fewer than MAX_HEARTS banked (see Game.visiblePickups()); otherwise 40% of
+// Pickups rolled per platform. The power-up chance starts at START at 0m and
+// eases out (falling fastest early) to END at POWERUP_PLATEAU_METERS, constant
+// beyond (see powerUpChanceAt); hearts are rarer, and only exist for a player
+// below their Pixel's heart cap (see Game.visiblePickups()); otherwise 40% of
 // platforms carry a gem, worth its biome's `gem.value` (see BIOMES).
-const POWERUP_CHANCE_MIN = 0.06;
-const POWERUP_CHANCE_MAX = 0.12;
-const POWERUP_RAMP_METERS = 8000;
+const POWERUP_CHANCE_START = 0.20;
+const POWERUP_CHANCE_END = 0.07;
+const POWERUP_PLATEAU_METERS = 5000;
+function powerUpChanceAt(meters) {
+    const t = Math.max(0, Math.min(1, meters / POWERUP_PLATEAU_METERS));
+    return POWERUP_CHANCE_END + (POWERUP_CHANCE_START - POWERUP_CHANCE_END) * (1 - t) * (1 - t);
+}
 // Hearts thin out with height (HEART_CHANCE_START at 0m down to
 // HEART_CHANCE_END at HEART_RAMP_METERS) and are always more than a screen
 // apart, so at most one is ever in view.
@@ -3710,17 +3798,32 @@ function biomeIndexAt(meters) {
     return BIOMES.indexOf(biomeAt(meters));
 }
 
-// Shop consumables. Hearts are bought with gems and carried between
-// runs as stock — each one is spent automatically on a death that would
-// otherwise end the run (see Game.die()).
-const HEART_COST = 50;
+// Shop consumables. Every run starts with one free heart plus the hearts
+// bought for it (saved as lp_hearts, "bought for the next run"); leftovers are
+// gone when the run ends. Each heart is spent automatically on a death that
+// would otherwise end the run (see Game.useSpareLife()).
+const HEART_COST = 100;
 // A spent life (or revive) springs up a red rescue net for a second that
 // bounces the player back in.
 const RESCUE_NET_FRAMES = 60;
 const RESCUE_NET_COLOR = '#ff3366';
 // Hit immunity after a jetpack or HARD SHIELD absorbs a drone or bullet.
 const ABSORB_INVULN_FRAMES = 30;
+// The default heart cap; heartCapFor() has the Pixel-specific one.
 const MAX_HEARTS = 3;
+const HEART_CAP_ROCKET = 2;
+// NINJA: wall jumps allowed between landings, the sideways push each gives,
+// and the frames after touching a wall in which one can still be fired.
+const NINJA_WALL_JUMPS = 2;
+const NINJA_WALL_PUSH = 9;
+const NINJA_WALL_FRAMES = 6;
+// How many hearts a run can hold with this Pixel: 3 by default, 5 with the
+// 5 HEARTS perk, 2 with ROCKET.
+function heartCapFor(pixel) {
+    const a = (pixel && pixel.ability) || {};
+    if (a.rocket) return HEART_CAP_ROCKET;
+    return a.heartCap || MAX_HEARTS;
+}
 
 // Multiplayer: host + up to 3 guests (NetworkManager.maxGuests must match).
 // Slot 0 is always the party leader; each slot's colour is used for that
@@ -3770,13 +3873,13 @@ const PARTY_COLORS = ['#00ffff', '#ff3cf0', '#ffe600', '#ff8a00'];
 // running game still addresses skins by SKINS index (Player, co-op sync),
 // which is fine as long as every client ships the same list.
 const SKINS = [
-    { id: 'unit734', name: "Unit 734", color: "#ff3366", eye: "white", unlock: 0, ability: {} },
-    { id: 'ghost', name: "The Ghost", color: "#ffffff", eye: "black", unlock: 150, ability: { gravityMult: 0.85 } },
-    { id: 'matrix', name: "Matrix", color: "#00ff00", eye: "black", unlock: 350, ability: { speedMult: 1.2 } },
-    { id: 'deepvoid', name: "Deep Void", color: "#330033", eye: "#ff00ff", unlock: 700, ability: { jumpMult: 1.15 } },
-    { id: 'golden', name: "Golden", color: "#ffd700", eye: "#8B4500", unlock: 1400, ability: { speedMult: 1.1, gravityMult: 0.9 } },
-    { id: 'glitch', name: "Glitch", color: "#00ffff", eye: "white", unlock: 2500, ability: { jumpMult: 1.1, speedMult: 1.1 } },
-    { id: 'theend', name: "The End", color: "#111", eye: "red", unlock: 4000, ability: { gravityMult: 0.75 } },
+    { id: 'unit734', name: "Unit 734", tier: 'uncommon', color: "#ff3366", eye: "white", unlock: 0, ability: {} },
+    { id: 'ghost', name: "The Ghost", tier: 'uncommon', color: "#ffffff", eye: "black", unlock: 150, ability: { gravityMult: 0.85, holdJump: true } },
+    { id: 'matrix', name: "Matrix", tier: 'uncommon', color: "#00ff00", eye: "black", unlock: 350, ability: { speedMult: 1.2, airJump: true } },
+    { id: 'deepvoid', name: "Deep Void", tier: 'uncommon', color: "#330033", eye: "#ff00ff", unlock: 700, ability: { jumpMult: 1.15, gemMagnetRadius: 150 } },
+    { id: 'golden', name: "Golden", tier: 'rare', color: "#ffd700", eye: "#8B4500", unlock: 1400, ability: { speedMult: 1.1, gravityMult: 0.9, gemMult: 2 } },
+    { id: 'glitch', name: "Glitch", tier: 'rare', color: "#00ffff", eye: "white", unlock: 2500, ability: { jumpMult: 1.1, speedMult: 1.1, powerDurationMult: 1.5 } },
+    { id: 'theend', name: "The End", tier: 'rare', color: "#111", eye: "red", unlock: 4000, ability: { gravityMult: 0.75, smash: true } },
 
     // Gem-shop Pixels, cheapest first. Each one beats every free Pixel: the
     // bottom two carry one big stat (+30% jump already means 1.7x the jump
@@ -3787,57 +3890,77 @@ const SKINS = [
     // rather than grinding the first screens. Prices are one curve: each
     // tier costs about 2.5x the one before, from 75 up to 100,000
     // (tests/test_gem_shop.js checks). See Game.renderGemShop().
-    { id: 'nebula', name: "Nebula Drifter", color: "#6633ff", eye: "#ccccff", cost: 75, ability: { speedMult: 1.5 } },
-    { id: 'chrome', name: "Chrome Unit", color: "#cccccc", eye: "#333333", cost: 200, ability: { jumpMult: 1.3 } },
-    { id: 'solarflare', name: "Solar Flare", color: "#ff6600", eye: "#ffffff", cost: 500, ability: { speedMult: 1.25, gravityMult: 0.7 } },
-    { id: 'obsidian', name: "Obsidian", color: "#a64dff", eye: "#1a0033", cost: 1200, ability: { jumpMult: 1.25, powerDurationMult: 2 } },
-    { id: 'prism', name: "Prism", color: "#ff00ff", eye: "#ffffff", cost: 3000, ability: { speedMult: 1.25, airJump: true } },
-    { id: 'pulsewarden', name: "Pulse Warden", color: "#00ff99", eye: "#003322", cost: 7000, ability: { jumpMult: 1.25, dronePulseSec: 5 } },
-    { id: 'hoarder', name: "Crystal Hoarder", color: "#33e0ff", eye: "#002233", cost: 16000, ability: { speedMult: 1.25, gemMagnetRadius: 150, gemMult: 2 } },
-    { id: 'aegis', name: "Aegis", color: "#3366ff", eye: "#ffffff", cost: 40000, ability: { jumpMult: 1.25, startShield: true, biomeImmune: true } },
-    { id: 'overclock', name: "Overclock", color: "#ff2222", eye: "#ffe600", cost: 100000, ability: { speedMult: 1.3, jumpMult: 1.3, powerDurationMult: 2, scoreMult: 2 } },
+    { id: 'nebula', name: "Nebula Drifter", tier: 'rare', color: "#6633ff", eye: "#ccccff", cost: 75, ability: { speedMult: 1.5 } },
+    { id: 'chrome', name: "Chrome Unit", tier: 'rare', color: "#cccccc", eye: "#333333", cost: 200, ability: { jumpMult: 1.3 } },
+    { id: 'solarflare', name: "Solar Flare", tier: 'rare', color: "#ff6600", eye: "#ffffff", cost: 500, ability: { speedMult: 1.25, gravityMult: 0.7 } },
+    { id: 'obsidian', name: "Obsidian", tier: 'epic', color: "#a64dff", eye: "#1a0033", cost: 1200, ability: { jumpMult: 1.25, powerDurationMult: 2 } },
+    { id: 'prism', name: "Prism", tier: 'epic', color: "#ff00ff", eye: "#ffffff", cost: 3000, ability: { speedMult: 1.25, airJump: true } },
+    { id: 'pulsewarden', name: "Pulse Warden", tier: 'epic', color: "#00ff99", eye: "#003322", cost: 7000, ability: { jumpMult: 1.25, dronePulseSec: 5 } },
+    { id: 'hoarder', name: "Crystal Hoarder", tier: 'epic', color: "#33e0ff", eye: "#002233", cost: 16000, ability: { speedMult: 1.25, gemMagnetRadius: 150, gemMult: 2 } },
+    { id: 'aegis', name: "Aegis", tier: 'legendary', color: "#3366ff", eye: "#ffffff", cost: 40000, ability: { jumpMult: 1.25, smash: true, biomeImmune: true } },
+    // Legendary specialists: each plays differently rather than out-statting Overclock.
+    { id: 'ninja', name: "Ninja", tier: 'legendary', color: "#1a1a2e", eye: "#c9d1ff", cost: 50000, ability: { speedMult: 1.3, ninja: true } },
+    { id: 'rocket', name: "Rocket", tier: 'legendary', color: "#ff3300", eye: "#ffffff", cost: 65000, ability: { rocket: true, powerDurationMult: 2, speedMult: 0.85 } },
+    { id: 'bulwark', name: "Bulwark", tier: 'legendary', color: "#4a5568", eye: "#ffcc00", cost: 80000, ability: { heartCap: 5, smash: true, jumpMult: 1.2 } },
+    { id: 'overclock', name: "Overclock", tier: 'legendary', color: "#ff2222", eye: "#ffe600", cost: 100000, ability: { speedMult: 1.3, jumpMult: 1.3, powerDurationMult: 2, scoreMult: 2 } },
 
     // Secret skins: never shown in the menu picker until their distance is
     // reached (see Game.unlockedSkinIndexes()), one per new biome.
-    { id: 'riftdiver', name: "Rift Diver", color: "#6600cc", eye: "#00ffff", unlock: 5000, secret: true, ability: { powerDurationMult: 1.5 } },
-    { id: 'neonghost', name: "Neon Ghost", color: "#ff0099", eye: "#00ffff", unlock: 8000, secret: true, ability: { gemMagnetRadius: 150 } },
-    { id: 'staticking', name: "Static King", color: "#ffffff", eye: "#ff0000", unlock: 12000, secret: true, ability: { speedMult: 1.25, biomeImmune: true } },
-    { id: 'thevoid', name: "The Void", color: "#000000", eye: "#ff0000", unlock: 17000, secret: true, ability: { startAtScore: 50000, jumpMult: 1.1 } },
+    { id: 'riftdiver', name: "Rift Diver", tier: 'epic', color: "#6600cc", eye: "#00ffff", unlock: 5000, secret: true, ability: { powerDurationMult: 1.5 } },
+    { id: 'neonghost', name: "Neon Ghost", tier: 'epic', color: "#ff0099", eye: "#00ffff", unlock: 8000, secret: true, ability: { gemMagnetRadius: 150 } },
+    { id: 'staticking', name: "Static King", tier: 'legendary', color: "#ffffff", eye: "#ff0000", unlock: 12000, secret: true, ability: { speedMult: 1.25, biomeImmune: true } },
+    { id: 'thevoid', name: "The Void", tier: 'legendary', color: "#000000", eye: "#ff0000", unlock: 17000, secret: true, ability: { startAtScore: 50000, jumpMult: 1.1 } },
 
     // Pixels of the Hour (js/hourly.js): one of these is on offer each hour,
     // worn until the next :00 after watching an ad (or for gems). Each has a
     // two-colour `pattern` over its body (drawPixel / pixelBodyCSS), which no
     // other Pixel has, and mid-shop-tier perks: never SCORE x2 or RIFT. They
     // don't count as unlocks. Appended here so no other Pixel's index moves.
-    { id: 'h_sunset', name: "Sunset Strip", color: "#ff7a00", color2: "#ff2d95", eye: "#2a0010", pattern: 'stripes', hourly: true, ability: { speedMult: 1.25, powerDurationMult: 1.5 } },
-    { id: 'h_mint', name: "Mint Condition", color: "#3dffb4", color2: "#0a7f5a", eye: "#1a0033", pattern: 'split', hourly: true, ability: { jumpMult: 1.2, gemMagnetRadius: 150 } },
-    { id: 'h_arcade', name: "Arcade Cabinet", color: "#2b2bff", color2: "#ffe600", eye: "#1a1a66", pattern: 'visor', hourly: true, ability: { speedMult: 1.2, airJump: true } },
-    { id: 'h_lava', name: "Lava Lamp", color: "#ff2200", color2: "#ffcc00", eye: "#330000", pattern: 'gradient', hourly: true, ability: { jumpMult: 1.25, startShield: true } },
-    { id: 'h_glacier', name: "Glacier", color: "#bff6ff", color2: "#3fa9ff", eye: "#00224a", pattern: 'diagonal', hourly: true, ability: { gravityMult: 0.75, biomeImmune: true } },
-    { id: 'h_bubblegum', name: "Bubblegum", color: "#ff8fd8", color2: "#ffffff", eye: "#5a0040", pattern: 'checker', hourly: true, ability: { speedMult: 1.2, gemMult: 2 } },
-    { id: 'h_toxic', name: "Toxic Waste", color: "#7dff00", color2: "#1a1a1a", eye: "#7dff00", pattern: 'visor', hourly: true, ability: { jumpMult: 1.2, dronePulseSec: 6 } },
-    { id: 'h_royal', name: "Royal Flush", color: "#6a00ff", color2: "#ffd700", eye: "#ffd700", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, startShield: true } },
-    { id: 'h_circuit', name: "Circuit Board", color: "#00a86b", color2: "#c0ff00", eye: "#002a1a", pattern: 'stripes', hourly: true, ability: { speedMult: 1.15, powerDurationMult: 2 } },
-    { id: 'h_dusk', name: "Dusk Walker", color: "#ff5e62", color2: "#3a1c71", eye: "#ffffff", pattern: 'gradient', hourly: true, ability: { gravityMult: 0.8, airJump: true } },
-    { id: 'h_zebra', name: "Static Zebra", color: "#f2f2f2", color2: "#222222", eye: "#ff0055", pattern: 'stripes', hourly: true, ability: { jumpMult: 1.25, biomeImmune: true } },
-    { id: 'h_candy', name: "Candy Corn", color: "#ffb000", color2: "#fff4d6", eye: "#4a2500", pattern: 'diagonal', hourly: true, ability: { speedMult: 1.3, gemMagnetRadius: 150 } },
-    { id: 'h_deepsea', name: "Deep Sea", color: "#003b73", color2: "#00e5ff", eye: "#00e5ff", pattern: 'ring', hourly: true, ability: { gravityMult: 0.75, powerDurationMult: 1.5 } },
-    { id: 'h_ember', name: "Ember", color: "#2a0a00", color2: "#ff4d00", eye: "#ffffff", pattern: 'checker', hourly: true, ability: { jumpMult: 1.25, dronePulseSec: 6 } },
-    { id: 'h_aurora', name: "Aurora", color: "#00ffa3", color2: "#7a5cff", eye: "#0d0033", pattern: 'gradient', hourly: true, ability: { speedMult: 1.2, gemMult: 2 } },
-    { id: 'h_cherry', name: "Cherry Cola", color: "#b3001b", color2: "#2b0000", eye: "#ffd1d9", pattern: 'split', hourly: true, ability: { jumpMult: 1.2, startShield: true } },
-    { id: 'h_tiger', name: "Neon Tiger", color: "#ff8c00", color2: "#111111", eye: "#111111", pattern: 'stripes', hourly: true, ability: { speedMult: 1.2, biomeImmune: true } },
-    { id: 'h_frost', name: "Frostbyte", color: "#e0fbff", color2: "#7df9ff", eye: "#004d66", pattern: 'checker', hourly: true, ability: { jumpMult: 1.2, airJump: true } },
-    { id: 'h_sakura', name: "Sakura", color: "#ffc0d9", color2: "#ff5c9a", eye: "#4d0026", pattern: 'diagonal', hourly: true, ability: { gravityMult: 0.8, gemMagnetRadius: 150 } },
-    { id: 'h_hacker', name: "Hacker", color: "#0d0d0d", color2: "#00ff41", eye: "#0d0d0d", pattern: 'visor', hourly: true, ability: { powerDurationMult: 2, dronePulseSec: 7 } },
-    { id: 'h_plasma', name: "Plasma Core", color: "#ff00c8", color2: "#00f0ff", eye: "#ffffff", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, jumpMult: 1.1 } },
-    { id: 'h_copper', name: "Copper Top", color: "#b87333", color2: "#ffd9a0", eye: "#2b1400", pattern: 'visor', hourly: true, ability: { jumpMult: 1.2, powerDurationMult: 1.5 } },
-    { id: 'h_midnight', name: "Midnight Oil", color: "#1b1464", color2: "#6c5ce7", eye: "#ffe66d", pattern: 'split', hourly: true, ability: { gravityMult: 0.75, startShield: true } },
-    { id: 'h_keylime', name: "Key Lime", color: "#c6ff00", color2: "#1f7a1f", eye: "#1f3d00", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, gemMagnetRadius: 150 } }
+    { id: 'h_sunset', name: "Sunset Strip", tier: 'epic', color: "#ff7a00", color2: "#ff2d95", eye: "#2a0010", pattern: 'stripes', hourly: true, ability: { speedMult: 1.25, powerDurationMult: 1.5 } },
+    { id: 'h_mint', name: "Mint Condition", tier: 'rare', color: "#3dffb4", color2: "#0a7f5a", eye: "#1a0033", pattern: 'split', hourly: true, ability: { jumpMult: 1.2, gemMagnetRadius: 150 } },
+    { id: 'h_arcade', name: "Arcade Cabinet", tier: 'epic', color: "#2b2bff", color2: "#ffe600", eye: "#1a1a66", pattern: 'visor', hourly: true, ability: { speedMult: 1.2, airJump: true } },
+    { id: 'h_lava', name: "Lava Lamp", tier: 'legendary', color: "#ff2200", color2: "#ffcc00", eye: "#330000", pattern: 'gradient', hourly: true, ability: { jumpMult: 1.25, smash: true } },
+    { id: 'h_glacier', name: "Glacier", tier: 'legendary', color: "#bff6ff", color2: "#3fa9ff", eye: "#00224a", pattern: 'diagonal', hourly: true, ability: { gravityMult: 0.75, biomeImmune: true } },
+    { id: 'h_bubblegum', name: "Bubblegum", tier: 'epic', color: "#ff8fd8", color2: "#ffffff", eye: "#5a0040", pattern: 'checker', hourly: true, ability: { speedMult: 1.2, gemMult: 2 } },
+    { id: 'h_toxic', name: "Toxic Waste", tier: 'epic', color: "#7dff00", color2: "#1a1a1a", eye: "#7dff00", pattern: 'visor', hourly: true, ability: { jumpMult: 1.2, dronePulseSec: 6 } },
+    { id: 'h_royal', name: "Royal Flush", tier: 'legendary', color: "#6a00ff", color2: "#ffd700", eye: "#ffd700", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, heartCap: 5 } },
+    { id: 'h_circuit', name: "Circuit Board", tier: 'rare', color: "#00a86b", color2: "#c0ff00", eye: "#002a1a", pattern: 'stripes', hourly: true, ability: { speedMult: 1.15, powerDurationMult: 2 } },
+    { id: 'h_dusk', name: "Dusk Walker", tier: 'epic', color: "#ff5e62", color2: "#3a1c71", eye: "#ffffff", pattern: 'gradient', hourly: true, ability: { gravityMult: 0.8, airJump: true } },
+    { id: 'h_zebra', name: "Static Zebra", tier: 'rare', color: "#f2f2f2", color2: "#222222", eye: "#ff0055", pattern: 'stripes', hourly: true, ability: { jumpMult: 1.25, biomeImmune: true } },
+    { id: 'h_candy', name: "Candy Corn", tier: 'rare', color: "#ffb000", color2: "#fff4d6", eye: "#4a2500", pattern: 'diagonal', hourly: true, ability: { speedMult: 1.3, gemMagnetRadius: 150 } },
+    { id: 'h_deepsea', name: "Deep Sea", tier: 'rare', color: "#003b73", color2: "#00e5ff", eye: "#00e5ff", pattern: 'ring', hourly: true, ability: { gravityMult: 0.75, powerDurationMult: 1.5 } },
+    { id: 'h_ember', name: "Ember", tier: 'epic', color: "#2a0a00", color2: "#ff4d00", eye: "#ffffff", pattern: 'checker', hourly: true, ability: { jumpMult: 1.25, dronePulseSec: 6 } },
+    { id: 'h_aurora', name: "Aurora", tier: 'epic', color: "#00ffa3", color2: "#7a5cff", eye: "#0d0033", pattern: 'gradient', hourly: true, ability: { speedMult: 1.2, gemMult: 2 } },
+    { id: 'h_cherry', name: "Cherry Cola", tier: 'epic', color: "#b3001b", color2: "#2b0000", eye: "#ffd1d9", pattern: 'split', hourly: true, ability: { jumpMult: 1.2, holdJump: true } },
+    { id: 'h_tiger', name: "Neon Tiger", tier: 'rare', color: "#ff8c00", color2: "#111111", eye: "#111111", pattern: 'stripes', hourly: true, ability: { speedMult: 1.2, biomeImmune: true } },
+    { id: 'h_frost', name: "Frostbyte", tier: 'epic', color: "#e0fbff", color2: "#7df9ff", eye: "#004d66", pattern: 'checker', hourly: true, ability: { jumpMult: 1.2, airJump: true } },
+    { id: 'h_sakura', name: "Sakura", tier: 'rare', color: "#ffc0d9", color2: "#ff5c9a", eye: "#4d0026", pattern: 'diagonal', hourly: true, ability: { gravityMult: 0.8, gemMagnetRadius: 150 } },
+    { id: 'h_hacker', name: "Hacker", tier: 'legendary', color: "#0d0d0d", color2: "#00ff41", eye: "#0d0d0d", pattern: 'visor', hourly: true, ability: { powerDurationMult: 2, dronePulseSec: 7 } },
+    { id: 'h_plasma', name: "Plasma Core", tier: 'rare', color: "#ff00c8", color2: "#00f0ff", eye: "#ffffff", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, jumpMult: 1.1 } },
+    { id: 'h_copper', name: "Copper Top", tier: 'rare', color: "#b87333", color2: "#ffd9a0", eye: "#2b1400", pattern: 'visor', hourly: true, ability: { jumpMult: 1.2, powerDurationMult: 1.5 } },
+    { id: 'h_midnight', name: "Midnight Oil", tier: 'epic', color: "#1b1464", color2: "#6c5ce7", eye: "#ffe66d", pattern: 'split', hourly: true, ability: { gravityMult: 0.75, holdJump: true } },
+    { id: 'h_keylime', name: "Key Lime", tier: 'rare', color: "#c6ff00", color2: "#1f7a1f", eye: "#1f3d00", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, gemMagnetRadius: 150 } }
 ];
 
+// Tiers are a label only (how strong a Pixel is at a glance); how you get
+// one (height, gems, the hour) is unchanged. Colours are the --tier-* tokens.
+const PIXEL_TIERS = {
+    uncommon: { label: 'UNCOMMON', order: 0 },
+    rare: { label: 'RARE', order: 1 },
+    epic: { label: 'EPIC', order: 2 },
+    legendary: { label: 'LEGENDARY', order: 3 }
+};
+function pixelTier(pixel) {
+    return (pixel && PIXEL_TIERS[pixel.tier]) ? pixel.tier : 'uncommon';
+}
+
 // The Pixel of the Hour's gem price, the way to wear it without an ad
-// (CrazyGames asks for one). Deliberately steeper than an ad.
-const HOURLY_PIXEL_GEM_COST = 400;
+// (CrazyGames asks for one), set by its tier. Deliberately steeper than an
+// ad, and always under 5,000.
+const HOURLY_PIXEL_GEM_COSTS = { uncommon: 400, rare: 400, epic: 1500, legendary: 4500 };
+function hourlyPixelCost(pixel) {
+    return HOURLY_PIXEL_GEM_COSTS[pixelTier(pixel)];
+}
 
 function skinIndexById(id) {
     return SKINS.findIndex(s => s.id === id);
@@ -3846,13 +3969,16 @@ function skinIndexById(id) {
 // Perks: the passive buff a Pixel grants, keyed by its SKINS[i].ability key.
 // `label` is the short tag shown on the menu/shop, `describe(value)` the full
 // stat text revealed on hover/tap, and `active(value)` whether a value does
-// anything at all (a 1x multiplier doesn't). `covers` names the POWERS entry
+// anything at all (a 1x multiplier doesn't). A perk may also declare
+// `downside(value)`, returning null or { label, describe } for a red tag
+// shown after the perk tags. `covers` names the POWERS entry
 // the perk already gives for good, which that Pixel then never rolls. Tags
 // render in this order.
 const perkPct = (mult) => Math.round(Math.abs(mult - 1) * 100) + '%';
 const PERKS = [
-    { key: 'speedMult', label: 'SPEED', color: '#00ccff', active: v => !!v && v !== 1,
-      describe: v => (v > 1 ? '+' : '-') + perkPct(v) + ' move speed' },
+    { key: 'speedMult', label: 'SPEED', color: '#00ccff', active: v => !!v && v > 1,
+      describe: v => '+' + perkPct(v) + ' move speed',
+      downside: v => (v && v < 1) ? { label: '-' + perkPct(v) + ' SPEED', describe: '-' + perkPct(v) + ' move speed' } : null },
     { key: 'jumpMult', label: 'JUMP', color: '#00ff66', active: v => !!v && v !== 1,
       describe: v => (v > 1 ? '+' : '-') + perkPct(v) + ' jump height' },
     { key: 'gravityMult', label: 'GRAVITY', color: '#b388ff', active: v => !!v && v !== 1,
@@ -3861,8 +3987,18 @@ const PERKS = [
       describe: v => Number.isInteger(v) ? 'Power-ups last ' + v + 'x as long' : '+' + perkPct(v) + ' power-up duration' },
     { key: 'gemMagnetRadius', label: 'MAGNET', color: '#ffff00', active: v => !!v, covers: 'MAGNET',
       describe: () => 'Always pulls in nearby gems' },
-    { key: 'startShield', label: 'SHIELD START', color: '#3366ff', active: v => !!v,
-      describe: () => 'Every run starts with a HARD SHIELD' },
+    { key: 'heartCap', label: '5 HEARTS', color: '#ff3366', active: v => !!v,
+      describe: v => 'Can hold up to ' + v + ' hearts in a run' },
+    { key: 'holdJump', label: 'HOLD JUMP', color: '#7cffcb', active: v => !!v,
+      describe: () => 'Hold jump to jump again every time you land' },
+    { key: 'smash', label: 'SMASH', color: '#ff6b35', active: v => !!v,
+      describe: () => 'Drones and bots die when they touch you. Bullets, lasers, meteors and bosses still hurt' },
+    { key: 'ninja', label: 'NINJA', color: '#c9d1ff', active: v => !!v,
+      describe: () => 'The screen edges are walls: jump off them, up to ' + NINJA_WALL_JUMPS + ' times between landings',
+      downside: v => v ? { label: 'NO WRAP', describe: 'No screen wrap: the edges are walls' } : null },
+    { key: 'rocket', label: 'ROCKET', color: '#ff3300', active: v => !!v,
+      describe: () => 'Every power-up you pick up is a JETPACK',
+      downside: v => v ? { label: HEART_CAP_ROCKET + ' HEARTS MAX', describe: 'Holds at most ' + HEART_CAP_ROCKET + ' hearts in a run' } : null },
     { key: 'startAtScore', label: 'RIFT', color: '#9933ff', active: v => !!v,
       describe: v => 'Solo runs start at ' + Math.floor(v / 10) + 'm (The Rift)' },
     { key: 'airJump', label: 'AIR JUMP', color: '#ff66ff', active: v => !!v, covers: 'DOUBLE',
@@ -3885,6 +4021,15 @@ function skinPerks(ability) {
         .map(p => ({ perk: p, value: ability[p.key] }));
 }
 
+// The downsides a Pixel's abilities carry, in PERKS order.
+function skinDownsides(ability) {
+    if (!ability) return [];
+    return PERKS
+        .filter(p => p.downside)
+        .map(p => p.downside(ability[p.key]))
+        .filter(Boolean);
+}
+
 const POWERS = {
     DOUBLE: { id: 1, name: "DOUBLE JUMP", color: "#00ccff", time: 600 },
     SUPER: { id: 2, name: "SUPER JUMP", color: "#ffaa00", time: 400 },
@@ -3895,30 +4040,26 @@ const POWERS = {
     TIME_WARP: { id: 7, name: "TIME WARP", color: "#ffffff", time: 500 }
 };
 
+// The six feats. `desc` is the exact wording; `progress(state)` (0..1) feeds
+// the bar where progress is measurable (distance, gems held) and is left out
+// for one-shot feats. Reaching a Pixel's unlock height is not an achievement:
+// it is a NEW PIXEL moment (Game.checkPixelUnlocks()).
 const ACHIEVEMENTS = [
-    { id: '1km', name: 'Kilometer Club', desc: 'Climb to 1,000m', condition: (state, player) => state.score >= 10000 },
-    { id: '5km', name: 'Stratosphere', desc: 'Climb to 5,000m', condition: (state, player) => state.score >= 50000 },
-    { id: 'magnet', name: 'Attractive', desc: 'Pick up a MAGNET power-up', condition: (state, player) => player.activePower && player.activePower.name === "MAGNET" },
-    { id: 'pacifist', name: 'Pacifist Pilot', desc: 'Reach 5,000m without collecting a power-up', condition: (state, player) => state.score - (state.startMeters || 0) * 10 >= 50000 && state.powersCollected === 0 },
-    { id: 'boss', name: 'Titan Slayer', desc: 'Beat a boss', condition: (state, player) => state.loops >= 1 },
-    { id: 'rich', name: 'Data Hoarder', desc: 'Hold 100 gems', condition: (state, player) => state.gems >= 100 },
-
-    // Every distance-gated skin doubles as an achievement. Crossing its high
-    // score is exactly what unlocks it (see Game.isSkinLocked()), so that same
-    // moment pops a badge instead of the unlock sitting silently in the
-    // carousel until the player happens to scroll past it. Gem-shop skins are
-    // bought rather than earned, so they stay out of this, as does the starter
-    // skin (unlock: 0), which nobody earns.
-    ...SKINS
-        .filter(s => s.unlock > 0)
-        .map(s => ({
-            id: 'skin:' + s.id, // the stable id (see migrateAchievementIds)
-            name: s.name,
-            desc: 'Reach ' + s.unlock.toLocaleString('en-US') + 'm to unlock this Pixel',
-            skin: s, // the Pixel it unlocks
-            secret: !!s.secret,
-            condition: (state) => state.bestHeight >= s.unlock
-        }))
+    { id: '1km', name: 'Kilometer Club', desc: 'Reach 1,000m in one run',
+      condition: (state, player) => state.score - (state.startMeters || 0) * 10 >= 10000,
+      progress: (state) => state.bestHeight / 1000 },
+    { id: '5km', name: 'Stratosphere', desc: 'Reach 5,000m in one run',
+      condition: (state, player) => state.score - (state.startMeters || 0) * 10 >= 50000,
+      progress: (state) => state.bestHeight / 5000 },
+    { id: 'magnet', name: 'Attractive', desc: 'Pick up a MAGNET power-up',
+      condition: (state, player) => player.activePower && player.activePower.name === "MAGNET" },
+    { id: 'pacifist', name: 'Pacifist Pilot', desc: 'Reach 5,000m without collecting a power-up',
+      condition: (state, player) => state.score - (state.startMeters || 0) * 10 >= 50000 && state.powersCollected === 0 },
+    { id: 'boss', name: 'Titan Slayer', desc: 'Beat a boss',
+      condition: (state, player) => state.loops >= 1 },
+    { id: 'rich', name: 'Data Hoarder', desc: 'Hold 100 gems',
+      condition: (state, player) => state.gems >= 100,
+      progress: (state) => state.gems / 100 }
 ];
 
 </script>
@@ -5821,12 +5962,11 @@ class InputHandler {
             // iframe's parent) and from re-activating a focused button.
             e.preventDefault();
         }
-        if (role === 'jump') {
-            this.keys.buffer = 6;
-        } else {
-            this.heldCodes.set(InputHandler.keyId(e), role);
-            this.syncDirections();
-        }
+        // Key autorepeat doesn't re-press: holding jump re-jumps only with HOLD JUMP.
+        if (role === 'jump' && !e.repeat) this.keys.buffer = 6;
+        // Jump is tracked as held too (HOLD JUMP re-jumps on landing).
+        this.heldCodes.set(InputHandler.keyId(e), role);
+        this.syncDirections();
     }
 
     onKeyUp(e) {
@@ -5842,19 +5982,22 @@ class InputHandler {
         if (this.heldCodes.delete(InputHandler.keyId(e))) this.syncDirections();
     }
 
-    // Left/right are held while any key or any finger says so.
+    // Left/right/jump are held while any key or any finger says so.
     syncDirections() {
-        let left = false, right = false;
+        let left = false, right = false, jump = false;
         for (const role of this.heldCodes.values()) {
             if (role === 'left') left = true;
             if (role === 'right') right = true;
+            if (role === 'jump') jump = true;
         }
         for (const zone of this.pointers.values()) {
             if (zone === 'left') left = true;
             if (zone === 'right') right = true;
+            if (zone === 'jump') jump = true;
         }
         this.keys.left = left;
         this.keys.right = right;
+        this.keys.jump = jump;
     }
 
     // Touch zones across the game canvas: left quarter moves left, second
@@ -5946,6 +6089,7 @@ class InputHandler {
         this.pointers.clear();
         this.keys.left = false;
         this.keys.right = false;
+        this.keys.jump = false;
         this.keys.buffer = 0;
     }
 }
@@ -6797,6 +6941,11 @@ class Player extends Entity {
         this.standOn = null;
         // Set by the Game each frame: the ice hazard is on for this Pixel.
         this.icy = false;
+        // NINJA: frames left in which a wall touch still allows a wall jump,
+        // which way it pushes (+1 right, -1 left), and the jumps left.
+        this.wallContact = 0;
+        this.wallDir = 0;
+        this.wallJumps = NINJA_WALL_JUMPS;
     }
 
     // Advances the Pixel's animation: the squash spring settling back to
@@ -6891,8 +7040,22 @@ class Player extends Entity {
         // Screen wrap: the sides are one seam. x stays in [0, WIDTH); past
         // WIDTH - w the Pixel straddles the edge and draw() shows the rest of
         // it coming in on the left.
-        if (this.x >= CONFIG.WIDTH) this.x -= CONFIG.WIDTH;
-        if (this.x < 0) this.x += CONFIG.WIDTH;
+        if (ability.ninja) {
+            // NINJA: no wrap. The edges are walls; touching one in the air
+            // arms a wall jump pushing away from it.
+            const maxX = CONFIG.WIDTH - this.w;
+            if (this.x <= 0 || this.x >= maxX) {
+                const dir = this.x <= 0 ? 1 : -1;
+                this.x = this.x <= 0 ? 0 : maxX;
+                if (this.vx * dir < 0) this.vx = 0;
+                if (!this.grounded) { this.wallContact = NINJA_WALL_FRAMES; this.wallDir = dir; }
+            } else if (this.wallContact > 0) {
+                this.wallContact -= dt;
+            }
+        } else {
+            if (this.x >= CONFIG.WIDTH) this.x -= CONFIG.WIDTH;
+            if (this.x < 0) this.x += CONFIG.WIDTH;
+        }
 
         // Gravity & Jetpack
         const jetpack = this.activePower === POWERS.ROCKET;
@@ -6957,6 +7120,11 @@ class Player extends Entity {
         if (this.grounded) {
             this.coyote = 8;
             this.doubleReady = true;
+            this.wallJumps = NINJA_WALL_JUMPS;
+            this.wallContact = 0;
+            // HOLD JUMP: a held jump input fires again on every landing, as
+            // if it had just been pressed.
+            if (ability.holdJump && input.keys.jump && input.keys.buffer <= 0) input.keys.buffer = 1;
         } else if (this.coyote > 0) {
             this.coyote -= dt;
         }
@@ -6972,6 +7140,15 @@ class Player extends Entity {
                 // grounded flag here; otherwise next frame still counts as
                 // standing, refills coyote time and allows a mid-air re-jump.
                 this.grounded = false;
+                input.keys.buffer = 0;
+                this.bump(0.16);
+                return "jump";
+            } else if (ability.ninja && this.wallContact > 0 && this.wallJumps > 0) {
+                // NINJA wall jump: up, and away from the wall.
+                this.vy = CONFIG.JUMP_FORCE * (ability.jumpMult || 1);
+                this.vx = this.wallDir * NINJA_WALL_PUSH;
+                this.wallJumps--;
+                this.wallContact = 0;
                 input.keys.buffer = 0;
                 this.bump(0.16);
                 return "jump";
@@ -7017,6 +7194,7 @@ class Player extends Entity {
                         }
                         this.standOn = p;
                         this.grounded = true;
+                        this.wallJumps = NINJA_WALL_JUMPS;
                         this.vy = 0;
                         this.y = p.y - this.h;
                         if (p.vx) {
@@ -7048,6 +7226,11 @@ class Player extends Entity {
         // a dud, so it's left out of the draw. So is the one running now: a
         // pickup during a power always rolls a different one, on a full timer.
         const covered = skinPerks(ability).map(({ perk }) => POWERS[perk.covers]).filter(Boolean);
+        if (ability.rocket) {
+            // ROCKET: every power-up is a JETPACK.
+            this.grantPower(POWERS.ROCKET);
+            return;
+        }
         const types = Object.values(POWERS).filter(p => !covered.includes(p) && p !== this.activePower);
         this.grantPower(types[Math.floor(Math.random() * types.length)]);
     }
@@ -8858,7 +9041,7 @@ class GameCoop {
             // Share of the power-up's time left (0-1), for the spectate HUD.
             pf: power ? (num(d.pf, 0, 1) || 0) : 0,
             // Hearts banked (decides whether hearts show in their view).
-            hl: Number.isInteger(d.hl) ? Math.max(0, Math.min(MAX_HEARTS, d.hl)) : 0
+            hl: Number.isInteger(d.hl) ? Math.max(0, Math.min(heartCapFor(SKINS[skinIndex]), d.hl)) : 0
         };
     }
 
@@ -9302,7 +9485,7 @@ class GameCoop {
     // While you're down: the level as the teammate you're watching sees it,
     // without what they've taken, and hearts only while they can bank one.
     spectatePickups(rp) {
-        const hearts = (rp.hearts || 0) < MAX_HEARTS;
+        const hearts = (rp.hearts || 0) < heartCapFor(SKINS[rp.skinIndex] || SKINS[0]);
         return this.powerups.filter(p => !(rp.picked && rp.picked.has(p.wy)) && (hearts || !p.isHeart));
     }
 
@@ -9475,37 +9658,36 @@ class GameShop {
         this.ui.recordsStats.innerHTML = this.statTilesHTML(rows);
 
         const earned = ACHIEVEMENTS.filter(a => this.achievements.includes(a.id)).length;
-        this.ui.recordsCount.innerText = `${earned} / ${ACHIEVEMENTS.length}`;
-        // Secret Pixels stay a surprise until earned.
+        this.ui.recordsCount.innerText = `${earned}/${ACHIEVEMENTS.length}`;
         this.ui.recordsList.innerHTML = ACHIEVEMENTS.map(a => {
             const got = this.achievements.includes(a.id);
-            const masked = a.secret && !got;
-            const name = masked ? '???' : a.name;
-            const desc = masked ? 'A secret Pixel. Keep climbing.' : a.desc;
+            const frac = (!got && a.progress) ? Math.max(0, Math.min(1, a.progress(this.state))) : null;
+            const bar = frac === null ? '' :
+                `<span class="achievement-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(frac * 100)}"><span style="width:${Math.floor(frac * 100)}%"></span></span>`;
             return `<div class="achievement-row${got ? ' earned' : ''}">
-                <span class="achievement-icon">${a.skin && !masked ? this.pixelPreviewHTML(a.skin, 'achievement-pixel') : icon('medal')}</span>
-                <div><span class="achievement-name">${this.escapeHtml(name)}</span>
-                <span class="achievement-desc">${this.escapeHtml(desc || '')}</span></div>
+                <span class="achievement-icon">${icon('medal')}</span>
+                <div><span class="achievement-name">${this.escapeHtml(a.name)}</span>
+                <span class="achievement-desc">${this.escapeHtml(a.desc || '')}</span>${bar}</div>
             </div>`;
         }).join('');
+        this.applyAchievementsOpen();
     }
 
-    // Keyboard in the shop: left/right browse the Pixels, Space / Enter
-    // presses the framed card's BUY / EQUIP. A focused button handles its own
-    // Space / Enter, so that isn't doubled.
-    handleShopKey(e) {
-        const role = InputHandler.eventRole(e);
-        if (role === 'left' || role === 'right') {
-            e.preventDefault();
-            this.changeGemShopSkin(role === 'left' ? -1 : 1);
-            return;
+    // The Achievements section of Records: closed until the player opens it,
+    // and remembered per device (lp_achievements_open).
+    applyAchievementsOpen() {
+        const open = !!this.achievementsOpen;
+        if (this.ui.recordsList) this.ui.recordsList.hidden = !open;
+        if (this.ui.recordsToggle) {
+            if (this.ui.recordsToggle.setAttribute) this.ui.recordsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (this.ui.recordsToggle.classList) this.ui.recordsToggle.classList.toggle('open', open);
         }
-        const press = e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter';
-        const t = e.target;
-        if (!press || (t && t.closest && t.closest('button'))) return;
-        e.preventDefault();
-        const buy = this.ui.gemShop && this.ui.gemShop.querySelector && this.ui.gemShop.querySelector('.gem-skin-buy-btn');
-        if (buy && !buy.disabled) buy.click();
+    }
+
+    toggleAchievements() {
+        this.achievementsOpen = !this.achievementsOpen;
+        saveItem('lp_achievements_open', this.achievementsOpen ? '1' : '0');
+        this.applyAchievementsOpen();
     }
 
     // Saves used to store Pixels by SKINS position; they now store SKINS ids so
@@ -9526,15 +9708,6 @@ class GameShop {
         if (equipped !== null && /^\d+$/.test(equipped)) {
             saveItem('lp_skin', LEGACY_SKIN_IDS[parseInt(equipped, 10)] || SKINS[0].id);
         }
-    }
-
-    // Skin badges were once saved by the Pixel's name ('skin:Rift Diver').
-    // They use its id now, so renaming a Pixel can't award it a second time.
-    migrateAchievementIds() {
-        const byName = new Map(SKINS.map(s => ['skin:' + s.name, 'skin:' + s.id]));
-        if (!this.achievements.some(a => byName.has(a))) return;
-        this.achievements = [...new Set(this.achievements.map(a => byName.get(a) || a))];
-        saveItem('lp_achievements', JSON.stringify(this.achievements));
     }
 
     isSkinLocked(index = this.viewParams.skinIndex) {
@@ -9563,13 +9736,6 @@ class GameShop {
         this.updateSkinUI();
     }
 
-    changeSkin(dir) {
-        const unlocked = this.unlockedSkinIndexes();
-        const pos = unlocked.indexOf(this.viewParams.skinIndex);
-        const next = unlocked[(Math.max(0, pos) + dir + unlocked.length) % unlocked.length];
-        this.equipSkin(next);
-    }
-
     updateSkinUI() {
         // A saved Pixel can go missing (e.g. a cleared shop save, or a Pixel
         // of the Hour whose hour is up); never show or start a run with one
@@ -9594,13 +9760,16 @@ class GameShop {
         this.ui.skinName.innerText = s.name;
         this.ui.skinStatus.innerText = s.hourly ? "PIXEL OF THE HOUR" : "PIXELS " + unlockedCount + " / " + totalCount;
 
-        const showArrows = this.unlockedSkinIndexes().length > 1 ? 'visible' : 'hidden';
-        this.ui.prev.style.visibility = showArrows;
-        this.ui.next.style.visibility = showArrows;
-
         if (this.ui.gemDisplay) this.ui.gemDisplay.innerHTML = counted(fmtNum(this.state.gems), 'gem');
         this.updateShopBadge();
-        if (this.ui.skinAbility) this.ui.skinAbility.innerHTML = this.renderPerkTags(s.ability);
+        if (this.ui.skinAbility) this.ui.skinAbility.innerHTML = this.tierBadge(s) + this.renderPerkTags(s.ability);
+        this.renderPixelGrid();
+    }
+
+    // The tier label: a chip in the tier's own colour (--tier-*).
+    tierBadge(skin) {
+        const t = pixelTier(skin);
+        return `<span class="tier-badge tier-${t}">${PIXEL_TIERS[t].label}</span>`;
     }
 
     // Short, colour-coded perk chips shared by the menu picker and the shop.
@@ -9608,11 +9777,14 @@ class GameShop {
     // (the delegated handler in bindEvents), since the game runs on touch too.
     renderPerkTags(ability) {
         const perks = skinPerks(ability);
-        if (!perks.length) return '<span class="perk-none">NO PERK</span>';
-        return perks.map(({ perk, value }) =>
-            `<span class="perk-tag" style="--perk:${perk.color};" tabindex="0">${perk.label}` +
-            `<span class="perk-tip">${perk.describe(value)}</span></span>`
-        ).join('');
+        const downs = skinDownsides(ability);
+        if (!perks.length && !downs.length) return '<span class="perk-none">NO PERK</span>';
+        const tag = (color, label, text) =>
+            `<span class="perk-tag" style="--perk:${color};" tabindex="0">${label}` +
+            `<span class="perk-tip">${text}</span></span>`;
+        // Downsides are red, in the danger token.
+        return perks.map(({ perk, value }) => tag(perk.color, perk.label, perk.describe(value))).join('') +
+            downs.map(d => tag('var(--pixel)', d.label, d.describe)).join('');
     }
 
     // Every gems-purchasable skin (anything in SKINS with a `cost`), paired
@@ -9624,93 +9796,145 @@ class GameShop {
             .sort((a, b) => a.s.cost - b.s.cost);
     }
 
-    // Steps the shop's pixel carousel, wrapping at both ends exactly like the
-    // main-menu skin picker.
-    changeGemShopSkin(dir) {
-        const total = this.gemShopSkins().length;
-        if (!total) return;
-        this.gemShopIndex = (this.gemShopIndex + dir + total) % total;
-        this.renderGemShop();
+    // ------------------------------------------------------- Pixel picker
+    // One grid of every Pixel the player can see, in ALL / OWNED / SHOP / HOUR
+    // tabs. Secret Pixels stay hidden until bestHeight reaches them (never
+    // highScore, ADR 0004); only this hour's Pixel of the Hour is listed.
+    pixelPickerRows(tab = this.pixelTab) {
+        const hourNow = hourlySkinAt();
+        const visible = SKINS.map((s, i) => ({ s, i })).filter(({ s }) => {
+            if (s.hourly) return s === hourNow;
+            if (s.secret) return this.state.bestHeight >= s.unlock;
+            return true;
+        });
+        if (tab === 'owned') return visible.filter(({ i }) => !this.isSkinLocked(i));
+        if (tab === 'shop') return visible.filter(({ s }) => s.cost !== undefined).sort((a, b) => a.s.cost - b.s.cost);
+        if (tab === 'hour') return visible.filter(({ s }) => s.hourly);
+        return visible;
     }
 
-    // Renders the one currently-framed card of the shop's pixel carousel (plus
-    // its position dots) straight from SKINS data. Only one card exists in the
-    // DOM at a time — the arrows/dots swap which skin it shows.
-    renderGemShop() {
-        if (!this.ui.gemShop) return;
+    setPixelTab(tab) {
+        this.pixelTab = ['all', 'owned', 'shop', 'hour'].includes(tab) ? tab : 'all';
+        this.renderPixelGrid();
+    }
 
-        const rows = this.gemShopSkins();
-        if (!rows.length) {
-            this.ui.gemShop.innerHTML = '';
-            if (this.ui.gemDots) this.ui.gemDots.innerHTML = '';
-            return;
+    openPixels(tab = 'all') {
+        this.pixelTab = tab;
+        this.renderPixelGrid();
+        this.setMenuPanel('pixels');
+    }
+
+    // The line under a card: what it costs, where it unlocks, how long the
+    // hour has left, or that it is yours.
+    pixelCardStatus(s, i, now = Date.now()) {
+        if (this.viewParams.skinIndex === i && !this.isSkinLocked(i)) return { text: 'EQUIPPED' };
+        if (!this.isSkinLocked(i)) {
+            return { text: s.hourly ? 'YOURS UNTIL ' + fmtHour(nextHourAt(now)) : 'OWNED' };
         }
+        if (s.hourly) {
+            const price = counted(fmtNum(hourlyPixelCost(s)), 'gem');
+            return { html: price + ' <span class="js-hour-left">' + fmtClock(nextHourAt(now) - now) + '</span> LEFT', poor: this.state.gems < hourlyPixelCost(s) };
+        }
+        if (s.cost !== undefined) return { html: counted(fmtNum(s.cost), 'gem'), poor: this.state.gems < s.cost };
+        return { text: 'UNLOCKS AT ' + fmtNum(s.unlock) + 'm' };
+    }
 
-        if (!(this.gemShopIndex >= 0 && this.gemShopIndex < rows.length)) this.gemShopIndex = 0;
-        const { s, i } = rows[this.gemShopIndex];
-        const tier = this.gemShopIndex + 1;
-        const owned = this.ownedSkins.includes(s.id);
-        const equipped = owned && this.viewParams.skinIndex === i;
-        const affordable = this.state.gems >= s.cost;
-        // Tiers glow harder the higher they sit, and the top four (the
-        // run-changing perks) get the premium frame, so the ladder reads at a
-        // glance.
-        const premium = rows.length - this.gemShopIndex <= 4;
-
-        let btnLabel = 'BUY';
-        if (equipped) btnLabel = 'EQUIPPED';
-        else if (owned) btnLabel = 'EQUIP';
-        const btnCls = ['gem-skin-buy-btn'];
-        if (owned) btnCls.push('owned');
-        else if (!affordable) btnCls.push('unaffordable');
-
-        this.ui.gemShop.innerHTML = `<div class="gem-skin-card${premium ? ' premium' : ''}" style="--skin:${s.color}; --tier:${tier / rows.length};">
-            <div class="gem-skin-tier">TIER ${tier} / ${rows.length}</div>
-            ${this.pixelPreviewHTML(s, 'gem-skin-preview', `opacity:${owned ? 1 : 0.35};`)}
-            <div class="gem-skin-name" style="color:${s.color};">${s.name}</div>
-            <div class="gem-skin-perks">${this.renderPerkTags(s.ability)}</div>
-            <button class="${btnCls.join(' ')}" data-index="${i}" ${equipped ? 'disabled' : ''}>
-                <span class="btn-label">${btnLabel}</span>
-                ${owned ? '' : `<span class="btn-cost">${counted(fmtNum(s.cost), 'gem')}</span>`}
-            </button>
-        </div>`;
-
-        if (this.ui.gemDots) {
-            this.ui.gemDots.innerHTML = rows.map(({ s: row }, pos) => {
-                const cls = ['gem-dot'];
-                if (pos === this.gemShopIndex) cls.push('active');
-                if (this.ownedSkins.includes(row.id)) cls.push('owned');
-                return `<button class="${cls.join(' ')}" data-pos="${pos}" aria-label="Tier ${pos + 1}: ${row.name}"></button>`;
-            }).join('');
-
-            this.ui.gemDots.querySelectorAll('.gem-dot').forEach(dot => {
-                dot.onclick = (e) => {
-                    e.stopPropagation();
-                    this.gemShopIndex = parseInt(dot.dataset.pos, 10);
-                    this.renderGemShop();
-                };
+    renderPixelGrid() {
+        const grid = this.ui.pixelGrid;
+        if (!grid || this.state.running) return; // the page stays still during a run (drawn again at game over)
+        const tab = this.pixelTab || (this.pixelTab = 'all');
+        if (this.ui.pixelTabs && this.ui.pixelTabs.querySelectorAll) {
+            this.ui.pixelTabs.querySelectorAll('.pixel-tab').forEach(b => {
+                b.classList.toggle('active', b.dataset.tab === tab);
             });
         }
+        const rows = this.pixelPickerRows(tab);
+        if (!rows.length) {
+            grid.innerHTML = '<div class="pixel-empty">' + (tab === 'owned' ? 'NO PIXELS YET' : 'NOTHING HERE') + '</div>';
+            return;
+        }
+        grid.innerHTML = rows.map(({ s, i }) => {
+            const t = pixelTier(s);
+            const st = this.pixelCardStatus(s, i);
+            const equipped = this.viewParams.skinIndex === i && !this.isSkinLocked(i);
+            return `<div class="pixel-card tier-${t}${equipped ? ' equipped' : ''}${this.isSkinLocked(i) ? ' locked' : ''}" data-index="${i}" role="button" tabindex="0">` +
+                this.pixelPreviewHTML(s, 'pixel-card-pixel') +
+                `<div class="pixel-card-name">${this.escapeHtml(s.name)}</div>` +
+                `<span class="tier-badge">${PIXEL_TIERS[t].label}</span>` +
+                `<div class="pixel-card-perks">${this.renderPerkTags(s.ability)}</div>` +
+                `<div class="pixel-card-status${st.poor ? ' cant-afford' : ''}">${st.html || st.text}</div></div>`;
+        }).join('');
+    }
 
-        this.ui.gemShop.querySelectorAll('.gem-skin-buy-btn').forEach(btn => {
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                const index = parseInt(btn.dataset.index, 10);
-                if (this.ownedSkins.includes(SKINS[index].id)) {
-                    this.equipSkin(index);
-                    this.renderGemShop();
-                } else {
-                    this.buyGemSkin(index, btn);
-                }
-            };
-        });
+    // Once a second: the hour's time left on its card (no re-render, so an
+    // open tooltip stays put).
+    tickPixelGrid() {
+        const grid = this.ui.pixelGrid;
+        if (!grid || !grid.querySelectorAll || this.state.running) return;
+        const left = fmtClock(nextHourAt() - Date.now());
+        grid.querySelectorAll('.js-hour-left').forEach(el => { el.innerText = left; });
+    }
+
+    // A tap on a card: equip it if it's yours, buy it if you can, otherwise
+    // say how to get it.
+    pickPixel(index, card) {
+        const s = SKINS[index];
+        if (!s || this.state.running) return;
+        if (!this.isSkinLocked(index)) {
+            this.equipSkin(index);
+        } else if (s.hourly) {
+            this.openHourly();
+        } else if (s.cost !== undefined) {
+            if (this.state.gems >= s.cost) this.openBuyConfirm(index);
+            else {
+                this.shakeUI(card);
+                this.notify('NEED ' + fmtNum(s.cost) + ' GEMS FOR ' + s.name.toUpperCase(), 'warning');
+            }
+        } else {
+            this.shakeUI(card);
+            this.notify(s.name.toUpperCase() + ' UNLOCKS AT ' + fmtNum(s.unlock) + 'm', 'info');
+        }
+    }
+
+    // "Are you sure?" before gems are spent on a Pixel. BUY goes through
+    // buyGemSkin(); CANCEL (or a tap beside the box) spends nothing.
+    openBuyConfirm(index) {
+        const s = SKINS[index];
+        const ui = this.ui;
+        if (!s || s.cost === undefined || !ui.buyConfirm) return;
+        this.buyConfirmIndex = index;
+        this.buyConfirmOpen = true;
+        ui.buyConfirmPreview.innerHTML = this.pixelPreviewHTML(s, 'hourly-pixel');
+        ui.buyConfirmName.innerText = s.name;
+        ui.buyConfirmPerks.innerHTML = this.tierBadge(s) + this.renderPerkTags(s.ability);
+        ui.buyConfirmNote.innerText = fmtNum(s.cost) + ' gems. You\'ll have ' + fmtNum(Math.max(0, this.state.gems - s.cost)) + ' left.';
+        setHTML(ui.buyConfirmYes, counted(fmtNum(s.cost), 'gem') + ' BUY ' + this.escapeHtml(s.name.toUpperCase()));
+        ui.buyConfirm.hidden = false;
+    }
+
+    closeBuyConfirm() {
+        this.buyConfirmOpen = false;
+        this.buyConfirmIndex = null;
+        if (this.ui.buyConfirm) this.ui.buyConfirm.hidden = true;
+    }
+
+    confirmBuyPixel() {
+        const index = this.buyConfirmIndex;
+        this.closeBuyConfirm();
+        if (index === null || index === undefined || this.state.running) return;
+        this.buyGemSkin(index);
+    }
+
+    // Re-draws the picker after a purchase or equip (the old gem-shop name).
+    renderGemShop() {
+        this.renderPixelGrid();
     }
 
     // Something in the shop you could buy right now: a Pixel you don't own
     // yet, or a heart with room in the stock.
     shopHasAffordable() {
         const gems = this.state.gems;
-        if (this.state.hearts < MAX_HEARTS && gems >= HEART_COST) return true;
+        if (!this.heartStockFull() && gems >= HEART_COST) return true;
         return this.gemShopSkins().some(({ s }) => !this.ownedSkins.includes(s.id) && gems >= s.cost);
     }
 
@@ -9723,10 +9947,16 @@ class GameShop {
         if (badge) badge.hidden = !can;
     }
 
-    // Hearts are stock rather than a one-shot toggle: the card shows how
-    // many are banked, and the button locks at MAX_HEARTS.
+    // The free run-start heart plus the bought ones fill the Pixel's cap.
+    heartStockFull() {
+        return this.state.hearts + 1 >= this.heartCap();
+    }
+
+    // Hearts bought here are added to the next run: the card shows how many
+    // are waiting, and the button locks once they fill the Pixel's cap.
     updateHeartUI() {
         if (this.ui.shopLifeCount) this.ui.shopLifeCount.innerText = this.state.hearts;
+        if (this.ui.shopLifeMax) this.ui.shopLifeMax.innerText = this.heartCap() - 1;
         const hearts = this.ui.lifeDisplay;
         if (hearts) {
             const html = counted(this.state.hearts, 'heart');
@@ -9740,7 +9970,7 @@ class GameShop {
         }
         if (!this.ui.shopLifeBtn) return;
 
-        const full = this.state.hearts >= MAX_HEARTS;
+        const full = this.heartStockFull();
         const affordable = this.state.gems >= HEART_COST;
         const label = this.ui.shopLifeBtn.querySelector('.btn-label');
         const cost = this.ui.shopLifeBtn.querySelector('.btn-cost');
@@ -9754,7 +9984,7 @@ class GameShop {
     }
 
     buyHeart() {
-        if (this.state.hearts >= MAX_HEARTS || this.state.gems < HEART_COST) {
+        if (this.heartStockFull() || this.state.gems < HEART_COST) {
             this.shakeUI(this.ui.shopLifeBtn);
             return false;
         }
@@ -9903,31 +10133,38 @@ class GameShop {
             if (!this.achievements.includes(g.id) && g.condition(this.state, this.player)) {
                 this.achievements.push(g.id);
                 saveItem('lp_achievements', JSON.stringify(this.achievements));
-                const label = g.skin ? "PIXEL UNLOCKED: " + g.name : g.name;
-                if (this.state.running && this.state.runUnlocks) this.state.runUnlocks.push(label);
-                // New Pixels are announced like the game's other notices;
-                // everything else gets the achievement badge.
-                if (g.skin) this.notify(label, 'unlock', { icon: this.pixelPreviewHTML(g.skin, 'alert-pixel') });
-                else this.showAchievement(label);
+                this.showAchievement(g.name);
             }
         });
+        this.checkPixelUnlocks();
     }
 
-    // Skin unlocks only became achievements after launch, so a returning player
-    // has already earned every skin their high score covers. Record those once,
-    // silently, rather than burying them under a stack of popups on the next
-    // run — only genuinely new unlocks should announce themselves.
-    seedSkinAchievements() {
-        if (storageGet('lp_skin_achievements_seeded')) return;
+    // Passing a Pixel's unlock height (bestHeight, never highScore) is a NEW
+    // PIXEL moment, not an achievement: a notice with the Pixel itself mid-run,
+    // and a row on the run card. Each is announced once per device
+    // (lp_pixel_unlocks); secret Pixels reveal through the same moment.
+    checkPixelUnlocks() {
+        for (const s of SKINS) {
+            if (s.hourly || s.cost !== undefined || !(s.unlock > 0)) continue;
+            if (this.state.bestHeight < s.unlock || this.pixelUnlocksSeen.includes(s.id)) continue;
+            this.pixelUnlocksSeen.push(s.id);
+            saveItem('lp_pixel_unlocks', JSON.stringify(this.pixelUnlocksSeen));
+            const label = "NEW PIXEL: " + s.name;
+            if (this.state.running && this.state.runUnlocks) this.state.runUnlocks.push(label);
+            this.notify(label, 'unlock', { icon: this.pixelPreviewHTML(s, 'alert-pixel') });
+            if (!this.state.running) this.renderPixelGrid();
+        }
+    }
 
-        ACHIEVEMENTS.forEach(g => {
-            if (g.skin && g.condition(this.state) && !this.achievements.includes(g.id)) {
-                this.achievements.push(g.id);
-            }
-        });
-
-        saveItem('lp_achievements', JSON.stringify(this.achievements));
-        saveItem('lp_skin_achievements_seeded', '1');
+    // A returning player has already passed some heights: record those once,
+    // silently, so only genuinely new unlocks announce themselves. (Older
+    // saves tracked them as 'skin:*' achievements, which are ignored now.)
+    loadPixelUnlocks() {
+        const seen = loadJSON('lp_pixel_unlocks', null, isStringArray);
+        if (seen) return seen;
+        const ids = SKINS.filter(s => !s.hourly && s.cost === undefined && s.unlock > 0 && this.state.bestHeight >= s.unlock).map(s => s.id);
+        saveItem('lp_pixel_unlocks', JSON.stringify(ids));
+        return ids;
     }
 
     showAchievement(name) {
@@ -10141,7 +10378,7 @@ class GameShare {
 <script>/* ---- js/hourly.js ---- */
 // The Pixel of the Hour. Each hour one of the hourly Pixels (the SKINS
 // entries marked `hourly`) is on offer. Watching a rewarded ad, or paying
-// HOURLY_PIXEL_GEM_COST gems, lets the player wear it until the next :00 on
+// its tier's gem price (hourlyPixelCost), lets the player wear it until the next :00 on
 // their own clock. If the hour turns mid-run the Pixel stays on until that
 // run ends; then the Pixel they wore before comes back.
 //
@@ -10205,11 +10442,12 @@ class GameHourly {
 
     buyHourly() {
         if (this.state.running || this.hourlyUnlocked(hourlySkinAt())) return;
-        if (this.state.gems < HOURLY_PIXEL_GEM_COST) {
+        const cost = hourlyPixelCost(hourlySkinAt());
+        if (this.state.gems < cost) {
             this.shakeUI(this.ui.hourlyGemBtn);
             return;
         }
-        this.state.gems -= HOURLY_PIXEL_GEM_COST;
+        this.state.gems -= cost;
         saveItem('lp_gems', this.state.gems);
         this.unlockHourly();
     }
@@ -10261,20 +10499,19 @@ class GameHourly {
     // The menu button under the Pixel picker, and the card it opens.
     updateHourlyUI() {
         const ui = this.ui;
-        if (!ui.hourlyOpenBtn) return;
         const now = Date.now();
         const skin = hourlySkinAt(now);
         const until = fmtHour(nextHourAt(now));
         const owned = this.hourlyUnlocked(skin, now);
         const left = fmtClock(nextHourAt(now) - now);
-        setHTML(ui.hourlyOpenBtn, icon('clock') + (owned ? ' YOURS UNTIL ' + until : ' HOURLY PIXEL ' + left));
-        if (!this.hourlyOpen) return;
+        if (ui.hourlyOpenBtn) setHTML(ui.hourlyOpenBtn, icon('clock') + (owned ? ' YOURS UNTIL ' + until : ' HOURLY PIXEL ' + left));
+        if (!this.hourlyOpen || !ui.hourlyTimer) return;
 
         if (this.hourlyShownSkin !== skin.id) {
             this.hourlyShownSkin = skin.id;
             ui.hourlyPreview.innerHTML = this.pixelPreviewHTML(skin, 'hourly-pixel');
             ui.hourlyName.innerText = skin.name;
-            ui.hourlyPerks.innerHTML = this.renderPerkTags(skin.ability);
+            ui.hourlyPerks.innerHTML = this.tierBadge(skin) + this.renderPerkTags(skin.ability);
         }
         ui.hourlyTimer.innerText = 'NEXT PIXEL IN ' + left;
         const wearing = SKINS[this.viewParams.skinIndex] === skin;
@@ -10284,8 +10521,9 @@ class GameHourly {
             setHTML(ui.hourlyAdBtn, icon('play') + ' WATCH AD: WEAR IT UNTIL ' + until);
         }
         ui.hourlyGemBtn.hidden = owned;
-        setHTML(ui.hourlyGemBtn, counted(fmtNum(HOURLY_PIXEL_GEM_COST), 'gem') + ' WEAR IT UNTIL ' + until);
-        ui.hourlyGemBtn.classList.toggle('cant-afford', this.state.gems < HOURLY_PIXEL_GEM_COST);
+        const cost = hourlyPixelCost(skin);
+        setHTML(ui.hourlyGemBtn, counted(fmtNum(cost), 'gem') + ' WEAR IT UNTIL ' + until);
+        ui.hourlyGemBtn.classList.toggle('cant-afford', this.state.gems < cost);
         ui.hourlyOwned.hidden = !owned;
         ui.hourlyOwned.innerText = wearing ? 'YOU\'RE WEARING IT UNTIL ' + until : 'YOURS UNTIL ' + until;
         ui.hourlyWearBtn.hidden = !owned || wearing;
@@ -10293,7 +10531,6 @@ class GameHourly {
 
     bindHourlyEvents() {
         const on = (el, fn) => { if (el) el.onclick = (e) => { if (e && e.stopPropagation) e.stopPropagation(); fn(); }; };
-        on(this.ui.hourlyOpenBtn, () => this.openHourly());
         on(this.ui.hourlyCloseBtn, () => this.closeHourly());
         on(this.ui.hourlyAdBtn, () => this.watchHourlyAd());
         on(this.ui.hourlyGemBtn, () => this.buyHourly());
@@ -10710,7 +10947,6 @@ class Game {
         // After a run, its last frame stays up behind the run card.
         this.showLeftover = false;
         this.achievements = loadJSON('lp_achievements', [], isStringArray);
-        this.migrateAchievementIds();
         this.migrateSkinSaves();
         // Owned gem-shop Pixels, by SKINS id.
         this.ownedSkins = loadJSON('lp_owned_skins', [], isStringArray);
@@ -10750,7 +10986,8 @@ class Game {
         this.noticeQueue = [];
         this.noticeTimer = null;
 
-        this.seedSkinAchievements();
+        this.achievementsOpen = storageGet('lp_achievements_open') === '1';
+        this.pixelUnlocksSeen = this.loadPixelUnlocks();
 
         this.settings = this.loadSettings();
         this.stats = this.loadStats();
@@ -10789,18 +11026,19 @@ class Game {
             preview: document.getElementById("skin-preview-box"),
             eyesL: document.getElementById("skin-eyes-l"),
             eyesR: document.getElementById("skin-eyes-r"),
-            prev: document.getElementById("prev-btn"),
-            next: document.getElementById("next-btn"),
             fame: document.getElementById("fame-list"),
             fameBox: document.getElementById("fame-container"),
             gemDisplay: document.getElementById("gem-display"),
             lifeDisplay: document.getElementById("life-display"),
             shopLifeBtn: document.getElementById("shop-life-btn"),
             shopLifeCount: document.getElementById("shop-life-count"),
-            gemShop: document.getElementById("gem-skin-shop"),
-            gemPrev: document.getElementById("gem-prev-btn"),
-            gemNext: document.getElementById("gem-next-btn"),
-            gemDots: document.getElementById("gem-shop-dots"),
+            shopLifeMax: document.getElementById("shop-life-max"),
+            pixelsLayer: document.getElementById("pixels-menu-layer"),
+            pixelsOpenBtn: document.getElementById("pixels-open-btn"),
+            pixelsBackBtn: document.getElementById("pixels-back-btn"),
+            shopPixelsBtn: document.getElementById("shop-pixels-btn"),
+            pixelTabs: document.getElementById("pixel-tabs"),
+            pixelGrid: document.getElementById("pixel-grid"),
             skinAbility: document.getElementById("skin-ability"),
             shopOpenBtn: document.getElementById("shop-open-btn"),
             shopBackBtn: document.getElementById("shop-back-btn"),
@@ -10860,6 +11098,7 @@ class Game {
             lbSubmitBtn: document.getElementById("lb-submit-btn"),
             lbNote: document.getElementById("run-card-lb-note"),
             recordsList: document.getElementById("records-list"),
+            recordsToggle: document.getElementById("records-toggle"),
             recordsCount: document.getElementById("records-count"),
 
             // Phones, challenge links and sharing
@@ -10883,6 +11122,13 @@ class Game {
             // Pixel of the Hour (js/hourly.js)
             hourlyOpenBtn: document.getElementById("hourly-open-btn"),
             hourlyOverlay: document.getElementById("hourly-overlay"),
+            buyConfirm: document.getElementById("buy-confirm-overlay"),
+            buyConfirmPreview: document.getElementById("buy-confirm-preview"),
+            buyConfirmName: document.getElementById("buy-confirm-name"),
+            buyConfirmPerks: document.getElementById("buy-confirm-perks"),
+            buyConfirmNote: document.getElementById("buy-confirm-note"),
+            buyConfirmYes: document.getElementById("buy-confirm-yes"),
+            buyConfirmNo: document.getElementById("buy-confirm-no"),
             hourlyPreview: document.getElementById("hourly-preview"),
             hourlyName: document.getElementById("hourly-name"),
             hourlyPerks: document.getElementById("hourly-perks"),
@@ -10934,7 +11180,6 @@ class Game {
 
         // Position within the shop's pixel carousel — an index into
         // gemShopSkins(), not into SKINS.
-        this.gemShopIndex = 0;
 
         // Migration: gems were once called shards and saved as lp_shards.
         if (storageGet('lp_shards') !== null) {
@@ -10947,7 +11192,7 @@ class Game {
         // gets it converted rather than silently losing what they paid for.
         if (storageGet('lp_boughtBoost') === '1') {
             storageRemove('lp_boughtBoost');
-            if (this.state.hearts < MAX_HEARTS) {
+            if (this.state.hearts + 1 < this.heartCap()) {
                 this.state.hearts++;
                 saveItem('lp_hearts', this.state.hearts);
             }
@@ -10981,7 +11226,7 @@ class Game {
         this.ads.onAdStart = () => { this.input.resetInput(); this.applySettings(); };
         this.ads.onAdEnd = () => { this.applySettings(); this.lastTime = 0; };
         this.ads.onChange = () => this.updateAdButtons();
-        setInterval(() => { this.updateAdButtons(); this.tickHourly(); }, 1000);
+        setInterval(() => { this.updateAdButtons(); this.tickHourly(); this.tickPixelGrid(); }, 1000);
         this.updateAdButtons();
         this.tickHourly();
         this.makePickupSprites();
@@ -11007,23 +11252,33 @@ class Game {
 
     bindEvents() {
         this.bindMetaEvents();
-        this.ui.prev.onclick = (e) => { e.stopPropagation(); this.changeSkin(-1); };
-        this.ui.next.onclick = (e) => { e.stopPropagation(); this.changeSkin(1); };
+        const onTap = (el, fn) => { if (el) el.onclick = (e) => { if (e && e.stopPropagation) e.stopPropagation(); fn(e); }; };
+        onTap(this.ui.pixelsOpenBtn, () => this.openPixels('all'));
+        onTap(this.ui.shopPixelsBtn, () => this.openPixels('shop'));
+        onTap(this.ui.pixelsBackBtn, () => this.setMenuPanel('sp'));
+        onTap(this.ui.buyConfirmYes, () => this.confirmBuyPixel());
+        onTap(this.ui.buyConfirmNo, () => this.closeBuyConfirm());
+        if (this.ui.buyConfirm) this.ui.buyConfirm.onclick = (e) => { if (e.target === this.ui.buyConfirm) this.closeBuyConfirm(); };
+        if (this.ui.pixelTabs && this.ui.pixelTabs.querySelectorAll) {
+            this.ui.pixelTabs.querySelectorAll('.pixel-tab').forEach(b => onTap(b, () => this.setPixelTab(b.dataset.tab)));
+        }
+        if (this.ui.pixelGrid) {
+            const pick = (e) => {
+                const card = e.target.closest && e.target.closest('.pixel-card');
+                if (!card || e.target.closest('.perk-tag')) return;
+                this.pickPixel(parseInt(card.dataset.index, 10), card);
+            };
+            this.ui.pixelGrid.onclick = pick;
+            this.ui.pixelGrid.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e); }
+            };
+        }
 
         if (this.ui.shopLifeBtn) {
             this.ui.shopLifeBtn.onclick = (e) => {
                 e.stopPropagation();
                 this.buyHeart();
             };
-        }
-
-        // Shop pixel carousel — same left/right stepping as the main-menu skin
-        // picker, over just the gems-purchasable skins.
-        if (this.ui.gemPrev) {
-            this.ui.gemPrev.onclick = (e) => { e.stopPropagation(); this.changeGemShopSkin(-1); };
-        }
-        if (this.ui.gemNext) {
-            this.ui.gemNext.onclick = (e) => { e.stopPropagation(); this.changeGemShopSkin(1); };
         }
 
         // Shop screen open/close (slides up on its own vertical axis, see CSS)
@@ -11065,23 +11320,15 @@ class Game {
             this.requestSoloStart();
         };
 
-        // Keyboard on the solo menu: left/right browse the Pixel picker, and
-        // Space / Enter / Up / W start a run (same as clicking the menu).
+        // Keyboard on the solo menu: Space / Enter / Up / W start a run (same as clicking the menu).
         window.addEventListener('keydown', (e) => {
             if (this.runCardOpen) {
                 this.handleRunCardKey(e);
                 return;
             }
-            if (this.canMenuKey(e, 'shop')) {
-                this.handleShopKey(e);
-                return;
-            }
             if (!this.canQuickStart(e)) return;
             const role = InputHandler.eventRole(e);
-            if (role === 'left' || role === 'right') {
-                e.preventDefault();
-                this.changeSkin(role === 'left' ? -1 : 1);
-            } else if (role === 'jump' || e.code === 'Enter' || e.code === 'NumpadEnter') {
+            if (role === 'jump' || e.code === 'Enter' || e.code === 'NumpadEnter') {
                 e.preventDefault();
                 this.requestSoloStart();
             }
@@ -11101,6 +11348,7 @@ class Game {
         on(this.ui.settingsCloseBtn, () => this.closeSettings());
         on(this.ui.recordsOpenBtn, () => { this.renderRecords(); this.refreshLeaderboard(); this.setMenuPanel('records'); });
         on(this.ui.recordsBackBtn, () => this.setMenuPanel('sp'));
+        on(this.ui.recordsToggle, () => this.toggleAchievements());
         on(this.ui.runAgainBtn, () => this.runCardPlayAgain());
         on(this.ui.runMenuBtn, () => this.closeRunCard());
         // Tapping beside the card closes it, like MENU. A short grace period
@@ -11381,7 +11629,7 @@ class Game {
     // The same rules for any menu panel's keys (the solo menu, the shop).
     canMenuKey(e, panel) {
         if (e.repeat || this.state.running || this.ads.playing) return false;
-        if (this.activeMenuPanel !== panel || this.runCardOpen || this.settingsOpen || this.hourlyOpen) return false;
+        if (this.activeMenuPanel !== panel || this.runCardOpen || this.settingsOpen || this.hourlyOpen || this.buyConfirmOpen) return false;
         const revive = this.ads && this.ads.reviveOverlay;
         if (revive && revive.style.display === 'flex') return false;
         const t = e.target;
@@ -11406,7 +11654,9 @@ class Game {
     // pages (focusing one also scrolled the clipped wrapper).
     setMenuPanel(panel) {
         this.activeMenuPanel = panel;
-        const sp = this.ui.menu, mp = this.ui.menuLayer2, shop = this.ui.shopLayer, records = this.ui.recordsLayer;
+        const sp = this.ui.menu, mp = this.ui.menuLayer2, shop = this.ui.shopLayer, records = this.ui.recordsLayer, pixels = this.ui.pixelsLayer;
+        if (pixels) pixels.style.transform = panel === 'pixels' ? 'translateY(0)' : 'translateY(100%)';
+        if (pixels) pixels.inert = panel !== 'pixels';
         if (sp) sp.style.transform = panel === 'mp' ? 'translateX(-100%)' : 'translateX(0)';
         if (mp) mp.style.transform = panel === 'mp' ? 'translateX(0)' : 'translateX(100%)';
         if (shop) shop.style.transform = panel === 'shop' ? 'translateY(0)' : 'translateY(100%)';
@@ -11472,9 +11722,16 @@ class Game {
         return true;
     }
 
+    // The equipped Pixel's heart cap (heartCapFor).
+    heartCap() {
+        return heartCapFor(SKINS[this.viewParams.skinIndex] || SKINS[0]);
+    }
+
+    // In a run `hearts` is the hearts you have; between runs it is the hearts
+    // bought for the next one (lp_hearts), so only the latter is saved.
     setHearts(n) {
-        this.state.hearts = Math.max(0, Math.min(MAX_HEARTS, n));
-        saveItem('lp_hearts', this.state.hearts);
+        this.state.hearts = Math.max(0, Math.min(this.heartCap(), n));
+        if (!this.state.running) saveItem('lp_hearts', this.state.hearts);
         this.updateHeartUI();
     }
 
@@ -11781,6 +12038,18 @@ class Game {
         return true;
     }
 
+    // SMASH: a drone or bot that touches the Pixel dies instead of hurting it.
+    // Lasers, meteors, projectiles and the boss are not drones. In co-op a
+    // guest's kill goes to the host as a `hit` (see destroyHostile).
+    smashHit(e) {
+        if (!(this.player.skin.ability || {}).smash || !(e instanceof Drone)) return false;
+        this.destroyHostile(e);
+        this.addShake(4);
+        this.particles.spawn(e.x + e.w / 2, e.y + e.h / 2, '#ff6b35', 15, "blast");
+        sounds.play('reward');
+        return true;
+    }
+
     knockBackFrom(boss) {
         const p = this.player;
         p.vx = (p.x + p.w / 2 < boss.x + boss.w / 2) ? -9 : 9;
@@ -11797,7 +12066,7 @@ class Game {
         saveItem('lp_loops', this.state.loops);
         this.state.bonusScore += BOSS_BONUS_METERS * 10;
         this.addGems(BOSS_GEM_BOUNTY);
-        this.setHearts(MAX_HEARTS);
+        this.setHearts(this.heartCap());
         this.state.nextBossAt = Math.floor(this.state.score / 10) + CONFIG.BOSS_LOOP_DISTANCE;
         this.notify(`TITAN DOWN  +${BOSS_BONUS_METERS}m  +${BOSS_GEM_BOUNTY} GEMS  HEARTS FULL`, 'reward');
         sounds.play('reward');
@@ -12001,7 +12270,7 @@ class Game {
             drawPlatform(ctx, p, p.y, biome, biomeIndex, t);
             if (p.type) drawPlatformType(ctx, p, p.y, t);
         });
-        const hearts = this.state.hearts < MAX_HEARTS;
+        const hearts = this.state.hearts < this.heartCap();
         this.drawPickups(level.powerups.filter(p => hearts || !p.isHeart), t);
         m.pixel.draw(ctx);
         this.particles.draw(ctx);
@@ -12175,10 +12444,8 @@ class Game {
         if (type) plat.type = type;
         this.platforms.push(plat);
 
-        // Power-ups get more common the higher you climb.
-        const ramp = Math.min(1, scoreMeters / POWERUP_RAMP_METERS);
-        const chance = POWERUP_CHANCE_MIN + (POWERUP_CHANCE_MAX - POWERUP_CHANCE_MIN) * ramp;
-        if (this.seededRandom() < chance) {
+        // Power-ups are common early and level off from POWERUP_PLATEAU_METERS.
+        if (this.seededRandom() < powerUpChanceAt(scoreMeters)) {
             this.powerups.push({
                 x: x + w / 2 - 12,
                 y: y - 40,
@@ -12190,7 +12457,7 @@ class Game {
             });
         } else if (this.heartAllowedAt(wy, scoreMeters)) {
             // Always generated (so every client builds the same level), but
-            // only shown to a player with fewer than MAX_HEARTS banked.
+            // only shown to a player below their Pixel's heart cap.
             this.state.lastHeartWY = wy;
             this.powerups.push({
                 x: x + w / 2 - 14,
@@ -12662,10 +12929,11 @@ class Game {
         this.state.deathCount = 0;
         this.runSerial = (this.runSerial || 0) + 1;
         this.reset(isMp ? mpSeed : null);
-        // Every run starts with at least one heart: the free life each round
-        // lives in the hearts meter rather than behind a hidden revive.
-        if (this.state.hearts < 1) this.setHearts(1);
-        if ((this.player.skin.ability || {}).startShield) this.player.grantPower(POWERS.SHIELD);
+        // Every run starts with the free heart plus the hearts bought for it;
+        // the bought count is spent into the run, so it resets.
+        const bought = this.state.hearts;
+        saveItem('lp_hearts', 0);
+        this.setHearts(1 + bought);
 
         this.ui.menu.style.opacity = 0;
         if (this.ui.menusWrapper) this.ui.menusWrapper.style.opacity = 0;
@@ -12834,20 +13102,20 @@ class Game {
 
     // The pickups this player can see and collect. Hearts are part of every
     // client's level, but only exist for a player with room to bank one
-    // (fewer than MAX_HEARTS): filling up hides the rest, and spending a
+    // (fewer than the Pixel's heart cap): filling up hides the rest, and spending a
     // life brings them back (except any near where it was spent: see
     // useSpareLife).
     // In co-op, pickups you took stay in the level (flagged `mine`) so a
     // spectating view can still show them for a teammate who hasn't.
     visiblePickups() {
-        const hearts = this.state.hearts < MAX_HEARTS;
+        const hearts = this.state.hearts < this.heartCap();
         const block = this.state.heartBlockWY;
         const blocked = p => block !== null && block !== undefined && p.wy >= block;
         return this.powerups.filter(p => !p.mine && (!p.isHeart || (hearts && !blocked(p))));
     }
 
     collectHeart(event) {
-        if (this.state.hearts < MAX_HEARTS) this.setHearts(this.state.hearts + 1);
+        if (this.state.hearts < this.heartCap()) this.setHearts(this.state.hearts + 1);
         this.particles.spawn(event.x + 14, event.y + 14, "#ff3366", 20);
         sounds.play('heart');
         this.notify("HEART +1", 'heart');
@@ -13031,7 +13299,7 @@ class Game {
     // spends a heart instead, if there is one. Returns true if the player was
     // saved.
     useSpareLife() {
-        const wasFull = this.state.hearts >= MAX_HEARTS;
+        const wasFull = this.state.hearts >= this.heartCap();
         if (this.consumeHeart()) {
             // Hearts are hidden at full hearts, so one already on screen would
             // appear now and could be grabbed on the rebound. Hide any heart
@@ -13116,6 +13384,8 @@ class Game {
         this.updateFameUI();
         this.updateSkinUI();
         this.renderGemShop();
+        // Leftover hearts are gone; the meter now counts hearts bought for the next run.
+        this.state.hearts = 0;
         this.updateHeartUI();
         const skin = SKINS[this.viewParams.skinIndex] || SKINS[0];
         // A solo run's seed is the day it was played (YYYYMMDD). A co-op
@@ -13366,7 +13636,7 @@ class Game {
                     this.resolveBossContact(e);
                     continue;
                 }
-                if (this.absorbHit(e)) continue;
+                if (this.smashHit(e) || this.absorbHit(e)) continue;
                 this.die(true);
             }
         }

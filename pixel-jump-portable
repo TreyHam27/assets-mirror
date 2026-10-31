@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.32.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.33.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -1163,7 +1163,6 @@ body {
 
 /* Shop and Records slide up over the home page. */
 #shop-menu-layer,
-#pixels-menu-layer,
 #records-menu-layer {
     transform: translateY(100%);
     z-index: 25;
@@ -1205,7 +1204,6 @@ body {
 }
 
 .page-title--shop { --accent: var(--gem); }
-.page-title--pixels { --accent: var(--teal); }
 .page-title--records { --accent: var(--gold); }
 
 /* The game's own name: white, with the one rainbow glow in the menus. The
@@ -1301,6 +1299,7 @@ body.reduce-motion .page-title--brand {
 }
 
 #skin-status {
+    min-height: 1.3em; /* kept when empty, so PLAY doesn't move */
     color: var(--muted);
     font-family: var(--font-text);
     font-size: 13px;
@@ -1312,9 +1311,12 @@ body.reduce-motion .page-title--brand {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    align-content: flex-start;
     gap: 6px;
     margin-top: 8px;
-    min-height: 20px;
+    /* Two rows of tags (the most any Pixel needs), so stepping between
+       Pixels never moves the picker or PLAY. */
+    min-height: 46px;
 }
 
 /* Best and last run, on one line. */
@@ -1930,36 +1932,7 @@ body.reduce-motion .page-title--brand {
 
 
 
-/* ---------- Pixel of the Hour (js/hourly.js) ----------
-   The small gold key under the Pixel picker, and the card it opens. */
-.hourly-open-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    max-width: 100%;
-    margin-top: 10px;
-    padding: 5px 10px;
-    border: 1px solid rgba(var(--gold-rgb), 0.6);
-    border-radius: 7px;
-    background: rgba(var(--gold-rgb), 0.08);
-    color: var(--gold);
-    font-family: inherit;
-    font-size: 10px;
-    font-weight: bold;
-    letter-spacing: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
-}
-
-@media (hover: hover) {
-    .hourly-open-btn:hover {
-        background: rgba(var(--gold-rgb), 0.2);
-        color: #fff;
-    }
-}
-
+/* ---------- The buy-confirm card's Pixel ---------- */
 #hourly-preview,
 .hourly-preview {
     display: flex;
@@ -1987,14 +1960,6 @@ body.reduce-motion .page-title--brand {
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
-}
-
-.hourly-owned {
-    color: var(--teal);
-    font-family: var(--font-text);
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
 }
 
 .overlay-btn.cant-afford {
@@ -2782,97 +2747,40 @@ body.reduce-motion *::after {
 .tier-legendary { --tier: var(--tier-legendary); }
 .tier-mythic { --tier: var(--tier-mythic); }
 
-/* ---- Pixel picker (ALL / OWNED / SHOP / HOUR) ---- */
-.pixel-tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 14px;
+/* Mythic shimmers in the menus and shop only: never during a run, when the
+   page must stay still (#game-container loses .menu-open). */
+@keyframes tier-shimmer { to { background-position: 200% 0; } }
+.tier-badge.tier-mythic,
+.tier-mythic .tier-badge,
+.shop-list-tier.tier-mythic span {
+    animation: tier-shimmer 2.4s linear infinite;
 }
-
-.pixel-tab {
-    padding: 8px 14px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--muted);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 1px;
-    cursor: pointer;
-}
-
-.pixel-tab.active {
+.tier-badge.tier-mythic,
+.tier-mythic .tier-badge {
+    border-color: transparent;
+    background: linear-gradient(90deg, #ff2d55, #ffd23f, #ff2d55, #c06bff, #ff2d55) 0 0 / 200% 100%;
     color: #fff;
-    border-color: var(--teal);
-    background: rgba(var(--teal-rgb), 0.18);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
-
-.pixel-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
-    gap: 10px;
-    width: min(100%, 560px);
-    margin-bottom: 18px;
+/* Mythic cards: their tier colour pulses (same rules as the tag). */
+@keyframes tier-pulse { 50% { box-shadow: 0 0 22px rgba(255, 45, 85, 0.55), 0 0 0 1px rgba(255, 210, 63, 0.6); } }
+.shop-row.tier-mythic,
+.strip-pixel.tier-mythic,
+.shop-stage.tier-mythic .stage-pixel {
+    animation: tier-pulse 2.4s ease-in-out infinite;
 }
-
-.pixel-empty {
-    grid-column: 1 / -1;
-    padding: 24px 0;
-    color: var(--muted);
-    font-family: var(--font-text);
-    text-align: center;
+#game-container:not(.menu-open) .tier-mythic .stage-pixel,
+#game-container:not(.menu-open) .tier-mythic,
+#game-container:not(.menu-open) .tier-mythic .tier-badge,
+#game-container:not(.menu-open) .tier-mythic span { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+    .tier-badge.tier-mythic,
+    .tier-mythic .tier-badge,
+    .shop-list-tier.tier-mythic span,
+    .shop-row.tier-mythic,
+    .strip-pixel.tier-mythic,
+    .shop-stage.tier-mythic .stage-pixel { animation: none; }
 }
-
-.pixel-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 12px 8px;
-    border: 2px solid var(--tier);
-    background: rgba(255, 255, 255, 0.04);
-    text-align: center;
-    cursor: pointer;
-    outline: none;
-}
-
-.pixel-card:focus-visible { box-shadow: 0 0 12px color-mix(in srgb, var(--tier) 60%, transparent); }
-.pixel-card.equipped { background: color-mix(in srgb, var(--tier) 18%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--tier) 45%, transparent); }
-.pixel-card.locked .pixel-card-pixel { opacity: 0.4; }
-
-.pixel-card-pixel {
-    position: relative;
-    display: block;
-    width: 44px;
-    height: 44px;
-    border-radius: 8%;
-    box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
-}
-
-.pixel-card-name {
-    color: #fff;
-    font-size: 14px;
-    font-weight: 900;
-}
-
-.pixel-card-perks {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-}
-
-.pixel-card-status {
-    margin-top: auto;
-    color: var(--muted);
-    font-family: var(--font-text);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.pixel-card.equipped .pixel-card-status { color: var(--teal); }
-.pixel-card-status.cant-afford { color: var(--pixel); }
 
 /* Achievements fold away inside Records: the header is the toggle. */
 .records-toggle {
@@ -2903,6 +2811,426 @@ body.reduce-motion *::after {
     display: block;
     height: 100%;
     background: var(--gold);
+}
+
+/* ---------- The menu's owned-Pixel picker ---------- */
+.skin-picker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+.skin-step {
+    min-width: 44px;
+    min-height: 40px;
+    padding: 2px 10px;
+    font-size: 22px;
+}
+.skin-owned-count {
+    min-width: 92px;
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+/* ---------- The shop: RENT / PIXELS / BOOSTERS (js/shop.js) ----------
+   A stage for one Pixel at a time, tabs pinned to the bottom for thumbs. */
+.shop-page {
+    justify-content: flex-start;
+}
+.shop-page::before,
+.shop-page::after {
+    display: none;
+}
+.shop-top,
+.shop-main,
+.shop-tabs {
+    width: min(520px, 100%);
+}
+/* Room for BACK (in the corner on wide screens, its own row on phones). */
+.shop-top {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+}
+/* Phones: the HUD strip runs across the top, so the shop starts below it. */
+@media (max-width: 520px) {
+    .shop-page {
+        padding-top: calc(58px + var(--safe-top));
+    }
+    .shop-top .back-btn {
+        margin-bottom: 0;
+    }
+}
+.shop-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 12px 0;
+}
+.shop-tabs {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--night);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+}
+.shop-tab {
+    min-height: 52px;
+    border: 0;
+    border-radius: 11px;
+    background: none;
+    color: var(--muted);
+    font: 900 14px var(--font-display);
+    letter-spacing: 1.5px;
+    cursor: pointer;
+}
+.shop-tab.active {
+    background: linear-gradient(#6affe4, #00d6b0);
+    color: var(--ink);
+}
+.shop-tab:focus-visible,
+.shop-view-toggle button:focus-visible,
+.stage-nav:focus-visible,
+.strip-pixel:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* SINGLE / LIST */
+.shop-view-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin: 0 auto 12px;
+    padding: 3px;
+    width: max-content;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: var(--night);
+}
+.shop-view-toggle button {
+    min-height: 32px;
+    padding: 4px 14px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--muted);
+    font: 900 11px var(--font-display);
+    letter-spacing: 1.5px;
+    cursor: pointer;
+}
+.shop-view-toggle button.active {
+    background: rgba(var(--teal-rgb), 0.16);
+    color: var(--teal);
+}
+
+/* The stage: one big Pixel, its perks spelled out, its button. */
+.shop-stage {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 6px;
+}
+#rent-stage {
+    grid-template-columns: 1fr;
+}
+.stage-center,
+#rent-stage {
+    text-align: center;
+}
+.stage-center .tier-badge,
+#rent-tier {
+    margin-bottom: 10px;
+}
+.stage-pixel {
+    position: relative;
+    display: block;
+    width: 140px;
+    height: 140px;
+    margin: 6px auto 14px;
+    border-radius: 8%;
+    box-shadow: 0 0 56px color-mix(in srgb, var(--tier) 65%, transparent), 0 0 0 2px color-mix(in srgb, var(--tier) 55%, transparent);
+}
+.stage-pixel .pixel-eye {
+    width: 18%;
+    height: 22%;
+}
+.stage-name {
+    color: #fff;
+    font: 900 clamp(18px, 6vw, 26px) var(--font-display);
+    margin-bottom: 4px;
+    white-space: nowrap; /* one line, so a long name can't push things down */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* SINGLE: the perk list keeps room for the longest one in the shop (plus a
+   wrapped line), so flipping between Pixels doesn't move anything. */
+.shop-stage .stage-center .stage-perks {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    min-height: calc((var(--perk-rows, 4) + 1) * 1.75em);
+}
+.need-bar.is-empty {
+    visibility: hidden;
+}
+@media (max-width: 520px) {
+    /* Long perk lines wrap on a phone: keep room for two of them. */
+    .shop-stage .stage-center .stage-perks {
+        min-height: calc((var(--perk-rows, 4) + 2) * 1.75em);
+    }
+}
+.stage-perks {
+    display: inline-block;
+    margin: 10px 0 4px;
+    padding: 0;
+    list-style: none;
+    color: #dfe6f3;
+    font: 500 14px var(--font-text);
+    text-align: left;
+}
+.stage-perks li {
+    margin: 6px 0;
+}
+.stage-perks .perk-tag {
+    margin-right: 6px;
+}
+.stage-cta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+}
+.stage-cta .btn {
+    min-width: 160px;
+}
+.shop-cta.cant-afford {
+    --k: var(--muted);
+    --k-rgb: 147, 160, 184;
+}
+.shop-cta.is-equipped {
+    --k: var(--tier-uncommon);
+    --k-rgb: 123, 216, 143;
+}
+.stage-note,
+.stage-owned {
+    margin-top: 8px;
+    color: var(--muted);
+    font: 600 13px var(--font-text);
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+.stage-owned {
+    color: var(--teal);
+}
+.stage-nav {
+    height: 88px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--glass);
+    color: var(--teal);
+    font: 900 34px var(--font-display);
+    cursor: pointer;
+}
+.stage-strip {
+    display: flex;
+    justify-content: safe center;
+    gap: 5px;
+    margin-top: 18px;
+    padding-bottom: 4px;
+    overflow-x: auto;
+}
+.strip-pixel {
+    padding: 4px;
+    border: 2px solid transparent;
+    border-bottom: 3px solid var(--tier);
+    border-radius: 8px;
+    background: var(--glass);
+    opacity: 0.6;
+    cursor: pointer;
+}
+.strip-pixel.owned {
+    opacity: 1;
+}
+.strip-pixel.active {
+    border-color: var(--teal);
+    opacity: 1;
+}
+.strip-pixel-body {
+    position: relative;
+    display: block;
+    width: 22px;
+    height: 22px;
+    border-radius: 8%;
+}
+
+/* Gems still to go for a Pixel you can't afford yet. */
+.need-bar {
+    position: relative;
+    height: 16px;
+    margin: 8px auto 0;
+    max-width: 260px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+}
+.need-bar > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(var(--gem-rgb), 0.35), rgba(var(--gem-rgb), 0.7));
+}
+.need-bar > b {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font: 700 11px var(--font-text);
+    letter-spacing: 0.5px;
+}
+
+/* LIST: every shop Pixel, grouped by tier, cheapest first. */
+.shop-list-tier {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 2px 8px;
+    color: var(--tier);
+    font: 900 12px var(--font-display);
+    letter-spacing: 2px;
+}
+.shop-list-tier::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--tier), transparent);
+}
+.shop-list-tier.tier-mythic span {
+    background: linear-gradient(90deg, #ff2d55, #ffd23f, #ff2d55) 0 0 / 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.shop-row {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid var(--tier);
+    border-radius: 10px;
+    background: var(--glass);
+}
+.shop-row.equipped {
+    box-shadow: 0 0 0 1px var(--tier-uncommon);
+}
+.shop-row-pixel {
+    position: relative;
+    display: block;
+    width: 52px;
+    height: 52px;
+    border-radius: 8%;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--tier) 50%, transparent);
+}
+.shop-row-name {
+    margin-bottom: 4px;
+    color: #fff;
+    font: 900 15px var(--font-display);
+}
+.shop-row-perks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.shop-row-mid .need-bar {
+    margin-left: 0;
+}
+.shop-row-cta .btn {
+    min-width: 108px;
+    min-height: 44px;
+}
+
+/* BOOSTERS */
+.booster-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+}
+.booster-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 22px 12px 16px;
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--pixel);
+    border-radius: 12px;
+    background: var(--glass);
+    text-align: center;
+}
+.booster-slot--gem {
+    border-top-color: var(--gem);
+}
+.booster-ico {
+    width: 44px;
+    height: 44px;
+}
+.heart-pips {
+    display: flex;
+    gap: 6px;
+    margin: 4px 0 2px;
+}
+.heart-pip {
+    width: 30px;
+    height: 30px;
+    color: rgba(255, 255, 255, 0.14);
+}
+.heart-pip.free,
+.heart-pip.bought {
+    color: var(--pixel);
+    filter: drop-shadow(0 0 6px rgba(var(--pixel-rgb), 0.7));
+}
+.booster-extra {
+    color: var(--gold);
+    font: 700 12px var(--font-text);
+    letter-spacing: 0.5px;
+}
+.booster-n {
+    color: #fff;
+    font: 900 40px var(--font-display);
+}
+.booster-n small {
+    color: var(--muted);
+    font-size: 18px;
+}
+.booster-label {
+    color: var(--muted);
+    font: 700 12px var(--font-text);
+    letter-spacing: 1px;
+}
+.booster-desc {
+    margin: 2px 0 8px;
+    color: var(--muted);
+    font: 500 13px var(--font-text);
+}
+.booster-slot .btn {
+    margin-top: auto;
+    min-height: 44px;
 }
 
 
@@ -3084,7 +3412,12 @@ body.reduce-motion *::after {
                             <div id="skin-name">Unit 734</div>
                             <div id="skin-status">UNLOCKED</div>
                             <div id="skin-ability"></div>
-                            <button id="pixels-open-btn" class="btn" type="button">CHOOSE PIXEL<span class="shop-badge" hidden>NEW</span></button>
+                            <!-- Owned Pixels only, one step at a time; the shop sells the rest. -->
+                            <div class="skin-picker">
+                                <button id="skin-prev-btn" class="btn skin-step" type="button" aria-label="Previous owned Pixel">&lsaquo;</button>
+                                <span id="skin-owned-count" class="skin-owned-count">1 / 1</span>
+                                <button id="skin-next-btn" class="btn skin-step" type="button" aria-label="Next owned Pixel">&rsaquo;</button>
+                            </div>
                         </div>
                     </div>
 
@@ -3105,41 +3438,54 @@ body.reduce-motion *::after {
 
             </div>
 
-            <!-- SHOP -->
-            <div id="shop-menu-layer" class="menu-page">
-                <button id="shop-back-btn" class="btn back-btn"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg> BACK</button>
+            <!-- SHOP: RENT / PIXELS / BOOSTERS, tabs at the bottom (js/shop.js) -->
+            <div id="shop-menu-layer" class="menu-page shop-page">
+                <div class="shop-top">
+                    <button id="shop-back-btn" class="btn back-btn"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg> BACK</button>
+                </div>
 
-                <div class="page-title page-title--shop">SHOP</div>
-
-                <div class="panel shop-card">
-                    <div class="panel-head">
-                        <span class="panel-title"><svg class="ico ico-heart" aria-hidden="true"><use href="#i-heart"/></svg> Heart</span>
-                        <span class="shop-card-stock">Next run +<span id="shop-life-count">0</span> / <span id="shop-life-max">2</span></span>
+                <div class="shop-main">
+                    <!-- RENT: this hour's Rental (js/hourly.js) -->
+                    <div id="shop-panel-rent" class="shop-panel" role="tabpanel" aria-labelledby="shop-tab-rent" hidden>
+                        <div id="rent-stage" class="shop-stage">
+                            <div id="rent-tier"></div>
+                            <span id="rent-preview"></span>
+                            <div id="rent-name" class="stage-name"></div>
+                            <ul id="rent-perks" class="stage-perks"></ul>
+                            <div id="rent-timer" class="stage-note"></div>
+                            <div id="rent-owned" class="stage-owned" hidden></div>
+                            <div class="stage-cta">
+                                <button id="rent-gem-btn" class="btn btn--primary btn--big" type="button"></button>
+                                <button id="rent-equip-btn" class="btn btn--big" type="button" hidden>EQUIP</button>
+                            </div>
+                        </div>
                     </div>
-                    <p class="shop-card-desc">A spare life for your next run only, on top of the free one every run starts with. One is spent by itself on a fall or hit that would end your run. You can also find them as you climb.</p>
-                    <button id="shop-life-btn" class="btn btn--primary shop-card-btn">
-                        <span class="btn-label">BUY HEART</span>
-                        <span class="btn-cost"></span>
-                    </button>
+
+                    <!-- PIXELS: one Pixel at a time (SINGLE), or a LIST (drawn by renderShopPixels) -->
+                    <div id="shop-panel-pixels" class="shop-panel" role="tabpanel" aria-labelledby="shop-tab-pixels"></div>
+
+                    <!-- BOOSTERS: help for a run, from the shop -->
+                    <div id="shop-panel-boosters" class="shop-panel" role="tabpanel" aria-labelledby="shop-tab-boosters" hidden>
+                        <div class="booster-slots">
+                            <div class="booster-slot booster-slot--heart">
+                                <div id="shop-life-pips" class="heart-pips" aria-hidden="true"></div>
+                                <div class="booster-label">NEXT RUN: 1 FREE + <span id="shop-life-count">0</span> / <span id="shop-life-max">2</span> BOUGHT</div>
+                                <div id="shop-life-extra" class="booster-extra" hidden></div>
+                                <p class="booster-desc">A spare life for your next run only, on top of the free one. You can also find them as you climb.</p>
+                                <button id="shop-life-btn" class="btn btn--primary shop-card-btn">
+                                    <span class="btn-label">BUY HEART</span>
+                                    <span class="btn-cost"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <button id="shop-pixels-btn" class="btn">PIXEL SHOP</button>
-            </div>
-
-            <!-- PIXELS: the one place to choose a Pixel (ALL / OWNED / SHOP / HOUR) -->
-            <div id="pixels-menu-layer" class="menu-page">
-                <button id="pixels-back-btn" class="btn back-btn"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg> BACK</button>
-
-                <div class="page-title page-title--pixels">PIXELS</div>
-
-                <div id="pixel-tabs" class="pixel-tabs" role="tablist">
-                    <button class="pixel-tab active" data-tab="all" role="tab" type="button">ALL</button>
-                    <button class="pixel-tab" data-tab="owned" role="tab" type="button">OWNED</button>
-                    <button class="pixel-tab" data-tab="shop" role="tab" type="button">SHOP</button>
-                    <button class="pixel-tab" data-tab="hour" role="tab" type="button">HOUR</button>
+                <div id="shop-tabs" class="shop-tabs" role="tablist" aria-label="Shop">
+                    <button id="shop-tab-rent" class="shop-tab" data-tab="rent" role="tab" type="button">RENT</button>
+                    <button id="shop-tab-pixels" class="shop-tab" data-tab="pixels" role="tab" type="button">PIXELS</button>
+                    <button id="shop-tab-boosters" class="shop-tab" data-tab="boosters" role="tab" type="button">BOOSTERS</button>
                 </div>
-
-                <div id="pixel-grid" class="pixel-grid"></div>
             </div>
 
             <!-- RECORDS: your top runs, lifetime stats and every achievement -->
@@ -3255,21 +3601,6 @@ body.reduce-motion *::after {
             </div>
         </div>
 
-        <!-- PIXEL OF THE HOUR: this hour's Pixel, worn until the next :00 for gems (js/hourly.js) -->
-        <div id="hourly-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="hourly-title">
-            <div class="panel overlay-box hourly-box">
-                <div id="hourly-title" class="overlay-title">PIXEL OF THE HOUR</div>
-                <div id="hourly-preview"></div>
-                <div id="hourly-name" class="hourly-name"></div>
-                <div id="hourly-perks" class="hourly-perks"></div>
-                <div id="hourly-timer" class="overlay-note"></div>
-                <div id="hourly-owned" class="hourly-owned" hidden></div>
-                <button id="hourly-wear-btn" class="btn btn--primary overlay-btn" hidden>WEAR IT</button>
-                <button id="hourly-gem-btn" class="btn btn--gem overlay-btn hourly-gem-btn"></button>
-                <button id="hourly-close-btn" class="btn overlay-btn">CLOSE</button>
-            </div>
-        </div>
-
         <!-- BUY A PIXEL: asks first, since gems are hard to earn (js/shop.js) -->
         <div id="buy-confirm-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="buy-confirm-title">
             <div class="panel overlay-box hourly-box">
@@ -3340,7 +3671,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.32.0';
+    const EMBEDDED = '1.33.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -3538,7 +3869,7 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.32.0';
+const GAME_VERSION = '1.33.0';
 const NET_PROTOCOL = 11;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
@@ -3899,8 +4230,8 @@ const SKINS = [
     { id: 'overclock', name: "Overclock", tier: 'mythic', color: "#ff2222", eye: "#ffe600", cost: 100000, ability: { speedMult: 1.3, jumpMult: 1.3, powerDurationMult: 2, gemMagnetRadius: 150 } },
 
 
-    // Pixels of the Hour (js/hourly.js): one of these is on offer each hour,
-    // worn until the next :00 after watching an ad (or for gems). Each has a
+    // Rentals (js/hourly.js): one of these is on offer each hour, equipped
+    // until the next :00 after watching an ad (or for gems). Each has a
     // two-colour `pattern` over its body (drawPixel / pixelBodyCSS), which no
     // other Pixel has, and mid-shop-tier perks, never Mythic. They
     // don't count as unlocks. Appended here so no other Pixel's index moves.
@@ -3930,6 +4261,11 @@ const SKINS = [
     { id: 'h_keylime', name: "Key Lime", tier: 'rare', color: "#c6ff00", color2: "#1f7a1f", eye: "#1f3d00", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, gemMagnetRadius: 150 } }
 ];
 
+// Hearts that can be bought for the next run: as many as the roomiest
+// Pixel holds, less the free one. A save keeps up to this many; a run takes
+// what fits the equipped Pixel and refunds the rest (Game.startGame).
+const MAX_BOUGHT_HEARTS = Math.max(...SKINS.map(heartCapFor)) - 1;
+
 // Tiers are a label only (how strong a Pixel is at a glance); how you get
 // one (height, gems, the hour) is unchanged. Colours are the --tier-* tokens.
 const PIXEL_TIERS = {
@@ -3943,7 +4279,7 @@ function pixelTier(pixel) {
     return (pixel && PIXEL_TIERS[pixel.tier]) ? pixel.tier : 'uncommon';
 }
 
-// The Pixel of the Hour's gem price, the way to wear it without an ad
+// A Rental's gem price, the way to rent it without an ad
 // (CrazyGames asks for one), set by its tier. Deliberately steeper than an
 // ad, and always under 5,000.
 const HOURLY_PIXEL_GEM_COSTS = { uncommon: 400, rare: 400, epic: 1500, legendary: 4500 };
@@ -3964,7 +4300,7 @@ function skinIndexById(id) {
 // the perk already gives for good, which that Pixel then never rolls. Tags
 // render in this order.
 const perkPct = (mult) => Math.round(Math.abs(mult - 1) * 100) + '%';
-// Host: may a guest wearing `pixel` set off an EMP now (frames of game
+// Host: may a guest with `pixel` equipped set off an EMP now (frames of game
 // time), given its last accepted one? A few frames of slack absorb timing
 // jitter between clients; any faster is a modified client.
 const EMP_SLACK_FRAMES = 10;
@@ -6494,7 +6830,7 @@ function addRoundRect(ctx, x, y, w, h, r) {
 // body colour: faded gold is brown, so Golden's brown eyes vanished. So a
 // faded body has holes where the eyes go, and its glow is clipped to outside
 // the body so it can't show through them either.
-// Pixels of the Hour wear a two-colour pattern (skin.pattern in skin.color2)
+// Rentals (the hourly Pixels) have a two-colour pattern (skin.pattern in skin.color2)
 // over their body. Both painters below follow the same 26-unit grid, one for
 // the canvas and one for the DOM previews, so they always match. The eyes
 // (rows 7-12, columns 5-10 and 16-21) are drawn on top by the caller.
@@ -9661,10 +9997,25 @@ class GameCoop {
 
 </script>
 <script>/* ---- js/shop.js ---- */
-// Game's progress screens: the Pixel picker and gem shop (owning, buying and
-// equipping Pixels), hearts in the shop, the Records screen, the Hall of Fame
-// and achievements.
-//
+// Game's progress screens: the shop (RENT / PIXELS / BOOSTERS: owning,
+// buying and equipping Pixels, hearts and 2X GEMS), the menu's owned-Pixel
+// picker, the Records screen, the Hall of Fame and achievements.
+
+// Which tab the shop opens on: the one last used this session, else PIXELS.
+function shopDefaultTab(lastTab) {
+    return lastTab || 'pixels';
+}
+
+// The BOOSTERS tab's cards: hearts always; 2X GEMS where ads exist (never in
+// the portable build), while an ad can be watched or the booster is running.
+function boosterCards(platform, adsAvailable, boostActive) {
+    const cards = ['hearts'];
+    if (platform !== 'portable' && (adsAvailable || boostActive)) cards.push('gems');
+    return cards;
+}
+
+const SHOP_VIEWS = ['single', 'list'];
+
 // GameShop is never instantiated: app.js copies these methods onto
 // Game.prototype, so `this` is always the Game.
 class GameShop {
@@ -9745,8 +10096,7 @@ class GameShop {
         return false; // Unit 734, the free starter
     }
 
-    // The menu picker only ever offers Pixels the player can actually use:
-    // locked gem Pixels live in the shop.
+    // Every Pixel the player can equip now (owned, or this hour's Rental).
     unlockedSkinIndexes() {
         return SKINS.map((s, i) => i).filter(i => !this.isSkinLocked(i));
     }
@@ -9765,31 +10115,45 @@ class GameShop {
     updateSkinUI() {
         // A saved Pixel can go missing (e.g. a cleared shop save, or a Pixel
         // of the Hour whose hour is up); never show or start a run with one
-        // the player doesn't have. One worn into a run stays for that run.
-        const worn = SKINS[this.viewParams.skinIndex];
-        if (this.isSkinLocked() && !(this.state.running && worn && worn.hourly)) {
+        // the player doesn't have. A Rental equipped into a run stays for it.
+        const equipped = SKINS[this.viewParams.skinIndex];
+        if (this.isSkinLocked() && !(this.state.running && equipped && equipped.hourly)) {
             this.viewParams.skinIndex = this.fallbackSkinIndex();
             saveItem('lp_skin', SKINS[this.viewParams.skinIndex].id);
-            if (worn && worn.hourly) this.notify(worn.name.toUpperCase() + "'S HOUR IS UP", 'info');
+            if (equipped && equipped.hourly) this.notify(equipped.name.toUpperCase() + "'S HOUR IS UP", 'info');
         }
 
         const s = SKINS[this.viewParams.skinIndex];
-        // Pixels of the Hour are borrowed, not collected.
-        const unlockedCount = this.unlockedSkinIndexes().filter(i => !SKINS[i].hourly).length;
-        const totalCount = SKINS.filter(sk => !sk.hourly).length;
 
-        // The pattern (a Pixel of the Hour), over the body colour.
+        // The pattern (a Rental), over the body colour.
         this.ui.preview.style.background = pixelBodyCSS(s);
         this.ui.preview.style.backgroundColor = s.color;
         this.ui.eyesL.style.backgroundColor = s.eye;
         this.ui.eyesR.style.backgroundColor = s.eye;
         this.ui.skinName.innerText = s.name;
-        this.ui.skinStatus.innerText = s.hourly ? "PIXEL OF THE HOUR" : "PIXELS " + unlockedCount + " / " + totalCount;
+        // Always there (empty unless a Rental is equipped), so the card's
+        // height doesn't change from one Pixel to the next.
+        this.ui.skinStatus.innerText = s.hourly ? "RENTAL ENDS " + fmtHour(nextHourAt()) : "";
+        const owned = this.unlockedSkinIndexes();
+        const at = owned.indexOf(this.viewParams.skinIndex);
+        if (this.ui.skinOwnedCount) this.ui.skinOwnedCount.innerText = (at < 0 ? '-' : at + 1) + ' / ' + owned.length;
+        if (this.ui.skinPrevBtn) this.ui.skinPrevBtn.disabled = this.ui.skinNextBtn.disabled = owned.length < 2;
 
         if (this.ui.gemDisplay) this.ui.gemDisplay.innerHTML = counted(fmtNum(this.state.gems), 'gem');
         this.updateShopBadge();
         if (this.ui.skinAbility) this.ui.skinAbility.innerHTML = this.tierBadge(s) + this.renderPerkTags(s.ability);
-        this.renderPixelGrid();
+        if (!this.state.running) this.updateHeartUI(); // the heart cap goes with the Pixel
+        this.renderShop();
+    }
+
+    // The menu picker's ‹ ›: the next Pixel the player can equip, wrapping.
+    stepOwnedSkin(dir) {
+        const owned = this.unlockedSkinIndexes();
+        if (owned.length < 2 || this.state.running) return;
+        const k = owned.indexOf(this.viewParams.skinIndex);
+        // Not in the list (a Rental whose hour just ended): start at an end.
+        const next = k < 0 ? (dir > 0 ? 0 : owned.length - 1) : (k + dir + owned.length) % owned.length;
+        this.equipSkin(owned[next]);
     }
 
     // The tier label: a chip in the tier's own colour (--tier-*).
@@ -9822,97 +10186,207 @@ class GameShop {
             .sort((a, b) => a.s.cost - b.s.cost);
     }
 
-    // ------------------------------------------------------- Pixel picker
-    // One grid of every Pixel the player can see, in ALL / OWNED / SHOP / HOUR
-    // tabs. Only this hour's Pixel of the Hour is listed.
-    pixelPickerRows(tab = this.pixelTab) {
-        const hourNow = hourlySkinAt();
-        const visible = SKINS.map((s, i) => ({ s, i })).filter(({ s }) => {
-            if (s.hourly) return s === hourNow;
-            return true;
-        });
-        if (tab === 'owned') return visible.filter(({ i }) => !this.isSkinLocked(i));
-        if (tab === 'shop') return visible.filter(({ s }) => s.cost !== undefined).sort((a, b) => a.s.cost - b.s.cost);
-        if (tab === 'hour') return visible.filter(({ s }) => s.hourly);
-        return visible;
+    // ------------------------------------------------------------- the shop
+    // One page, three tabs (RENT / PIXELS / BOOSTERS) along the bottom.
+    openShop() {
+        this.shopSelected = null;
+        this.setShopTab(shopDefaultTab(this.shopLastTab));
+        this.setMenuPanel('shop');
     }
 
-    setPixelTab(tab) {
-        this.pixelTab = ['all', 'owned', 'shop', 'hour'].includes(tab) ? tab : 'all';
-        this.renderPixelGrid();
-    }
-
-    openPixels(tab = 'all') {
-        this.pixelTab = tab;
-        this.renderPixelGrid();
-        this.setMenuPanel('pixels');
-    }
-
-    // The line under a card: what it costs, how long the hour has left, or
-    // that it is yours.
-    pixelCardStatus(s, i, now = Date.now()) {
-        if (this.viewParams.skinIndex === i && !this.isSkinLocked(i)) return { text: 'EQUIPPED' };
-        if (!this.isSkinLocked(i)) {
-            return { text: s.hourly ? 'YOURS UNTIL ' + fmtHour(nextHourAt(now)) : 'OWNED' };
-        }
-        if (s.hourly) {
-            const price = counted(fmtNum(hourlyPixelCost(s)), 'gem');
-            return { html: price + ' <span class="js-hour-left">' + fmtClock(nextHourAt(now) - now) + '</span> LEFT', poor: this.state.gems < hourlyPixelCost(s) };
-        }
-        return { html: counted(fmtNum(s.cost), 'gem'), poor: this.state.gems < s.cost };
-    }
-
-    renderPixelGrid() {
-        const grid = this.ui.pixelGrid;
-        if (!grid || this.state.running) return; // the page stays still during a run (drawn again at game over)
-        const tab = this.pixelTab || (this.pixelTab = 'all');
-        if (this.ui.pixelTabs && this.ui.pixelTabs.querySelectorAll) {
-            this.ui.pixelTabs.querySelectorAll('.pixel-tab').forEach(b => {
-                b.classList.toggle('active', b.dataset.tab === tab);
+    setShopTab(tab) {
+        this.shopTab = ['rent', 'pixels', 'boosters'].includes(tab) ? tab : 'pixels';
+        this.shopLastTab = this.shopTab;
+        const ui = this.ui;
+        [['rent', ui.shopPanelRent, ui.shopTabRent], ['pixels', ui.shopPanelPixels, ui.shopTabPixels], ['boosters', ui.shopPanelBoosters, ui.shopTabBoosters]]
+            .forEach(([name, panel, btn]) => {
+                const on = name === this.shopTab;
+                if (panel) panel.hidden = !on;
+                if (btn) {
+                    btn.classList.toggle('active', on);
+                    btn.tabIndex = on ? 0 : -1; // one stop in Tab order; ← / → move between tabs
+                    if (btn.setAttribute) btn.setAttribute('aria-selected', on ? 'true' : 'false');
+                }
             });
+        this.renderShop();
+    }
+
+    // ← / → (and Home / End) on the tab bar: select and focus the next tab.
+    onShopTabsKey(e) {
+        const order = ['rent', 'pixels', 'boosters'];
+        const k = order.indexOf(this.shopTab);
+        const next = { ArrowLeft: k - 1, ArrowRight: k + 1, Home: 0, End: order.length - 1 }[e.key];
+        if (next === undefined) return;
+        e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+        this.setShopTab(order[(next + order.length) % order.length]);
+        const btn = { rent: this.ui.shopTabRent, pixels: this.ui.shopTabPixels, boosters: this.ui.shopTabBoosters }[this.shopTab];
+        if (btn && btn.focus) btn.focus();
+    }
+
+    // SINGLE (one Pixel at a time) or LIST, remembered on this device.
+    loadShopView() {
+        const v = storageGet('lp_shop_view');
+        return SHOP_VIEWS.includes(v) ? v : 'single';
+    }
+
+    setShopView(view) {
+        this.shopView = SHOP_VIEWS.includes(view) ? view : 'single';
+        saveItem('lp_shop_view', this.shopView);
+        this.renderShopPixels();
+    }
+
+    // Everything on the shop page that depends on gems, ownership or time.
+    renderShop() {
+        if (this.state.running) return; // the page stays still during a run
+        this.renderShopPixels();
+        this.updateHourlyUI();
+        this.updateBoosterCards();
+    }
+
+    // The Pixel the SINGLE view is on: the one picked, else (picking it now)
+    // the cheapest one not owned yet, else the first.
+    selectedShopIndex() {
+        const list = this.gemShopSkins();
+        if (!list.some(r => r.i === this.shopSelected)) {
+            this.shopSelected = (list.find(r => this.isSkinLocked(r.i)) || list[0]).i;
         }
-        const rows = this.pixelPickerRows(tab);
-        if (!rows.length) {
-            grid.innerHTML = '<div class="pixel-empty">' + (tab === 'owned' ? 'NO PIXELS YET' : 'NOTHING HERE') + '</div>';
-            return;
+        return this.shopSelected;
+    }
+
+    shopPick(index) {
+        this.shopSelected = index;
+        this.renderShopPixels();
+    }
+
+    // The SINGLE view's ‹ ›: one step along the price ladder, wrapping.
+    shopStep(dir) {
+        const list = this.gemShopSkins();
+        const k = list.findIndex(r => r.i === this.selectedShopIndex());
+        this.shopPick(list[(k + dir + list.length) % list.length].i);
+    }
+
+    // A Pixel's button: EQUIPPED, EQUIP, or its price (BUY when affordable).
+    shopPixelButton(i, big) {
+        const s = SKINS[i];
+        const cls = 'btn shop-cta' + (big ? ' btn--big' : '');
+        if (!this.isSkinLocked(i)) {
+            if (this.viewParams.skinIndex === i) return `<button class="${cls} is-equipped" type="button" disabled>EQUIPPED</button>`;
+            return `<button class="${cls}" type="button" data-shop-act="equip" data-index="${i}">EQUIP</button>`;
         }
-        grid.innerHTML = rows.map(({ s, i }) => {
+        if (this.state.gems < s.cost) return `<button class="${cls} cant-afford" type="button" data-shop-act="buy" data-index="${i}">${counted(fmtNum(s.cost), 'gem')}</button>`;
+        return `<button class="${cls} btn--primary" type="button" data-shop-act="buy" data-index="${i}">${counted(fmtNum(s.cost), 'gem')} BUY</button>`;
+    }
+
+    // Progress toward a Pixel you can't afford yet. `keepSpace` leaves an
+    // invisible bar in its place, so the SINGLE view doesn't shift.
+    shopNeedBar(i, keepSpace) {
+        const s = SKINS[i];
+        if (!this.isSkinLocked(i) || this.state.gems >= s.cost) return keepSpace ? '<div class="need-bar is-empty" aria-hidden="true"></div>' : '';
+        const pct = Math.max(2, Math.min(100, Math.round(this.state.gems / s.cost * 100)));
+        return `<div class="need-bar"><span style="width:${pct}%"></span><b>${fmtNum(s.cost - this.state.gems)} MORE</b></div>`;
+    }
+
+    // A Pixel's perks spelled out, one per line, downsides in red.
+    perkListHTML(ability) {
+        const line = (color, label, text) => `<li><span class="perk-tag" style="--perk:${color};">${label}</span> ${text}</li>`;
+        const items = skinPerks(ability).map(({ perk, value }) => line(perk.color, perk.label, perk.describe(value)))
+            .concat(skinDownsides(ability).map(d => line('var(--pixel)', d.label, d.describe)));
+        return items.length ? items.join('') : '<li class="perk-none">NO PERK</li>';
+    }
+
+    // PIXELS: the SINGLE / LIST toggle over whichever view is chosen.
+    renderShopPixels() {
+        const panel = this.ui.shopPanelPixels;
+        if (!panel || this.state.running) return;
+        if (!this.shopView) this.shopView = this.loadShopView();
+        const toggle = `<div class="shop-view-toggle" role="group" aria-label="View">` +
+            SHOP_VIEWS.map(v => `<button type="button" class="${this.shopView === v ? 'active' : ''}" data-shop-view="${v}" aria-pressed="${this.shopView === v}">${v.toUpperCase()}</button>`).join('') + `</div>`;
+        // A redraw replaces the buttons: put keyboard focus back on the same one.
+        const focused = typeof document !== 'undefined' && document.activeElement;
+        const keep = focused && panel.contains && panel.contains(focused) &&
+            ['shopStep', 'shopPick', 'shopView', 'shopAct'].find(k => focused.dataset && focused.dataset[k] !== undefined);
+        const attr = keep && keep.replace(/[A-Z]/g, c => '-' + c.toLowerCase());
+        const value = keep && focused.dataset[keep];
+        panel.innerHTML = toggle + (this.shopView === 'list' ? this.shopListHTML() : this.shopSingleHTML());
+        if (keep && panel.querySelector) {
+            const again = panel.querySelector(`[data-${attr}="${value}"]`) || panel.querySelector('[data-shop-act]');
+            if (again && again.focus) again.focus();
+        }
+    }
+
+    // Every shop Pixel, grouped under its tier, cheapest first.
+    shopListHTML() {
+        let tier = null;
+        return '<div class="shop-list">' + this.gemShopSkins().map(({ s, i }) => {
             const t = pixelTier(s);
-            const st = this.pixelCardStatus(s, i);
-            const equipped = this.viewParams.skinIndex === i && !this.isSkinLocked(i);
-            return `<div class="pixel-card tier-${t}${equipped ? ' equipped' : ''}${this.isSkinLocked(i) ? ' locked' : ''}" data-index="${i}" role="button" tabindex="0">` +
-                this.pixelPreviewHTML(s, 'pixel-card-pixel') +
-                `<div class="pixel-card-name">${this.escapeHtml(s.name)}</div>` +
-                `<span class="tier-badge">${PIXEL_TIERS[t].label}</span>` +
-                `<div class="pixel-card-perks">${this.renderPerkTags(s.ability)}</div>` +
-                `<div class="pixel-card-status${st.poor ? ' cant-afford' : ''}">${st.html || st.text}</div></div>`;
-        }).join('');
+            const head = t !== tier ? `<div class="shop-list-tier tier-${t}"><span>${PIXEL_TIERS[t].label}</span></div>` : '';
+            tier = t;
+            return head + `<div class="shop-row tier-${t}${this.viewParams.skinIndex === i ? ' equipped' : ''}">` +
+                this.pixelPreviewHTML(s, 'shop-row-pixel') +
+                `<div class="shop-row-mid"><div class="shop-row-name">${this.escapeHtml(s.name)}</div>` +
+                `<div class="shop-row-perks">${this.renderPerkTags(s.ability)}</div>${this.shopNeedBar(i)}</div>` +
+                `<div class="shop-row-cta">${this.shopPixelButton(i)}</div></div>`;
+        }).join('') + '</div>';
     }
 
-    // Once a second: the hour's time left on its card (no re-render, so an
-    // open tooltip stays put).
-    tickPixelGrid() {
-        const grid = this.ui.pixelGrid;
-        if (!grid || !grid.querySelectorAll || this.state.running) return;
-        const left = fmtClock(nextHourAt() - Date.now());
-        grid.querySelectorAll('.js-hour-left').forEach(el => { el.innerText = left; });
+    // One Pixel on the stage, with ‹ › and a strip of every shop Pixel.
+    shopSingleHTML() {
+        const list = this.gemShopSkins();
+        const i = this.selectedShopIndex();
+        const s = SKINS[i];
+        const k = list.findIndex(r => r.i === i);
+        // Room for the longest perk list in the shop, so flipping between
+        // Pixels never moves the button or the strip.
+        const rows = Math.max(...list.map(r => skinPerks(r.s.ability).length + skinDownsides(r.s.ability).length));
+        return `<div class="shop-stage tier-${pixelTier(s)}" style="--perk-rows:${rows}">` +
+            `<button class="stage-nav" type="button" data-shop-step="-1" aria-label="Previous Pixel">&lsaquo;</button>` +
+            `<div class="stage-center">${this.tierBadge(s)}${this.pixelPreviewHTML(s, 'stage-pixel')}` +
+            `<div class="stage-name">${this.escapeHtml(s.name)}</div><ul class="stage-perks">${this.perkListHTML(s.ability)}</ul>` +
+            `${this.shopNeedBar(i, true)}<div class="stage-cta">${this.shopPixelButton(i, true)}</div></div>` +
+            `<button class="stage-nav" type="button" data-shop-step="1" aria-label="Next Pixel">&rsaquo;</button></div>` +
+            `<div class="stage-strip">` + list.map(r => `<button type="button" class="strip-pixel tier-${pixelTier(r.s)}${r.i === i ? ' active' : ''}${this.isSkinLocked(r.i) ? '' : ' owned'}" data-shop-pick="${r.i}" aria-label="${this.escapeHtml(r.s.name)}">${this.pixelPreviewHTML(r.s, 'strip-pixel-body')}</button>`).join('') +
+            `</div><div class="stage-note">${k + 1} / ${list.length}</div>`;
     }
 
-    // A tap on a card: equip it if it's yours, buy it if you can, otherwise
-    // say how to get it.
-    pickPixel(index, card) {
+    // A tap on a Pixel's button: equip it, or buy it (asking first).
+    shopAct(act, index, button) {
         const s = SKINS[index];
         if (!s || this.state.running) return;
-        if (!this.isSkinLocked(index)) {
+        if (act === 'equip' && !this.isSkinLocked(index)) {
             this.equipSkin(index);
-        } else if (s.hourly) {
-            this.openHourly();
-        } else if (this.state.gems >= s.cost) {
-            this.openBuyConfirm(index);
-        } else {
-            this.shakeUI(card);
-            this.notify('NEED ' + fmtNum(s.cost) + ' GEMS FOR ' + s.name.toUpperCase(), 'warning');
+        } else if (act === 'buy' && this.isSkinLocked(index)) {
+            if (this.state.gems >= s.cost) this.openBuyConfirm(index);
+            else {
+                this.shakeUI(button);
+                this.notify('NEED ' + fmtNum(s.cost - this.state.gems) + ' MORE GEMS FOR ' + s.name.toUpperCase(), 'warning');
+            }
         }
+    }
+
+    // Delegated clicks inside the PIXELS panel (it is redrawn often).
+    onShopPixelsClick(e) {
+        const el = e.target && e.target.closest && e.target.closest('[data-shop-act],[data-shop-pick],[data-shop-step],[data-shop-view]');
+        if (!el) return;
+        if (e.stopPropagation) e.stopPropagation();
+        const d = el.dataset;
+        if (d.shopView) this.setShopView(d.shopView);
+        else if (d.shopStep) this.shopStep(parseInt(d.shopStep, 10));
+        else if (d.shopPick) this.shopPick(parseInt(d.shopPick, 10));
+        else this.shopAct(d.shopAct, parseInt(d.index, 10), el);
+    }
+
+    // BOOSTERS: the 2X GEMS card (an ad offer, or the time left).
+    updateBoosterCards() {
+        const card = this.ui.boosterGems;
+        if (!card) return;
+        const left = this.gemBoostLeft();
+        const cards = boosterCards(PLATFORM, this.canWatchGemBoost(), left > 0);
+        card.hidden = !cards.includes('gems');
+        const btn = this.ui.boosterGemsBtn;
+        if (!btn) return;
+        btn.disabled = left > 0;
+        setHTML(btn, left > 0 ? fmtClock(left) + ' LEFT' : icon('play') + ' WATCH AD');
     }
 
     // "Are you sure?" before gems are spent on a Pixel. BUY goes through
@@ -9944,9 +10418,9 @@ class GameShop {
         this.buyGemSkin(index);
     }
 
-    // Re-draws the picker after a purchase or equip (the old gem-shop name).
+    // Re-draws the shop after a purchase or equip (the old gem-shop name).
     renderGemShop() {
-        this.renderPixelGrid();
+        this.renderShop();
     }
 
     // Something in the shop you could buy right now: a Pixel you don't own
@@ -9974,18 +10448,38 @@ class GameShop {
     // Hearts bought here are added to the next run: the card shows how many
     // are waiting, and the button locks once they fill the Pixel's cap.
     updateHeartUI() {
-        if (this.ui.shopLifeCount) this.ui.shopLifeCount.innerText = this.state.hearts;
-        if (this.ui.shopLifeMax) this.ui.shopLifeMax.innerText = this.heartCap() - 1;
+        // Hearts bought for a roomier Pixel may not all fit this one: the
+        // ones that do count toward the run, the rest are refunded at its start.
+        const room = this.heartCap() - 1;
+        const extra = Math.max(0, this.state.hearts - room);
+        if (this.ui.shopLifeCount) this.ui.shopLifeCount.innerText = this.state.hearts - extra;
+        if (this.ui.shopLifeMax) this.ui.shopLifeMax.innerText = room;
+        if (this.ui.shopLifeExtra) {
+            this.ui.shopLifeExtra.hidden = !extra;
+            this.ui.shopLifeExtra.innerText = extra ? extra + " MORE DON'T FIT: REFUNDED WHEN YOU PLAY" : '';
+        }
+        // One heart per slot the Pixel can hold: the free one, then the
+        // bought ones, then empty slots.
+        if (this.ui.shopLifePips) {
+            let pips = '';
+            for (let k = 0; k < this.heartCap(); k++) {
+                const kind = k === 0 ? ' free' : (k <= this.state.hearts ? ' bought' : '');
+                pips += `<svg class="ico heart-pip${kind}"><use href="#i-heart"/></svg>`;
+            }
+            setHTML(this.ui.shopLifePips, pips);
+        }
         const hearts = this.ui.lifeDisplay;
         if (hearts) {
-            const html = counted(this.state.hearts, 'heart');
+            // Between runs, only the bought hearts that fit this Pixel count.
+            const shown = this.state.running ? this.state.hearts : this.state.hearts - extra;
+            const html = counted(shown, 'heart');
             if (hearts.innerHTML !== html && hearts.classList) {
                 hearts.classList.remove('life-pop');
                 void hearts.offsetWidth; // restart the animation
                 hearts.classList.add('life-pop');
             }
             hearts.innerHTML = html;
-            if (hearts.classList) hearts.classList.toggle('empty', this.state.hearts <= 0);
+            if (hearts.classList) hearts.classList.toggle('empty', shown <= 0);
         }
         if (!this.ui.shopLifeBtn) return;
 
@@ -10059,7 +10553,8 @@ class GameShop {
     }
 
     // The booster chip under the hearts (an offer between runs, a countdown
-    // while it runs) and the run card's offer. Refreshed every second.
+    // while it runs), the run card's offer and the shop's 2X GEMS card.
+    // Refreshed every second.
     updateAdButtons() {
         const left = this.gemBoostLeft();
         const chip = this.ui.gemBoost;
@@ -10080,6 +10575,7 @@ class GameShop {
             }
         }
         if (this.ui.runBoostBtn) this.ui.runBoostBtn.hidden = !(canWatch && this.runCardOpen && !this.state.multiplayer);
+        if (!this.state.running) this.updateBoosterCards();
     }
 
     buyGemSkin(index, button) {
@@ -10364,11 +10860,12 @@ class GameShare {
 
 </script>
 <script>/* ---- js/hourly.js ---- */
-// The Pixel of the Hour. Each hour one of the hourly Pixels (the SKINS
-// entries marked `hourly`) is on offer. Watching a rewarded ad, or paying
-// its tier's gem price (hourlyPixelCost), lets the player wear it until the next :00 on
-// their own clock. If the hour turns mid-run the Pixel stays on until that
-// run ends; then the Pixel they wore before comes back.
+// The Rental (the shop's RENT tab). Each hour one of the hourly Pixels (the
+// SKINS entries marked `hourly`) is on offer. Watching a rewarded ad, or
+// paying its tier's gem price (hourlyPixelCost), rents it: it can be equipped
+// until the next :00 on the player's own clock. If the hour turns mid-run the
+// Pixel stays on until that run ends; then the Pixel equipped before it
+// comes back.
 //
 // Saves: lp_hourly_unlock = { key, id } (the hour it was unlocked for, see
 // hourKey()) and lp_skin_prev (the Pixel to go back to).
@@ -10402,14 +10899,14 @@ function fmtHour(ms) {
     return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-// Game's Pixel of the Hour methods (copied onto Game.prototype in app.js).
+// Game's Rental methods (copied onto Game.prototype in app.js).
 class GameHourly {
     loadHourlyUnlock() {
         return loadJSON('lp_hourly_unlock', null,
             v => isPlainObject(v) && typeof v.key === 'string' && typeof v.id === 'string');
     }
 
-    // Is this hourly Pixel the player's to wear right now?
+    // Has the player rented this hourly Pixel for the current hour?
     hourlyUnlocked(skin, now = Date.now()) {
         const rec = this.hourlyRecord;
         return !!rec && rec.id === skin.id && rec.key === hourKey(now) && hourlySkinAt(now).id === skin.id;
@@ -10432,7 +10929,7 @@ class GameHourly {
         if (this.state.running || this.hourlyUnlocked(hourlySkinAt())) return;
         const cost = hourlyPixelCost(hourlySkinAt());
         if (this.state.gems < cost) {
-            this.shakeUI(this.ui.hourlyGemBtn);
+            this.shakeUI(this.ui.rentGemBtn);
             return;
         }
         this.state.gems -= cost;
@@ -10448,13 +10945,13 @@ class GameHourly {
         this.hourlyRecord = { key: hourKey(now), id: skin.id };
         saveItem('lp_hourly_unlock', JSON.stringify(this.hourlyRecord));
         this.equipSkin(skinIndexById(skin.id));
-        this.notify(skin.name.toUpperCase() + ": YOURS UNTIL " + fmtHour(nextHourAt(now)), 'unlock',
+        this.notify(skin.name.toUpperCase() + ": EQUIPPED UNTIL " + fmtHour(nextHourAt(now)), 'unlock',
             { icon: this.pixelPreviewHTML(skin, 'alert-pixel') });
         sounds.play('reward');
         this.updateHourlyUI();
     }
 
-    // Where an expired Pixel of the Hour hands back to: the Pixel worn
+    // Where an expired Rental hands back to: the Pixel equipped
     // before it, if the player still has it.
     fallbackSkinIndex() {
         const prev = skinIndexById(storageGet('lp_skin_prev'));
@@ -10473,58 +10970,46 @@ class GameHourly {
         this.updateHourlyUI();
     }
 
-    openHourly() {
-        this.hourlyOpen = true;
-        this.ui.hourlyOverlay.hidden = false;
-        this.updateHourlyUI();
-    }
-
-    closeHourly() {
-        this.hourlyOpen = false;
-        this.ui.hourlyOverlay.hidden = true;
-    }
-
-    // The menu button under the Pixel picker, and the card it opens.
+    // The shop's RENT tab: this hour's Rental, the time left in its hour,
+    // and WATCH AD / RENT IT (or EQUIP, once rented).
     updateHourlyUI() {
         const ui = this.ui;
+        if (!ui.rentTimer || this.state.running) return;
         const now = Date.now();
         const skin = hourlySkinAt(now);
         const until = fmtHour(nextHourAt(now));
         const owned = this.hourlyUnlocked(skin, now);
-        const left = fmtClock(nextHourAt(now) - now);
-        if (ui.hourlyOpenBtn) setHTML(ui.hourlyOpenBtn, icon('clock') + (owned ? ' YOURS UNTIL ' + until : ' HOURLY PIXEL ' + left));
-        if (!this.hourlyOpen || !ui.hourlyTimer) return;
+        const msLeft = nextHourAt(now) - now;
 
         if (this.hourlyShownSkin !== skin.id) {
             this.hourlyShownSkin = skin.id;
-            ui.hourlyPreview.innerHTML = this.pixelPreviewHTML(skin, 'hourly-pixel');
-            ui.hourlyName.innerText = skin.name;
-            ui.hourlyPerks.innerHTML = this.tierBadge(skin) + this.renderPerkTags(skin.ability);
+            ui.rentPreview.innerHTML = this.pixelPreviewHTML(skin, 'stage-pixel');
+            ui.rentName.innerText = skin.name;
+            ui.rentTier.innerHTML = this.tierBadge(skin);
+            ui.rentPerks.innerHTML = this.perkListHTML(skin.ability);
+            if (ui.rentStage) ui.rentStage.className = 'shop-stage tier-' + pixelTier(skin);
         }
-        ui.hourlyTimer.innerText = 'NEXT PIXEL IN ' + left;
-        const wearing = SKINS[this.viewParams.skinIndex] === skin;
+        setText(ui.rentTimer, 'NEW PIXEL IN ' + fmtClock(msLeft));
+        const equipped = SKINS[this.viewParams.skinIndex] === skin;
         // A portable build has no ad button at all (the marker removes it).
-        if (ui.hourlyAdBtn) {
-            ui.hourlyAdBtn.hidden = owned || !this.canWatchHourlyAd();
-            setHTML(ui.hourlyAdBtn, icon('play') + ' WATCH AD: WEAR IT UNTIL ' + until);
+        if (ui.rentAdBtn) {
+            ui.rentAdBtn.hidden = owned || !this.canWatchHourlyAd();
+            setHTML(ui.rentAdBtn, icon('play') + ' WATCH AD');
         }
-        ui.hourlyGemBtn.hidden = owned;
         const cost = hourlyPixelCost(skin);
-        setHTML(ui.hourlyGemBtn, counted(fmtNum(cost), 'gem') + ' WEAR IT UNTIL ' + until);
-        ui.hourlyGemBtn.classList.toggle('cant-afford', this.state.gems < cost);
-        ui.hourlyOwned.hidden = !owned;
-        ui.hourlyOwned.innerText = wearing ? 'YOU\'RE WEARING IT UNTIL ' + until : 'YOURS UNTIL ' + until;
-        ui.hourlyWearBtn.hidden = !owned || wearing;
+        ui.rentGemBtn.hidden = owned;
+        setHTML(ui.rentGemBtn, counted(fmtNum(cost), 'gem') + ' RENT IT');
+        ui.rentGemBtn.classList.toggle('cant-afford', this.state.gems < cost);
+        ui.rentOwned.hidden = !owned;
+        setText(ui.rentOwned, (equipped ? 'EQUIPPED UNTIL ' : 'RENTAL ENDS ') + until);
+        ui.rentEquipBtn.hidden = !owned || equipped;
     }
 
     bindHourlyEvents() {
         const on = (el, fn) => { if (el) el.onclick = (e) => { if (e && e.stopPropagation) e.stopPropagation(); fn(); }; };
-        on(this.ui.hourlyCloseBtn, () => this.closeHourly());
-        on(this.ui.hourlyAdBtn, () => this.watchHourlyAd());
-        on(this.ui.hourlyGemBtn, () => this.buyHourly());
-        on(this.ui.hourlyWearBtn, () => { this.equipSkin(skinIndexById(hourlySkinAt().id)); this.updateHourlyUI(); });
-        // A tap beside the card closes it.
-        if (this.ui.hourlyOverlay) this.ui.hourlyOverlay.onclick = (e) => { if (e.target === this.ui.hourlyOverlay) this.closeHourly(); };
+        on(this.ui.rentAdBtn, () => this.watchHourlyAd());
+        on(this.ui.rentGemBtn, () => this.buyHourly());
+        on(this.ui.rentEquipBtn, () => { this.equipSkin(skinIndexById(hourlySkinAt().id)); this.updateHourlyUI(); });
     }
 }
 
@@ -10774,7 +11259,7 @@ function loadJSON(key, fallback, isValid = () => true) {
 
 // Load-time clamps for numeric saves. localStorage is editable by hand, and a
 // corrupted value used to load as-is: lp_hearts=999 granted 999 spare lives
-// (the cap is MAX_HEARTS), while an absurd gems balance or best height skewed
+// (the cap is MAX_BOUGHT_HEARTS), while an absurd gems balance or best height skewed
 // unlocks and display. Every numeric save is a non-negative integer no larger
 // than MAX_SAVE_VALUE (a metre or gem count far beyond any real run).
 const MAX_SAVE_VALUE = 1e9;
@@ -10947,7 +11432,7 @@ class Game {
             gems: storageGet('lp_gems') === null ? saveInt('lp_shards') : saveInt('lp_gems'),
             loops: saveInt('lp_loops'),
             skinIndex: Math.max(0, skinIndexById(storageGet('lp_skin'))),
-            hearts: Math.min(MAX_HEARTS, saveInt('lp_hearts')),
+            hearts: Math.min(MAX_BOUGHT_HEARTS, saveInt('lp_hearts')),
             bgOffset: 0,
             time: 0,
             seed: this.getDailySeed(),
@@ -11011,12 +11496,32 @@ class Game {
             shopLifeBtn: document.getElementById("shop-life-btn"),
             shopLifeCount: document.getElementById("shop-life-count"),
             shopLifeMax: document.getElementById("shop-life-max"),
-            pixelsLayer: document.getElementById("pixels-menu-layer"),
-            pixelsOpenBtn: document.getElementById("pixels-open-btn"),
-            pixelsBackBtn: document.getElementById("pixels-back-btn"),
-            shopPixelsBtn: document.getElementById("shop-pixels-btn"),
-            pixelTabs: document.getElementById("pixel-tabs"),
-            pixelGrid: document.getElementById("pixel-grid"),
+            shopLifePips: document.getElementById("shop-life-pips"),
+            shopLifeExtra: document.getElementById("shop-life-extra"),
+            // The menu's owned-Pixel picker
+            skinPrevBtn: document.getElementById("skin-prev-btn"),
+            skinNextBtn: document.getElementById("skin-next-btn"),
+            skinOwnedCount: document.getElementById("skin-owned-count"),
+            // The shop: RENT / PIXELS / BOOSTERS (js/shop.js, js/hourly.js)
+            shopTabs: document.getElementById("shop-tabs"),
+            shopTabRent: document.getElementById("shop-tab-rent"),
+            shopTabPixels: document.getElementById("shop-tab-pixels"),
+            shopTabBoosters: document.getElementById("shop-tab-boosters"),
+            shopPanelRent: document.getElementById("shop-panel-rent"),
+            shopPanelPixels: document.getElementById("shop-panel-pixels"),
+            shopPanelBoosters: document.getElementById("shop-panel-boosters"),
+            rentStage: document.getElementById("rent-stage"),
+            rentPreview: document.getElementById("rent-preview"),
+            rentName: document.getElementById("rent-name"),
+            rentTier: document.getElementById("rent-tier"),
+            rentPerks: document.getElementById("rent-perks"),
+            rentTimer: document.getElementById("rent-timer"),
+            rentOwned: document.getElementById("rent-owned"),
+            rentAdBtn: document.getElementById("rent-ad-btn"),
+            rentGemBtn: document.getElementById("rent-gem-btn"),
+            rentEquipBtn: document.getElementById("rent-equip-btn"),
+            boosterGems: document.getElementById("booster-gems"),
+            boosterGemsBtn: document.getElementById("booster-gems-btn"),
             skinAbility: document.getElementById("skin-ability"),
             shopOpenBtn: document.getElementById("shop-open-btn"),
             shopBackBtn: document.getElementById("shop-back-btn"),
@@ -11096,9 +11601,6 @@ class Game {
             challengeHud: document.getElementById("challenge-hud"),
             runShareBtn: document.getElementById("run-share-btn"),
             runBoostBtn: document.getElementById("run-boost-btn"),
-            // Pixel of the Hour (js/hourly.js)
-            hourlyOpenBtn: document.getElementById("hourly-open-btn"),
-            hourlyOverlay: document.getElementById("hourly-overlay"),
             buyConfirm: document.getElementById("buy-confirm-overlay"),
             buyConfirmPreview: document.getElementById("buy-confirm-preview"),
             buyConfirmName: document.getElementById("buy-confirm-name"),
@@ -11106,15 +11608,6 @@ class Game {
             buyConfirmNote: document.getElementById("buy-confirm-note"),
             buyConfirmYes: document.getElementById("buy-confirm-yes"),
             buyConfirmNo: document.getElementById("buy-confirm-no"),
-            hourlyPreview: document.getElementById("hourly-preview"),
-            hourlyName: document.getElementById("hourly-name"),
-            hourlyPerks: document.getElementById("hourly-perks"),
-            hourlyTimer: document.getElementById("hourly-timer"),
-            hourlyAdBtn: document.getElementById("hourly-ad-btn"),
-            hourlyGemBtn: document.getElementById("hourly-gem-btn"),
-            hourlyOwned: document.getElementById("hourly-owned"),
-            hourlyWearBtn: document.getElementById("hourly-wear-btn"),
-            hourlyCloseBtn: document.getElementById("hourly-close-btn"),
             gemBoost: document.getElementById("gem-boost"),
             shareToast: document.getElementById("share-toast"),
             spectateHud: document.getElementById("spectate-hud"),
@@ -11203,7 +11696,7 @@ class Game {
         this.ads.onAdStart = () => { this.input.resetInput(); this.applySettings(); };
         this.ads.onAdEnd = () => { this.applySettings(); this.lastTime = 0; };
         this.ads.onChange = () => this.updateAdButtons();
-        setInterval(() => { this.updateAdButtons(); this.tickHourly(); this.tickPixelGrid(); }, 1000);
+        setInterval(() => { this.updateAdButtons(); this.tickHourly(); }, 1000);
         this.updateAdButtons();
         this.tickHourly();
         this.makePickupSprites();
@@ -11230,26 +11723,16 @@ class Game {
     bindEvents() {
         this.bindMetaEvents();
         const onTap = (el, fn) => { if (el) el.onclick = (e) => { if (e && e.stopPropagation) e.stopPropagation(); fn(e); }; };
-        onTap(this.ui.pixelsOpenBtn, () => this.openPixels('all'));
-        onTap(this.ui.shopPixelsBtn, () => this.openPixels('shop'));
-        onTap(this.ui.pixelsBackBtn, () => this.setMenuPanel('sp'));
+        onTap(this.ui.skinPrevBtn, () => this.stepOwnedSkin(-1));
+        onTap(this.ui.skinNextBtn, () => this.stepOwnedSkin(1));
+        onTap(this.ui.boosterGemsBtn, () => this.watchGemBoost());
+        [this.ui.shopTabRent, this.ui.shopTabPixels, this.ui.shopTabBoosters]
+            .forEach(b => onTap(b, () => this.setShopTab(b.dataset.tab)));
+        if (this.ui.shopPanelPixels) this.ui.shopPanelPixels.onclick = (e) => this.onShopPixelsClick(e);
+        if (this.ui.shopTabs) this.ui.shopTabs.onkeydown = (e) => this.onShopTabsKey(e);
         onTap(this.ui.buyConfirmYes, () => this.confirmBuyPixel());
         onTap(this.ui.buyConfirmNo, () => this.closeBuyConfirm());
         if (this.ui.buyConfirm) this.ui.buyConfirm.onclick = (e) => { if (e.target === this.ui.buyConfirm) this.closeBuyConfirm(); };
-        if (this.ui.pixelTabs && this.ui.pixelTabs.querySelectorAll) {
-            this.ui.pixelTabs.querySelectorAll('.pixel-tab').forEach(b => onTap(b, () => this.setPixelTab(b.dataset.tab)));
-        }
-        if (this.ui.pixelGrid) {
-            const pick = (e) => {
-                const card = e.target.closest && e.target.closest('.pixel-card');
-                if (!card || e.target.closest('.perk-tag')) return;
-                this.pickPixel(parseInt(card.dataset.index, 10), card);
-            };
-            this.ui.pixelGrid.onclick = pick;
-            this.ui.pixelGrid.onkeydown = (e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e); }
-            };
-        }
 
         if (this.ui.shopLifeBtn) {
             this.ui.shopLifeBtn.onclick = (e) => {
@@ -11262,7 +11745,7 @@ class Game {
         if (this.ui.shopOpenBtn) {
             this.ui.shopOpenBtn.onclick = (e) => {
                 e.stopPropagation();
-                this.setMenuPanel('shop');
+                this.openShop();
             };
             this.ui.shopBackBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -11357,6 +11840,14 @@ class Game {
         // Leaving the tab or window pauses a solo run.
         document.addEventListener('visibilitychange', () => { if (document.hidden) { this.saveBest(); this.autoPause(); } });
         window.addEventListener('blur', () => this.autoPause());
+
+        // ← / → step through the shop's SINGLE view.
+        window.addEventListener('keydown', (e) => {
+            if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight') return;
+            if (!this.canMenuKey(e, 'shop') || this.shopTab !== 'pixels' || this.shopView !== 'single') return;
+            e.preventDefault();
+            this.shopStep(e.code === 'ArrowLeft' ? -1 : 1);
+        });
 
         // Esc / P: close the topmost thing, or pause the run.
         window.addEventListener('keydown', (e) => {
@@ -11605,7 +12096,7 @@ class Game {
     // The same rules for any menu panel's keys (the solo menu, the shop).
     canMenuKey(e, panel) {
         if (e.repeat || this.state.running || this.ads.playing) return false;
-        if (this.activeMenuPanel !== panel || this.runCardOpen || this.settingsOpen || this.hourlyOpen || this.buyConfirmOpen) return false;
+        if (this.activeMenuPanel !== panel || this.runCardOpen || this.settingsOpen || this.buyConfirmOpen) return false;
         const revive = this.ads && this.ads.reviveOverlay;
         if (revive && revive.style.display === 'flex') return false;
         const t = e.target;
@@ -11630,9 +12121,7 @@ class Game {
     // pages (focusing one also scrolled the clipped wrapper).
     setMenuPanel(panel) {
         this.activeMenuPanel = panel;
-        const sp = this.ui.menu, mp = this.ui.menuLayer2, shop = this.ui.shopLayer, records = this.ui.recordsLayer, pixels = this.ui.pixelsLayer;
-        if (pixels) pixels.style.transform = panel === 'pixels' ? 'translateY(0)' : 'translateY(100%)';
-        if (pixels) pixels.inert = panel !== 'pixels';
+        const sp = this.ui.menu, mp = this.ui.menuLayer2, shop = this.ui.shopLayer, records = this.ui.recordsLayer;
         if (sp) sp.style.transform = panel === 'mp' ? 'translateX(-100%)' : 'translateX(0)';
         if (mp) mp.style.transform = panel === 'mp' ? 'translateX(0)' : 'translateX(100%)';
         if (shop) shop.style.transform = panel === 'shop' ? 'translateY(0)' : 'translateY(100%)';
@@ -12881,10 +13370,9 @@ class Game {
 
     startGame(isMp = false, mpSeed = null) {
         if (this.installGated) return;
-        // A Pixel of the Hour whose hour ended a moment ago comes off first.
-        const worn = SKINS[this.viewParams.skinIndex];
-        if (worn && worn.hourly && this.isSkinLocked()) this.updateSkinUI();
-        this.closeHourly();
+        // A Rental whose hour ended a moment ago comes off first.
+        const equipped = SKINS[this.viewParams.skinIndex];
+        if (equipped && equipped.hourly && this.isSkinLocked()) this.updateSkinUI();
         // Whatever menu button had focus must not catch the Space/Enter that
         // follows, and keys held in the menu shouldn't carry into the run.
         this.blurFocus();
@@ -12899,10 +13387,19 @@ class Game {
         this.runSerial = (this.runSerial || 0) + 1;
         this.reset(isMp ? mpSeed : null);
         // Every run starts with the free heart plus the hearts bought for it;
-        // the bought count is spent into the run, so it resets.
+        // the bought count is spent into the run, so it resets. Hearts that
+        // don't fit this Pixel's cap (bought for a roomier one) are refunded.
         const bought = this.state.hearts;
+        const fit = Math.min(bought, this.heartCap() - 1);
+        const refund = (bought - fit) * HEART_COST;
+        if (refund > 0) {
+            this.state.gems += refund; // not addGems: a refund isn't earned in the run
+            saveItem('lp_gems', this.state.gems);
+            if (this.ui.gemDisplay) this.ui.gemDisplay.innerHTML = counted(fmtNum(this.state.gems), 'gem');
+            this.notify((bought - fit) + (bought - fit === 1 ? ' HEART' : ' HEARTS') + " DIDN'T FIT: +" + fmtNum(refund) + ' GEMS', 'reward');
+        }
         saveItem('lp_hearts', 0);
-        this.setHearts(1 + bought);
+        this.setHearts(1 + fit);
 
         this.ui.menu.style.opacity = 0;
         if (this.ui.menusWrapper) this.ui.menusWrapper.style.opacity = 0;
@@ -13861,7 +14358,7 @@ class Game {
     }
 }
 
-// Game's co-op, shop, sharing, Pixel of the Hour and leaderboard methods live
+// Game's co-op, shop, sharing, Rental and leaderboard methods live
 // in js/coop.js, js/shop.js, js/share.js, js/hourly.js and js/leaderboard.js
 // (loaded before this file). They're written as classes so they
 // run in strict mode like the rest of Game, and copied onto it here exactly

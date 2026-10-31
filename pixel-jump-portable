@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.31.2, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.32.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -9,6 +9,8 @@
     <meta name="description" content="A neon endless jumper. Climb through eight biomes, beat the boss and race today's daily run, solo or in co-op with up to four friends.">
     <meta name="theme-color" content="#050505">
     <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNiAyNiIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KICA8IS0tIFVuaXQgNzM0LCBzaW1wbGlmaWVkIGZvciAxNnB4IGxlZ2liaWxpdHk6IGZsYXQgcGluayBzcXVhcmUgZmlsbGluZyB0aGUgY2FudmFzLCBubyBnbG93LCBubyBncmlkIC0tPgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgZmlsbD0iI2ZmMzM2NiIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIi8+CiAgPHJlY3QgeD0iNSIgeT0iNyIgd2lkdGg9IjUiIGhlaWdodD0iNSIgZmlsbD0iI2ZmZmZmZiIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIi8+CiAgPHJlY3QgeD0iMTYiIHk9IjciIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiNmZmZmZmYiIHNoYXBlLXJlbmRlcmluZz0iY3Jpc3BFZGdlcyIvPgo8L3N2Zz4K" type="image/svg+xml">
+
+
     <style>
 @font-face {
   font-family: 'Orbitron';
@@ -63,6 +65,7 @@
     --tier-rare: #4da3ff;
     --tier-epic: #c06bff;
     --tier-legendary: #ff9a2e;
+    --tier-mythic: #ff2d55;
     --pixel-deep: #a31440;
     --gem: #33e0ff;                   /* gems and prices */
     --gem-rgb: 51, 224, 255;
@@ -2260,21 +2263,6 @@ body.reduce-motion .page-title--brand {
     letter-spacing: 0.8px;
 }
 
-.run-card-unlocks:empty {
-    display: none;
-}
-
-.run-card-unlocks {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    color: var(--gold);
-    font-family: var(--font-text);
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
 .run-card-actions {
     display: flex;
     gap: 8px;
@@ -2283,8 +2271,16 @@ body.reduce-motion .page-title--brand {
 .run-card-actions .btn {
     flex: 1;
     min-width: 0;
+    /* Phones: the three primary actions on the run card must each be a 44px
+       touch target (they measured 39.6px at 390x844). */
+    min-height: 44px;
     padding-left: 8px;
     padding-right: 8px;
+}
+
+/* SHARE RUN is a full-width button under that pair, not inside it. */
+#run-share-btn {
+    min-height: 44px;
 }
 
 #share-toast {
@@ -2784,6 +2780,7 @@ body.reduce-motion *::after {
 .tier-rare { --tier: var(--tier-rare); }
 .tier-epic { --tier: var(--tier-epic); }
 .tier-legendary { --tier: var(--tier-legendary); }
+.tier-mythic { --tier: var(--tier-mythic); }
 
 /* ---- Pixel picker (ALL / OWNED / SHOP / HOUR) ---- */
 .pixel-tabs {
@@ -3093,7 +3090,7 @@ body.reduce-motion *::after {
 
                     <div class="home-actions">
                         <div class="menu-scores">
-                            <span id="menu-highscore">HIGH SCORE: 0m</span>
+                            <span id="menu-highscore">BEST HEIGHT: 0m</span>
                             <span id="menu-lastscore" hidden>LAST RUN: 0m</span>
                         </div>
                         <button id="start-prompt" class="btn btn--primary btn--big">PLAY</button>
@@ -3239,7 +3236,6 @@ body.reduce-motion *::after {
                 <div id="run-card-distance" class="run-card-distance">0m</div>
                 <div id="run-card-best" class="run-card-best" hidden>★ NEW BEST ★</div>
                 <div id="run-card-stats" class="run-card-stats"></div>
-                <div id="run-card-unlocks" class="run-card-unlocks"></div>
                 <div id="run-card-lb" class="run-card-lb" hidden>
                     <div id="run-card-lb-title" class="run-card-lb-title"></div>
                     <div id="run-card-lb-row" class="run-card-lb-row">
@@ -3344,7 +3340,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.31.2';
+    const EMBEDDED = '1.32.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -3542,8 +3538,8 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.31.2';
-const NET_PROTOCOL = 10;
+const GAME_VERSION = '1.32.0';
+const NET_PROTOCOL = 11;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
 // to NEW_ORIGIN and redirects there (js/migrate.js). Empty = no move yet.
@@ -3597,15 +3593,16 @@ const PLATFORM = (typeof window !== 'undefined' && window.PJ_PLATFORM === 'porta
 // Sitelock: the only sites the web and portal copies run on, each with its
 // subdomains. A copy of the files hosted anywhere else shows a note pointing
 // here instead of the game. The portable build ('portable') skips this check. CrazyGames serves its copy from several crazygames.com
-// origins, its apps (https:// and capacitor://app.crazygames.com) and
-// 1001juegos; trey-hamilton227.workers.dev is our Cloudflare previews.
+// origins and its apps (https:// and capacitor://app.crazygames.com);
+// trey-hamilton227.workers.dev is our Cloudflare previews. 1001juegos.com is
+// not listed: it now redirects to crazygames.com, so its origin is covered.
 // pixeljump.pages.dev is a second home on Cloudflare Pages (npm run
 // build:pages); its saves are its own, since localStorage is per origin.
 // deltamath.app is a third home: an extra custom domain on the same Pages
 // project, so a merge to main deploys there too (same Securly refusal,
 // same AWS Turnstile check).
 const SITELOCK_HOSTS = ['pixeljump.online', 'pixeljump.pages.dev', 'deltamath.app',
-    'crazygames.com', '1001juegos.com',
+    'crazygames.com',
     'trey-hamilton227.workers.dev', 'localhost', '127.0.0.1'];
 function siteAllowed(hostname) {
     // The portable build is meant to run from file:// and any static host.
@@ -3754,18 +3751,20 @@ const BOSS = {
     DIVE_SPEED: 16,      // px per frame
     EXPOSED: 90,         // how long it sits at the player's level
     RECOVER: 45,         // time to climb back to hover height
+    HIT_HOLD: 15,        // after a hit it holds still this long before climbing away
     HIT_INVULN: 40,      // invulnerability after each hit
     ABOVE_FEET: 50       // exposed: its top sits this far above the target's feet
 };
-// Beating the boss: bonus distance (score only, the camera doesn't move) and
-// a gem bounty (not doubled by GEMS x2). The next boss is BOSS_LOOP_DISTANCE
-// metres further on.
+// Beating the boss pays gems only (score is height, ADR-0006): a bounty
+// multiplied by the player's own GEMS x2 perk and 2X GEMS booster, which
+// stack. The next boss is BOSS_LOOP_DISTANCE metres further on.
 // Hits to kill the boss: the first one of a run takes 3, then 5, 7 and 10,
 // and every boss after that stays at 10.
 const BOSS_HP_STEPS = [3, 5, 7, 10];
 const bossHpFor = (beaten) => BOSS_HP_STEPS[Math.min(beaten || 0, BOSS_HP_STEPS.length - 1)];
-const BOSS_BONUS_METERS = 500;
-const BOSS_GEM_BOUNTY = 150;
+const BOSS_GEM_BOUNTY = 300;
+const bossBountyFor = (perks, gemBoostActive) =>
+    BOSS_GEM_BOUNTY * ((perks && perks.gemMult) || 1) * (gemBoostActive ? 2 : 1);
 
 // Each biome's `hazards` list is cumulative: once a hazard is introduced by a
 // biome, it stays active in every later biome too (by The Void, everything is
@@ -3873,13 +3872,7 @@ const PARTY_COLORS = ['#00ffff', '#ff3cf0', '#ffe600', '#ff8a00'];
 // running game still addresses skins by SKINS index (Player, co-op sync),
 // which is fine as long as every client ships the same list.
 const SKINS = [
-    { id: 'unit734', name: "Unit 734", tier: 'uncommon', color: "#ff3366", eye: "white", unlock: 0, ability: {} },
-    { id: 'ghost', name: "The Ghost", tier: 'uncommon', color: "#ffffff", eye: "black", unlock: 150, ability: { gravityMult: 0.85, holdJump: true } },
-    { id: 'matrix', name: "Matrix", tier: 'uncommon', color: "#00ff00", eye: "black", unlock: 350, ability: { speedMult: 1.2, airJump: true } },
-    { id: 'deepvoid', name: "Deep Void", tier: 'uncommon', color: "#330033", eye: "#ff00ff", unlock: 700, ability: { jumpMult: 1.15, gemMagnetRadius: 150 } },
-    { id: 'golden', name: "Golden", tier: 'rare', color: "#ffd700", eye: "#8B4500", unlock: 1400, ability: { speedMult: 1.1, gravityMult: 0.9, gemMult: 2 } },
-    { id: 'glitch', name: "Glitch", tier: 'rare', color: "#00ffff", eye: "white", unlock: 2500, ability: { jumpMult: 1.1, speedMult: 1.1, powerDurationMult: 1.5 } },
-    { id: 'theend', name: "The End", tier: 'rare', color: "#111", eye: "red", unlock: 4000, ability: { gravityMult: 0.75, smash: true } },
+    { id: 'unit734', name: "Unit 734", tier: 'uncommon', color: "#ff3366", eye: "white", ability: {} },
 
     // Gem-shop Pixels, cheapest first. Each one beats every free Pixel: the
     // bottom two carry one big stat (+30% jump already means 1.7x the jump
@@ -3902,19 +3895,14 @@ const SKINS = [
     { id: 'ninja', name: "Ninja", tier: 'legendary', color: "#1a1a2e", eye: "#c9d1ff", cost: 50000, ability: { speedMult: 1.3, ninja: true } },
     { id: 'rocket', name: "Rocket", tier: 'legendary', color: "#ff3300", eye: "#ffffff", cost: 65000, ability: { rocket: true, powerDurationMult: 2, speedMult: 0.85 } },
     { id: 'bulwark', name: "Bulwark", tier: 'legendary', color: "#4a5568", eye: "#ffcc00", cost: 80000, ability: { heartCap: 5, smash: true, jumpMult: 1.2 } },
-    { id: 'overclock', name: "Overclock", tier: 'legendary', color: "#ff2222", eye: "#ffe600", cost: 100000, ability: { speedMult: 1.3, jumpMult: 1.3, powerDurationMult: 2, scoreMult: 2 } },
+    // The one Mythic Pixel, the top of the shop.
+    { id: 'overclock', name: "Overclock", tier: 'mythic', color: "#ff2222", eye: "#ffe600", cost: 100000, ability: { speedMult: 1.3, jumpMult: 1.3, powerDurationMult: 2, gemMagnetRadius: 150 } },
 
-    // Secret skins: never shown in the menu picker until their distance is
-    // reached (see Game.unlockedSkinIndexes()), one per new biome.
-    { id: 'riftdiver', name: "Rift Diver", tier: 'epic', color: "#6600cc", eye: "#00ffff", unlock: 5000, secret: true, ability: { powerDurationMult: 1.5 } },
-    { id: 'neonghost', name: "Neon Ghost", tier: 'epic', color: "#ff0099", eye: "#00ffff", unlock: 8000, secret: true, ability: { gemMagnetRadius: 150 } },
-    { id: 'staticking', name: "Static King", tier: 'legendary', color: "#ffffff", eye: "#ff0000", unlock: 12000, secret: true, ability: { speedMult: 1.25, biomeImmune: true } },
-    { id: 'thevoid', name: "The Void", tier: 'legendary', color: "#000000", eye: "#ff0000", unlock: 17000, secret: true, ability: { startAtScore: 50000, jumpMult: 1.1 } },
 
     // Pixels of the Hour (js/hourly.js): one of these is on offer each hour,
     // worn until the next :00 after watching an ad (or for gems). Each has a
     // two-colour `pattern` over its body (drawPixel / pixelBodyCSS), which no
-    // other Pixel has, and mid-shop-tier perks: never SCORE x2 or RIFT. They
+    // other Pixel has, and mid-shop-tier perks, never Mythic. They
     // don't count as unlocks. Appended here so no other Pixel's index moves.
     { id: 'h_sunset', name: "Sunset Strip", tier: 'epic', color: "#ff7a00", color2: "#ff2d95", eye: "#2a0010", pattern: 'stripes', hourly: true, ability: { speedMult: 1.25, powerDurationMult: 1.5 } },
     { id: 'h_mint', name: "Mint Condition", tier: 'rare', color: "#3dffb4", color2: "#0a7f5a", eye: "#1a0033", pattern: 'split', hourly: true, ability: { jumpMult: 1.2, gemMagnetRadius: 150 } },
@@ -3931,14 +3919,14 @@ const SKINS = [
     { id: 'h_deepsea', name: "Deep Sea", tier: 'rare', color: "#003b73", color2: "#00e5ff", eye: "#00e5ff", pattern: 'ring', hourly: true, ability: { gravityMult: 0.75, powerDurationMult: 1.5 } },
     { id: 'h_ember', name: "Ember", tier: 'epic', color: "#2a0a00", color2: "#ff4d00", eye: "#ffffff", pattern: 'checker', hourly: true, ability: { jumpMult: 1.25, dronePulseSec: 6 } },
     { id: 'h_aurora', name: "Aurora", tier: 'epic', color: "#00ffa3", color2: "#7a5cff", eye: "#0d0033", pattern: 'gradient', hourly: true, ability: { speedMult: 1.2, gemMult: 2 } },
-    { id: 'h_cherry', name: "Cherry Cola", tier: 'epic', color: "#b3001b", color2: "#2b0000", eye: "#ffd1d9", pattern: 'split', hourly: true, ability: { jumpMult: 1.2, holdJump: true } },
+    { id: 'h_cherry', name: "Cherry Cola", tier: 'epic', color: "#b3001b", color2: "#2b0000", eye: "#ffd1d9", pattern: 'split', hourly: true, ability: { jumpMult: 1.2, powerDurationMult: 2 } },
     { id: 'h_tiger', name: "Neon Tiger", tier: 'rare', color: "#ff8c00", color2: "#111111", eye: "#111111", pattern: 'stripes', hourly: true, ability: { speedMult: 1.2, biomeImmune: true } },
     { id: 'h_frost', name: "Frostbyte", tier: 'epic', color: "#e0fbff", color2: "#7df9ff", eye: "#004d66", pattern: 'checker', hourly: true, ability: { jumpMult: 1.2, airJump: true } },
     { id: 'h_sakura', name: "Sakura", tier: 'rare', color: "#ffc0d9", color2: "#ff5c9a", eye: "#4d0026", pattern: 'diagonal', hourly: true, ability: { gravityMult: 0.8, gemMagnetRadius: 150 } },
     { id: 'h_hacker', name: "Hacker", tier: 'legendary', color: "#0d0d0d", color2: "#00ff41", eye: "#0d0d0d", pattern: 'visor', hourly: true, ability: { powerDurationMult: 2, dronePulseSec: 7 } },
     { id: 'h_plasma', name: "Plasma Core", tier: 'rare', color: "#ff00c8", color2: "#00f0ff", eye: "#ffffff", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, jumpMult: 1.1 } },
     { id: 'h_copper', name: "Copper Top", tier: 'rare', color: "#b87333", color2: "#ffd9a0", eye: "#2b1400", pattern: 'visor', hourly: true, ability: { jumpMult: 1.2, powerDurationMult: 1.5 } },
-    { id: 'h_midnight', name: "Midnight Oil", tier: 'epic', color: "#1b1464", color2: "#6c5ce7", eye: "#ffe66d", pattern: 'split', hourly: true, ability: { gravityMult: 0.75, holdJump: true } },
+    { id: 'h_midnight', name: "Midnight Oil", tier: 'epic', color: "#1b1464", color2: "#6c5ce7", eye: "#ffe66d", pattern: 'split', hourly: true, ability: { gravityMult: 0.75, powerDurationMult: 2 } },
     { id: 'h_keylime', name: "Key Lime", tier: 'rare', color: "#c6ff00", color2: "#1f7a1f", eye: "#1f3d00", pattern: 'ring', hourly: true, ability: { speedMult: 1.25, gemMagnetRadius: 150 } }
 ];
 
@@ -3948,7 +3936,8 @@ const PIXEL_TIERS = {
     uncommon: { label: 'UNCOMMON', order: 0 },
     rare: { label: 'RARE', order: 1 },
     epic: { label: 'EPIC', order: 2 },
-    legendary: { label: 'LEGENDARY', order: 3 }
+    legendary: { label: 'LEGENDARY', order: 3 },
+    mythic: { label: 'MYTHIC', order: 4 }
 };
 function pixelTier(pixel) {
     return (pixel && PIXEL_TIERS[pixel.tier]) ? pixel.tier : 'uncommon';
@@ -3975,6 +3964,16 @@ function skinIndexById(id) {
 // the perk already gives for good, which that Pixel then never rolls. Tags
 // render in this order.
 const perkPct = (mult) => Math.round(Math.abs(mult - 1) * 100) + '%';
+// Host: may a guest wearing `pixel` set off an EMP now (frames of game
+// time), given its last accepted one? A few frames of slack absorb timing
+// jitter between clients; any faster is a modified client.
+const EMP_SLACK_FRAMES = 10;
+function empRequestAllowed(pixel, lastFrame, nowFrame) {
+    const sec = pixel && pixel.ability && pixel.ability.dronePulseSec;
+    if (!sec) return false;
+    return lastFrame === undefined || nowFrame - lastFrame >= sec * 60 - EMP_SLACK_FRAMES;
+}
+
 const PERKS = [
     { key: 'speedMult', label: 'SPEED', color: '#00ccff', active: v => !!v && v > 1,
       describe: v => '+' + perkPct(v) + ' move speed',
@@ -3989,8 +3988,6 @@ const PERKS = [
       describe: () => 'Always pulls in nearby gems' },
     { key: 'heartCap', label: '5 HEARTS', color: '#ff3366', active: v => !!v,
       describe: v => 'Can hold up to ' + v + ' hearts in a run' },
-    { key: 'holdJump', label: 'HOLD JUMP', color: '#7cffcb', active: v => !!v,
-      describe: () => 'Hold jump to jump again every time you land' },
     { key: 'smash', label: 'SMASH', color: '#ff6b35', active: v => !!v,
       describe: () => 'Drones and bots die when they touch you. Bullets, lasers, meteors and bosses still hurt' },
     { key: 'ninja', label: 'NINJA', color: '#c9d1ff', active: v => !!v,
@@ -3999,18 +3996,14 @@ const PERKS = [
     { key: 'rocket', label: 'ROCKET', color: '#ff3300', active: v => !!v,
       describe: () => 'Every power-up you pick up is a JETPACK',
       downside: v => v ? { label: HEART_CAP_ROCKET + ' HEARTS MAX', describe: 'Holds at most ' + HEART_CAP_ROCKET + ' hearts in a run' } : null },
-    { key: 'startAtScore', label: 'RIFT', color: '#9933ff', active: v => !!v,
-      describe: v => 'Solo runs start at ' + Math.floor(v / 10) + 'm (The Rift)' },
     { key: 'airJump', label: 'AIR JUMP', color: '#ff66ff', active: v => !!v, covers: 'DOUBLE',
       describe: () => 'Always has a double jump' },
     { key: 'dronePulseSec', label: 'EMP', color: '#00ff99', active: v => !!v,
-      describe: v => 'Every ' + v + 's, destroys all drones on screen (solo only)' },
+      describe: v => 'Every ' + v + 's, destroys all drones on screen, for the whole party in co-op' },
     { key: 'gemMult', label: 'GEMS x2', color: '#33e0ff', active: v => !!v && v !== 1,
       describe: v => 'Gem pickups are worth ' + v + 'x' },
     { key: 'biomeImmune', label: 'SHIELDED', color: '#3399ff', active: v => !!v,
-      describe: () => 'Immune to ice, gravity pulses and glitches' },
-    { key: 'scoreMult', label: 'SCORE x2', color: '#ff3333', active: v => !!v && v !== 1,
-      describe: v => 'Climbing earns ' + v + 'x distance score' }
+      describe: () => 'Immune to ice, gravity pulses and glitches' }
 ];
 
 // The perks a Pixel actually grants, in PERKS order, each with its value.
@@ -4042,8 +4035,7 @@ const POWERS = {
 
 // The six feats. `desc` is the exact wording; `progress(state)` (0..1) feeds
 // the bar where progress is measurable (distance, gems held) and is left out
-// for one-shot feats. Reaching a Pixel's unlock height is not an achievement:
-// it is a NEW PIXEL moment (Game.checkPixelUnlocks()).
+// for one-shot feats.
 const ACHIEVEMENTS = [
     { id: '1km', name: 'Kilometer Club', desc: 'Reach 1,000m in one run',
       condition: (state, player) => state.score - (state.startMeters || 0) * 10 >= 10000,
@@ -4073,6 +4065,26 @@ const ACHIEVEMENTS = [
 // transfer hash (js/migrate.js) uses this format. The SAVE DATA backup codes
 // (site and portable build) wrap the same string in an encrypted envelope, so
 // they are not interchangeable with the site transfer hash.
+
+function storageGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+
+function storageRemove(key) {
+    try { localStorage.removeItem(key); } catch (e) { /* storage blocked */ }
+}
+
+// Writes a save. Storage can be full or blocked, and a throw here would
+// escape into the game loop mid-run, so a failed write is dropped instead.
+// Returns false when it didn't stick.
+function saveItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
 
 // The daily ghost is large and only good for today; everything else moves.
 const SAVE_TRANSFER_SKIP = ['lp_ghost'];
@@ -5962,9 +5974,9 @@ class InputHandler {
             // iframe's parent) and from re-activating a focused button.
             e.preventDefault();
         }
-        // Key autorepeat doesn't re-press: holding jump re-jumps only with HOLD JUMP.
+        // Key autorepeat doesn't re-press: holding jump re-jumps only on a landing.
         if (role === 'jump' && !e.repeat) this.keys.buffer = 6;
-        // Jump is tracked as held too (HOLD JUMP re-jumps on landing).
+        // Jump is tracked as held too (every Pixel re-jumps on landing while it is held).
         this.heldCodes.set(InputHandler.keyId(e), role);
         this.syncDirections();
     }
@@ -7122,9 +7134,9 @@ class Player extends Entity {
             this.doubleReady = true;
             this.wallJumps = NINJA_WALL_JUMPS;
             this.wallContact = 0;
-            // HOLD JUMP: a held jump input fires again on every landing, as
+            // Every Pixel: a held jump input fires again on every landing, as
             // if it had just been pressed.
-            if (ability.holdJump && input.keys.jump && input.keys.buffer <= 0) input.keys.buffer = 1;
+            if (input.keys.jump && input.keys.buffer <= 0) input.keys.buffer = 1;
         } else if (this.coyote > 0) {
             this.coyote -= dt;
         }
@@ -7744,7 +7756,7 @@ class BossDrone extends Entity {
                 break;
 
             case 'recover':
-                easeY(hoverY, 0.1);
+                if (this.timer <= BOSS.RECOVER) easeY(hoverY, 0.1);
                 this.timer -= dt;
                 if (this.timer <= 0) this.enterHover();
                 break;
@@ -7756,9 +7768,11 @@ class BossDrone extends Entity {
         this.timer = this.raging ? BOSS.HOVER_RAGE : BOSS.HOVER;
     }
 
-    startRecover() {
+    // `hold` frames of standing still first (after a hit, so the stomped
+    // Pixel's spring carries it clear before the boss starts to climb).
+    startRecover(hold = 0) {
         this.state = 'recover';
-        this.timer = BOSS.RECOVER;
+        this.timer = BOSS.RECOVER + hold;
     }
 
     // Commit to a dive at `target`: its lane, and a landing height that puts
@@ -7787,7 +7801,7 @@ class BossDrone extends Entity {
         if (this.hp <= 0) {
             this.markedForDeletion = true;
         } else {
-            this.startRecover();
+            this.startRecover(BOSS.HIT_HOLD);
             this.shootTimer = 30;
         }
         return true;
@@ -8151,7 +8165,6 @@ class NetworkManager {
                 this.reconnectAttempts = 0;
                 if (settled) return;
                 settled = true;
-                console.log("PeerJS: Signaling channel open. ID:", assignedId);
                 this.myId = assignedId;
                 resolve(assignedId);
             });
@@ -9100,7 +9113,7 @@ class GameCoop {
         // traffic from guests (never party control messages), and a guest
         // only listens to its host.
         if (this.state.isHost) {
-            if (!['handshake', 'sync', 'die', 'revive', 'hit', 'stomp', 'pick'].includes(data.type)) return;
+            if (!['handshake', 'sync', 'die', 'revive', 'hit', 'stomp', 'pick', 'emp'].includes(data.type)) return;
             // Gameplay only from seated players, not a joiner still being
             // introduced or one being turned away.
             if (data.type !== 'handshake' && !this.party.some(m => m.pid === fromId)) return;
@@ -9211,6 +9224,8 @@ class GameCoop {
             if (this.state.isHost) this.applyHitRequest(data, fromId);
         } else if (data.type === 'stomp') {
             if (this.state.isHost) this.applyStompRequest(data, fromId);
+        } else if (data.type === 'emp') {
+            if (this.state.isHost) this.applyEmpRequest(fromId);
         } else if (data.type === 'boss_down') {
             if (!this.state.isHost && this.state.running && this.state.multiplayer) this.onBossDefeated();
         }
@@ -9448,6 +9463,17 @@ class GameCoop {
         if (!this.state.running || !Number.isInteger(d.nid)) return;
         const boss = this.enemies.find(e => e instanceof BossDrone && e.nid === d.nid);
         if (boss && this.guestNear(fromId, boss)) boss.takeDamage(this.particles);
+    }
+
+    // Host: a guest's EMP went off. Only from a guest whose equipped Pixel
+    // has EMP, no faster than its interval, and only around that guest.
+    applyEmpRequest(fromId) {
+        const rp = this.remotePlayers.get(fromId);
+        if (!this.state.running || !rp || !rp.net) return;
+        const last = this.state.empLast || (this.state.empLast = {});
+        if (!empRequestAllowed(SKINS[rp.skinIndex], last[fromId], this.state.time)) return;
+        last[fromId] = this.state.time;
+        this.empBlastAround(rp.net.wy);
     }
 
     // Dead in co-op: the camera follows whoever is lowest; say who (and
@@ -9701,7 +9727,8 @@ class GameShop {
         ];
         const owned = loadJSON('lp_owned_skins', null, Array.isArray);
         if (Array.isArray(owned) && owned.some(v => typeof v === 'number')) {
-            const ids = owned.map(v => typeof v === 'number' ? LEGACY_SKIN_IDS[v] : v).filter(Boolean);
+            // Height Pixels from that list no longer exist (1.32.0): drop them.
+            const ids = owned.map(v => typeof v === 'number' ? LEGACY_SKIN_IDS[v] : v).filter(id => id && skinIndexById(id) >= 0);
             saveItem('lp_owned_skins', JSON.stringify([...new Set(ids)]));
         }
         const equipped = storageGet('lp_skin');
@@ -9715,12 +9742,11 @@ class GameShop {
         if (!s) return true;
         if (s.hourly) return !this.hourlyUnlocked(s);
         if (s.cost !== undefined) return !this.ownedSkins.includes(s.id);
-        return this.state.bestHeight < s.unlock;
+        return false; // Unit 734, the free starter
     }
 
     // The menu picker only ever offers Pixels the player can actually use:
-    // locked gem Pixels live in the shop, and locked distance/secret ones stay
-    // a surprise until they're earned.
+    // locked gem Pixels live in the shop.
     unlockedSkinIndexes() {
         return SKINS.map((s, i) => i).filter(i => !this.isSkinLocked(i));
     }
@@ -9798,13 +9824,11 @@ class GameShop {
 
     // ------------------------------------------------------- Pixel picker
     // One grid of every Pixel the player can see, in ALL / OWNED / SHOP / HOUR
-    // tabs. Secret Pixels stay hidden until bestHeight reaches them (never
-    // highScore, ADR 0004); only this hour's Pixel of the Hour is listed.
+    // tabs. Only this hour's Pixel of the Hour is listed.
     pixelPickerRows(tab = this.pixelTab) {
         const hourNow = hourlySkinAt();
         const visible = SKINS.map((s, i) => ({ s, i })).filter(({ s }) => {
             if (s.hourly) return s === hourNow;
-            if (s.secret) return this.state.bestHeight >= s.unlock;
             return true;
         });
         if (tab === 'owned') return visible.filter(({ i }) => !this.isSkinLocked(i));
@@ -9824,8 +9848,8 @@ class GameShop {
         this.setMenuPanel('pixels');
     }
 
-    // The line under a card: what it costs, where it unlocks, how long the
-    // hour has left, or that it is yours.
+    // The line under a card: what it costs, how long the hour has left, or
+    // that it is yours.
     pixelCardStatus(s, i, now = Date.now()) {
         if (this.viewParams.skinIndex === i && !this.isSkinLocked(i)) return { text: 'EQUIPPED' };
         if (!this.isSkinLocked(i)) {
@@ -9835,8 +9859,7 @@ class GameShop {
             const price = counted(fmtNum(hourlyPixelCost(s)), 'gem');
             return { html: price + ' <span class="js-hour-left">' + fmtClock(nextHourAt(now) - now) + '</span> LEFT', poor: this.state.gems < hourlyPixelCost(s) };
         }
-        if (s.cost !== undefined) return { html: counted(fmtNum(s.cost), 'gem'), poor: this.state.gems < s.cost };
-        return { text: 'UNLOCKS AT ' + fmtNum(s.unlock) + 'm' };
+        return { html: counted(fmtNum(s.cost), 'gem'), poor: this.state.gems < s.cost };
     }
 
     renderPixelGrid() {
@@ -9884,15 +9907,11 @@ class GameShop {
             this.equipSkin(index);
         } else if (s.hourly) {
             this.openHourly();
-        } else if (s.cost !== undefined) {
-            if (this.state.gems >= s.cost) this.openBuyConfirm(index);
-            else {
-                this.shakeUI(card);
-                this.notify('NEED ' + fmtNum(s.cost) + ' GEMS FOR ' + s.name.toUpperCase(), 'warning');
-            }
+        } else if (this.state.gems >= s.cost) {
+            this.openBuyConfirm(index);
         } else {
             this.shakeUI(card);
-            this.notify(s.name.toUpperCase() + ' UNLOCKS AT ' + fmtNum(s.unlock) + 'm', 'info');
+            this.notify('NEED ' + fmtNum(s.cost) + ' GEMS FOR ' + s.name.toUpperCase(), 'warning');
         }
     }
 
@@ -9999,7 +10018,7 @@ class GameShop {
     }
 
     // Buying a Pixel also equips it — that's why you bought it.
-    // ------------------------------------------- 2x gems booster (ads)
+    // ------------------------------------------- 2X GEMS booster (ads)
     // Watching an ad makes gem pickups count double for GEM_BOOST_MS of real
     // time. It's offered only between runs, never with a party (an ad there
     // could hold everyone up), and only while no booster is running.
@@ -10031,7 +10050,7 @@ class GameShop {
         this.ads.showRewarded('gem_boost', () => {
             this.gemBoostUntil = Date.now() + GEM_BOOST_MS;
             saveItem('lp_gem_boost_until', this.gemBoostUntil);
-            this.notify("2x GEMS FOR 15 MINUTES", 'reward');
+            this.notify("2X GEMS FOR 15 MINUTES", 'reward');
             sounds.play('reward');
             this.updateAdButtons();
         }, (why) => {
@@ -10050,12 +10069,12 @@ class GameShop {
                 chip.hidden = false;
                 chip.disabled = true;
                 chip.classList.add('is-active');
-                setHTML(chip, icon('gem') + 'x2 ' + fmtClock(left));
+                setHTML(chip, '2X ' + icon('gem') + ' ' + fmtClock(left));
             } else if (canWatch && !this.runCardOpen) {
                 chip.hidden = false;
                 chip.disabled = false;
                 chip.classList.remove('is-active');
-                setHTML(chip, icon('play') + ' 2x ' + icon('gem'));
+                setHTML(chip, icon('play') + ' 2X ' + icon('gem'));
             } else {
                 chip.hidden = true;
             }
@@ -10136,35 +10155,6 @@ class GameShop {
                 this.showAchievement(g.name);
             }
         });
-        this.checkPixelUnlocks();
-    }
-
-    // Passing a Pixel's unlock height (bestHeight, never highScore) is a NEW
-    // PIXEL moment, not an achievement: a notice with the Pixel itself mid-run,
-    // and a row on the run card. Each is announced once per device
-    // (lp_pixel_unlocks); secret Pixels reveal through the same moment.
-    checkPixelUnlocks() {
-        for (const s of SKINS) {
-            if (s.hourly || s.cost !== undefined || !(s.unlock > 0)) continue;
-            if (this.state.bestHeight < s.unlock || this.pixelUnlocksSeen.includes(s.id)) continue;
-            this.pixelUnlocksSeen.push(s.id);
-            saveItem('lp_pixel_unlocks', JSON.stringify(this.pixelUnlocksSeen));
-            const label = "NEW PIXEL: " + s.name;
-            if (this.state.running && this.state.runUnlocks) this.state.runUnlocks.push(label);
-            this.notify(label, 'unlock', { icon: this.pixelPreviewHTML(s, 'alert-pixel') });
-            if (!this.state.running) this.renderPixelGrid();
-        }
-    }
-
-    // A returning player has already passed some heights: record those once,
-    // silently, so only genuinely new unlocks announce themselves. (Older
-    // saves tracked them as 'skin:*' achievements, which are ignored now.)
-    loadPixelUnlocks() {
-        const seen = loadJSON('lp_pixel_unlocks', null, isStringArray);
-        if (seen) return seen;
-        const ids = SKINS.filter(s => !s.hourly && s.cost === undefined && s.unlock > 0 && this.state.bestHeight >= s.unlock).map(s => s.id);
-        saveItem('lp_pixel_unlocks', JSON.stringify(ids));
-        return ids;
     }
 
     showAchievement(name) {
@@ -10225,9 +10215,7 @@ class GameShare {
         }
     }
 
-    // Only a normal solo start on today's layout: a checkpoint start (The
-    // Void begins at 5000m) is a different climb and would pass most targets
-    // before the first jump.
+    // Only a normal solo start on today's layout.
     challengeActive() {
         return !!this.challenge && !this.state.multiplayer && this.state.runSeed === this.getDailySeed()
             && !this.state.startMeters;
@@ -10546,8 +10534,8 @@ class GameHourly {
 // everyone who plays, kept by the score Worker at SCORES_URL
 // (cloudflare/score-worker/). A solo run that would make the board offers a
 // name box on the run card, and Records shows the board. Climbs are ranked by
-// metres actually climbed (from the run's start, without SCORE x2 or boss
-// bonuses), so every Pixel competes on the same footing.
+// metres climbed from the run's start, so every Pixel competes on the same
+// footing.
 //
 // With no network, or the Worker down, there's simply no board: the panel
 // stays hidden and the run card never asks.
@@ -10780,26 +10768,21 @@ function loadJSON(key, fallback, isValid = () => true) {
 }
 
 // localStorage can throw just by being touched (Safari on file://, storage
-// disabled, a full quota). Saves are best-effort everywhere: these wrappers
-// keep a direct read or remove from escaping into the game constructor.
-function storageGet(key) {
-    try { return localStorage.getItem(key); } catch (e) { return null; }
-}
+// disabled, a full quota). Saves are best-effort everywhere: the storageGet,
+// saveItem and storageRemove wrappers live in js/saves.js (loaded first), so
+// the site and the portable build share one copy.
 
-function storageRemove(key) {
-    try { localStorage.removeItem(key); } catch (e) { /* storage blocked */ }
-}
+// Load-time clamps for numeric saves. localStorage is editable by hand, and a
+// corrupted value used to load as-is: lp_hearts=999 granted 999 spare lives
+// (the cap is MAX_HEARTS), while an absurd gems balance or best height skewed
+// unlocks and display. Every numeric save is a non-negative integer no larger
+// than MAX_SAVE_VALUE (a metre or gem count far beyond any real run).
+const MAX_SAVE_VALUE = 1e9;
 
-// Writes a save. Storage can be full or blocked, and a throw here would
-// escape into the game loop mid-run, so a failed write is dropped instead.
-// Returns false when it didn't stick.
-function saveItem(key, value) {
-    try {
-        localStorage.setItem(key, value);
-        return true;
-    } catch (e) {
-        return false;
-    }
+function saveInt(key, max = MAX_SAVE_VALUE) {
+    const n = parseInt(storageGet(key), 10);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(Math.floor(n), max);
 }
 
 // One of the drawn icons in index.html's sprite (gem, heart, trophy, medal,
@@ -10958,17 +10941,13 @@ class Game {
             multiplayer: false,
             isHost: false,
             score: 0,
-            bonusScore: 0,
-            highScore: parseInt(storageGet('lp_best')) || 0,
-            // Best real height reached, in meters. Distance-gated Pixels unlock
-            // on this, not on highScore: the SCORE x2 perk and boss bonuses
-            // inflate the score, and must not unlock them early. Older saves
-            // only have lp_best, so they start from that.
-            bestHeight: parseInt(storageGet('lp_best_height')) || parseInt(storageGet('lp_best')) || 0,
-            gems: parseInt(storageGet('lp_gems') ?? storageGet('lp_shards')) || 0,
-            loops: parseInt(storageGet('lp_loops')) || 0,
+            // Best height reached, in meters: the one record (ADR-0006). Very
+            // old saves only have lp_best, so they start from that.
+            bestHeight: saveInt('lp_best_height') || saveInt('lp_best'),
+            gems: storageGet('lp_gems') === null ? saveInt('lp_shards') : saveInt('lp_gems'),
+            loops: saveInt('lp_loops'),
             skinIndex: Math.max(0, skinIndexById(storageGet('lp_skin'))),
-            hearts: parseInt(storageGet('lp_hearts')) || 0,
+            hearts: Math.min(MAX_HEARTS, saveInt('lp_hearts')),
             bgOffset: 0,
             time: 0,
             seed: this.getDailySeed(),
@@ -10987,7 +10966,6 @@ class Game {
         this.noticeTimer = null;
 
         this.achievementsOpen = storageGet('lp_achievements_open') === '1';
-        this.pixelUnlocksSeen = this.loadPixelUnlocks();
 
         this.settings = this.loadSettings();
         this.stats = this.loadStats();
@@ -11080,7 +11058,6 @@ class Game {
             runCardDistance: document.getElementById("run-card-distance"),
             runCardBest: document.getElementById("run-card-best"),
             runCardStats: document.getElementById("run-card-stats"),
-            runCardUnlocks: document.getElementById("run-card-unlocks"),
             runCardWait: document.getElementById("run-card-wait"),
             runAgainBtn: document.getElementById("run-again-btn"),
             runMenuBtn: document.getElementById("run-menu-btn"),
@@ -11207,7 +11184,7 @@ class Game {
         this.renderGemShop();
         this.updateHeartUI();
 
-        this.ui.menuScore.innerText = "HIGH SCORE: " + fmtNum(this.state.highScore) + "m";
+        this.ui.menuScore.innerText = "BEST HEIGHT: " + fmtNum(this.state.bestHeight) + "m";
         this.makeMenuScene();
         this.setMenuOpen(true);
         this.updateStartPrompt();
@@ -11548,7 +11525,6 @@ class Game {
         this.ui.runCardDistance.innerText = fmtNum(finalScore) + "m";
         this.ui.runCardBest.hidden = !s.isNewBest;
         this.ui.runCardStats.innerHTML = this.statTilesHTML(stats);
-        this.ui.runCardUnlocks.innerHTML = (s.runUnlocks || []).map(u => `<div>${this.escapeHtml(u)}</div>`).join('');
         this.updateRunCardActions();
         this.ui.runCard.hidden = false;
         this.runCardOpen = true;
@@ -11766,9 +11742,8 @@ class Game {
         this.alertHideTimer = setTimeout(() => this.hideAlert(), 4000);
     }
 
-    // One-shot notices (biome changes, unlocks, rewards) take turns in the
-    // alert box instead of overwriting each other: a secret Pixel unlocks on
-    // the very frame its biome is entered.
+    // One-shot notices (biome changes, rewards) take turns in the alert box
+    // instead of overwriting each other: two can land on the same frame.
     notify(text, type = 'info', opts = {}) {
         this.noticeQueue.push({ text, type, opts });
         if (!this.noticeTimer) this.showNextNotice();
@@ -11930,31 +11905,43 @@ class Game {
         }
     }
 
-    // The run's score in meters: real height climbed plus any SCORE x2 bonus.
+    // The run's score in meters: the height climbed, nothing else (ADR-0006).
     runScore() {
-        return Math.floor((this.state.score + (this.state.bonusScore || 0)) / 10);
+        return Math.floor(this.state.score / 10);
     }
 
-    // EMP perk: every N seconds, wipe every drone on screen (regular, shooter
-    // and laser drones) and every bullet in flight. The boss and the biome's
-    // meteors are immune. Solo only: in co-op the host owns every enemy and
-    // guests only draw mirrors of them, so a guest's pulse would just hide
-    // drones that are still there for everyone else.
+    // EMP perk: every N seconds, wipe every drone (regular, shooter and
+    // laser drones) and bullet on screen. The boss and the biome's meteors
+    // are immune. In co-op the host owns every enemy, so a guest's pulse is
+    // an 'emp' request the host carries out around that guest
+    // (applyEmpRequest); everyone sees the result in the next snapshot.
     updateDronePulse(dt, perks) {
-        if (!perks.dronePulseSec || this.state.multiplayer) return;
+        if (!perks.dronePulseSec) return;
         this.state.pulseTimer = (this.state.pulseTimer || 0) + dt;
         if (this.state.pulseTimer < perks.dronePulseSec * 60) return;
         this.state.pulseTimer = 0;
+        if (!this.isAuthority()) window.network.send({ type: 'emp' });
+        else if (!this.state.multiplayer) this.empBlast(e => e.y + e.h >= 0 && e.y <= CONFIG.HEIGHT);
+        // A co-op host's camera follows the lowest player, so its own pulse
+        // reaches around itself, the same as a guest's.
+        else this.empBlastAround(this.player.y - this.state.score);
+    }
 
+    // Co-op: drones and bullets within one screen height of world y `wy`.
+    empBlastAround(wy) {
+        this.empBlast(e => Math.abs((e.y - this.state.score) - wy) <= CONFIG.HEIGHT);
+    }
+
+    // Destroys every drone and bullet that `inRange(entity)` accepts.
+    empBlast(inRange) {
         let hits = 0;
         this.enemies.forEach(e => {
-            if (!(e instanceof Drone || e instanceof LaserDrone) || e.hidden) return;
-            if (e.y + e.h < 0 || e.y > CONFIG.HEIGHT) return;
+            if (!(e instanceof Drone || e instanceof LaserDrone) || e.hidden || !inRange(e)) return;
             e.markedForDeletion = true;
             this.particles.spawn(e.x + e.w / 2, e.y + e.h / 2, "#00ff99", 15, "blast");
             hits++;
         });
-        this.projectiles.forEach(p => { if (p instanceof Projectile) p.markedForDeletion = true; });
+        this.projectiles.forEach(p => { if (p instanceof Projectile && inRange(p)) p.markedForDeletion = true; });
         if (hits) sounds.play('reward');
     }
 
@@ -12000,6 +11987,9 @@ class Game {
             if (shake) this.addShake(8);
             return;
         }
+        // A boss flashing from a hit only ever bounces you from above: it
+        // can't bump or hurt anyone while it holds and starts to climb away.
+        if (boss.invuln > 0 || boss.localInvuln > 0) return;
         if (p.activePower === POWERS.ROCKET || p.activePower === POWERS.SHIELD) {
             const color = p.activePower.color;
             p.activePower = null;
@@ -12056,19 +12046,18 @@ class Game {
         p.vy = -6;
     }
 
-    // Boss down: bonus distance on the scoreboard (not the camera, so
-    // biomes don't skip and co-op stays aligned), a gem bounty, and the next
-    // boss a full loop further on.
+    // Boss down: a gem bounty (each player's own multipliers), full hearts,
+    // and the next boss a full loop further on.
     onBossDefeated() {
         this.state.bossActive = false;
         this.state.runLoops = (this.state.runLoops || 0) + 1;
         this.state.loops = (this.state.loops || 0) + 1;
         saveItem('lp_loops', this.state.loops);
-        this.state.bonusScore += BOSS_BONUS_METERS * 10;
-        this.addGems(BOSS_GEM_BOUNTY);
+        const bounty = bossBountyFor(this.player.skin.ability, this.gemBoostLeft() > 0);
+        this.addGems(bounty);
         this.setHearts(this.heartCap());
         this.state.nextBossAt = Math.floor(this.state.score / 10) + CONFIG.BOSS_LOOP_DISTANCE;
-        this.notify(`TITAN DOWN  +${BOSS_BONUS_METERS}m  +${BOSS_GEM_BOUNTY} GEMS  HEARTS FULL`, 'reward');
+        this.notify(`TITAN DOWN  +${fmtNum(bounty)} GEMS  HEARTS FULL`, 'reward');
         sounds.play('reward');
         portal.happytime();
     }
@@ -12120,14 +12109,8 @@ class Game {
     reset(seed = null) {
         this.state.score = 0;
         this.state.dying = 0; // a run ended mid-shatter must not carry it over
-        // The Void's exclusive ability lets equipped runs start already at The
-        // Rift, skipping the early game — single-player only, never in co-op.
-        const equippedAbility = (SKINS[this.viewParams.skinIndex] && SKINS[this.viewParams.skinIndex].ability) || {};
-        if (seed === null && equippedAbility.startAtScore) {
-            this.state.score = equippedAbility.startAtScore;
-        }
-        this.state.bonusScore = 0;
         this.state.pulseTimer = 0;
+        this.state.empLast = {}; // host: when each guest's EMP last went off
         this.state.bossActive = false;
         this.state.time = 0;
         // Spawn/animation clocks in 60fps-frame units of game time (see
@@ -12142,8 +12125,7 @@ class Game {
         this.state.runSeed = this.state.seed;
         this.state.startMeters = Math.floor(this.state.score / 10);
         // Bosses beaten this run (drives drone difficulty) and where the next
-        // one appears. Measured from the start height, so a checkpoint start
-        // (The Void, 5000m) doesn't open straight into a boss.
+        // one appears, measured from the start height.
         this.state.runLoops = 0;
         this.state.nextBossAt = this.state.startMeters + CONFIG.BOSS_LOOP_DISTANCE;
         this.state.powersCollected = 0;
@@ -12152,7 +12134,6 @@ class Game {
         // Run summary counters (end-of-run card and lifetime stats).
         this.state.runGems = 0;
         this.state.runDeaths = 0;
-        this.state.runUnlocks = [];
         // Solo runs race (and record) a ghost of your previous run on this
         // exact layout (see saveGhost); co-op has none.
         this.ghostRec = this.state.multiplayer ? null : { nextT: 0, pts: [] };
@@ -12174,9 +12155,9 @@ class Game {
         this.state.nextMilestone = nextMilestone(this.state.startMeters);
         this.state.heartBlockWY = null;
         this.state.rescueNetT = 0;
-        // The high score before this run, marked in the level so you can see
-        // yourself pass it (highScore itself climbs along with you).
-        this.state.bestMarkerScore = this.state.highScore || 0;
+        // Best height before this run, marked in the level so you can see
+        // yourself pass it (bestHeight itself climbs along with you).
+        this.state.bestMarkerScore = this.state.bestHeight || 0;
         // Beginner tips are painted onto the starting screen (world space), so
         // they scroll away as you climb past them.
         this.shownScore = this.shownBest = null; // the HUD numbers are rewritten
@@ -12234,8 +12215,8 @@ class Game {
         const m = this.menuScene, p = m.pixel;
         const skin = SKINS[this.viewParams.skinIndex] || SKINS[0];
         if (p.skin !== skin) p.setSkin(this.viewParams.skinIndex);
-        // A new day, or a Pixel that starts somewhere else: a new first screen.
-        if (m.level.key !== this.getDailySeed() + ':' + this.soloStartScore()) m.level = this.previewFirstScreen();
+        // A new day: a new first screen.
+        if (m.level.key !== this.getDailySeed()) m.level = this.previewFirstScreen();
         m.hopIn -= dt;
         if (p.grounded && m.hopIn <= 0 && !this.settings.reducedMotion) {
             // A little hop on the spot, glancing left or right.
@@ -12374,13 +12355,6 @@ class Game {
         this.fillPlatforms();
     }
 
-    // The height a solo run with the equipped Pixel starts at (px): 0, or The
-    // Void's checkpoint.
-    soloStartScore() {
-        const skin = SKINS[this.viewParams.skinIndex];
-        return (skin && skin.ability && skin.ability.startAtScore) || 0;
-    }
-
     // What the next solo run's first screen will be, for the menu to show:
     // { key, score, platforms, powerups }. It runs the real generator on
     // today's seed, then puts back everything the generator touched, so
@@ -12392,8 +12366,8 @@ class Game {
             prevPlat: s.prevPlat, lastCrumble: s.lastCrumble, platforms: this.platforms, powerups: this.powerups
         };
         s.seed = this.getDailySeed();
-        s.score = this.soloStartScore();
-        const key = s.seed + ':' + s.score;
+        s.score = 0;
+        const key = s.seed;
         this.startLevel();
         const out = { key, score: s.score, platforms: this.platforms, powerups: this.powerups };
         this.platforms = keep.platforms;
@@ -12557,7 +12531,6 @@ class Game {
         if (!this.bestDirty) return;
         this.bestDirty = false;
         saveItem('lp_best_height', this.state.bestHeight);
-        saveItem('lp_best', this.state.highScore);
     }
 
     tick(name, dt, every) {
@@ -12780,15 +12753,11 @@ class Game {
 
     // Moves the camera up by `diff` px: everything on screen shifts down,
     // anything that fell far below is culled, and new platforms are generated.
-    scrollCamera(diff, perks = this.player.skin.ability || {}) {
+    scrollCamera(diff) {
         this.player.y += diff;
         this.remotePlayers.forEach(rp => { rp.y += diff; });
 
         this.state.score += diff;
-        // SCORE x2 perk: state.score is the camera's real height (it drives
-        // biomes, spawns and boss fights), so the extra distance is banked
-        // separately and only added to the score the player sees.
-        this.state.bonusScore += diff * ((perks.scoreMult || 1) - 1);
         this.state.bgOffset += diff * 0.5;
 
         this.platforms.forEach(p => p.y += diff);
@@ -13126,14 +13095,9 @@ class Game {
     // Screen y where the displayed score reaches `meters`: the line meets
     // the player exactly as the score passes it.
     scoreLineY(meters) {
-        return CONFIG.HEIGHT * CONFIG.SCROLL_THRESHOLD - (meters * 10 - (this.state.score + (this.state.bonusScore || 0)));
+        return CONFIG.HEIGHT * CONFIG.SCROLL_THRESHOLD - (meters * 10 - this.state.score);
     }
 
-    // A dashed line across the level at your high score from before this run.
-    // It stays put as you climb (it slides toward you only when score comes
-    // without height: SCORE x2, a boss bonus), meets your Pixel exactly as
-    // you set a new high score, then scrolls away below. Not shown on a first
-    // run or from a checkpoint start already above it.
     // The co-op ceiling applies while you're up and a teammate is still
     // playing (see update()).
     teamLimitActive() {
@@ -13165,6 +13129,9 @@ class Game {
         }
     }
 
+    // A dashed line across the level at your best height from before this
+    // run. It stays put as you climb, meets your Pixel exactly as you set a
+    // new best, then scrolls away below. Not shown on a first run.
     drawBestLine() {
         const best = this.state.bestMarkerScore;
         if (!(best > 0) || best <= (this.state.startMeters || 0)) return;
@@ -13181,7 +13148,7 @@ class Game {
         ctx.lineTo(CONFIG.WIDTH, y);
         ctx.stroke();
         // The label sits on a dark tab so platforms behind it can't swallow it.
-        const label = 'HIGH SCORE ' + fmtNum(best) + 'm';
+        const label = 'BEST ' + fmtNum(best) + 'm';
         const font = 'bold 15px Orbitron, sans-serif';
         ctx.font = font;
         const w = (ctx.measureText ? ctx.measureText(label).width : label.length * 10) + 16;
@@ -13380,7 +13347,7 @@ class Game {
 
         this.ui.menuLast.innerText = "LAST RUN: " + fmtNum(finalScore) + "m";
         this.ui.menuLast.hidden = false;
-        this.ui.menuScore.innerText = "HIGH SCORE: " + fmtNum(this.state.highScore) + "m";
+        this.ui.menuScore.innerText = "BEST HEIGHT: " + fmtNum(this.state.bestHeight) + "m";
         this.updateFameUI();
         this.updateSkinUI();
         this.renderGemShop();
@@ -13699,7 +13666,7 @@ class Game {
             targetY = aliveYs.length ? Math.max(...aliveYs) : threshold + 1; // everyone dead: no scroll
         }
 
-        if (targetY < threshold) this.scrollCamera(threshold - targetY, perks);
+        if (targetY < threshold) this.scrollCamera(threshold - targetY);
 
         if (!this.player.isDead && this.player.y > CONFIG.HEIGHT) {
             this.die();
@@ -13714,6 +13681,7 @@ class Game {
         if (heightMeters > this.state.bestHeight) {
             this.state.bestHeight = heightMeters;
             this.bestDirty = true;
+            this.state.isNewBest = true;
         }
 
         // Dead and waiting to respawn while the rest of the party went quiet:
@@ -13734,11 +13702,6 @@ class Game {
         }
         this.updateTouchPadStates();
         if (this.bestDirty && this.tick('bestsave', dt, 120)) this.saveBest();
-        if (displayScore > this.state.highScore) {
-            this.state.highScore = displayScore;
-            this.bestDirty = true;
-            this.state.isNewBest = true;
-        }
 
         // (Compared as numbers first: building the text every frame was
         // work for nothing.)
@@ -13746,9 +13709,9 @@ class Game {
             this.shownScore = displayScore;
             setText(this.ui.score, fmtNum(displayScore) + "m");
         }
-        if (this.state.highScore !== this.shownBest) {
-            this.shownBest = this.state.highScore;
-            setText(this.ui.best, "BEST: " + fmtNum(this.state.highScore) + "m");
+        if (this.state.bestHeight !== this.shownBest) {
+            this.shownBest = this.state.bestHeight;
+            setText(this.ui.best, "BEST: " + fmtNum(this.state.bestHeight) + "m");
         }
 
         this.updatePowerHud(perks);
@@ -14006,15 +13969,10 @@ const PORTABLE_BUILD_FILE = 'pixel-jump-portable';
 const PORTABLE_RETRY_MS = 120000;
 const PORTABLE_RETRY_MAX = 10;
 
-function portableRead(key) {
-    try { return localStorage.getItem(key); } catch (e) { return null; }
-}
-function portableStore(key, value) {
-    try { localStorage.setItem(key, value); return true; } catch (e) { return false; }
-}
-function portableRemove(key) {
-    try { localStorage.removeItem(key); } catch (e) { /* blocked storage */ }
-}
+// Storage goes through the shared wrappers (js/saves.js, loaded before this
+// file): storageGet/saveItem/storageRemove already swallow blocked or full
+// storage, so a downloaded copy behaves like the site without a second copy.
+
 // Restart. Inside a handoff iframe the whole page must reload, so the loader
 // runs again and picks the newest build; reloading the srcdoc would not.
 function portableReload() {
@@ -14176,7 +14134,7 @@ const PortableUI = {
         if (typeof document === 'undefined' || typeof document.createElement !== 'function') return false;
         this.ready = true;
         this.game = game || null;
-        portableRemove(PORTABLE_OFF_KEY);
+        storageRemove(PORTABLE_OFF_KEY);
         // This build came up: tell the launch crash guard (see portable-loader.js).
         if (typeof PortableLoader !== 'undefined') PortableLoader.clearBooting();
         this.buildChip();
@@ -14227,7 +14185,7 @@ const PortableUI = {
     // Hides the chip for this exact version; the next version shows again.
     // A ready update is never remembered as seen: its restart chip returns.
     dismiss() {
-        if (this.update && !this.updateReady()) portableStore(PORTABLE_SEEN_KEY, this.update.version);
+        if (this.update && !this.updateReady()) saveItem(PORTABLE_SEEN_KEY, this.update.version);
         if (this.chip) this.chip.hidden = true;
     },
 
@@ -14237,7 +14195,7 @@ const PortableUI = {
 
     renderChip() {
         if (!this.chip || !this.chipLink) return;
-        if (!this.update || (!this.updateReady() && portableRead(PORTABLE_SEEN_KEY) === this.update.version)) {
+        if (!this.update || (!this.updateReady() && storageGet(PORTABLE_SEEN_KEY) === this.update.version)) {
             this.chip.hidden = true;
             return;
         }
@@ -14307,7 +14265,7 @@ const PortableUI = {
     // ------------------------------------------------------------ update check
     scheduleCheck() {
         if (typeof setTimeout !== 'function') return;
-        const last = parseInt(portableRead(PORTABLE_CHECKED_KEY), 10) || 0;
+        const last = parseInt(storageGet(PORTABLE_CHECKED_KEY), 10) || 0;
         if (!updateCheckDue(Date.now(), last, portableSearch())) return;
         this.timer = setTimeout(() => {
             this.timer = null;
@@ -14341,7 +14299,7 @@ const PortableUI = {
         // A version that failed to start is never fetched again.
         if (typeof PortableLoader !== 'undefined' && PortableLoader.isBad(manifest.version)) return 'none';
         if (!manifest.bytes || !manifest.sha256 || !manifest.sig) return 'none';
-        const cached = portableRead(PORTABLE_READY_KEY);
+        const cached = storageGet(PORTABLE_READY_KEY);
         if (cached && compareVersions(manifest.version, cached) !== 1) {
             if (cached !== manifest.version) return 'none';
             // The pointer lives in localStorage and the build in IndexedDB; the
@@ -14351,7 +14309,7 @@ const PortableUI = {
                 this.readyVersion = cached;
                 return 'ready';
             }
-            portableRemove(PORTABLE_READY_KEY);
+            storageRemove(PORTABLE_READY_KEY);
         }
         if (this.runActive()) return 'retry';
         this.downloading = true;
@@ -14376,7 +14334,7 @@ const PortableUI = {
             // verified build quietly and try again later.
             if (this.runActive()) return 'retry';
             await portableStoreBuild({ version: manifest.version, protocol: manifest.protocol, html, sig });
-            if (!portableStore(PORTABLE_READY_KEY, manifest.version)) return 'retry';
+            if (!saveItem(PORTABLE_READY_KEY, manifest.version)) return 'retry';
             this.readyVersion = manifest.version;
             return 'ready';
         } catch (e) {
@@ -14390,7 +14348,7 @@ const PortableUI = {
     async check(manual) {
         if (PLATFORM !== 'portable' || this.checking) return null;
         if (!manual) {
-            const last = parseInt(portableRead(PORTABLE_CHECKED_KEY), 10) || 0;
+            const last = parseInt(storageGet(PORTABLE_CHECKED_KEY), 10) || 0;
             if (!updateCheckDue(Date.now(), last, portableSearch()) || this.runActive()) return null;
         }
         this.checking = true;
@@ -14425,7 +14383,7 @@ const PortableUI = {
                 this.renderChip();
             }
             if (outcome === 'retry') this.scheduleRetry();
-            else portableStore(PORTABLE_CHECKED_KEY, String(Date.now()));
+            else saveItem(PORTABLE_CHECKED_KEY, String(Date.now()));
             return newer ? data : null;
         } catch (e) {
             // Offline, CORS, a challenge page, a timeout or blocked storage:

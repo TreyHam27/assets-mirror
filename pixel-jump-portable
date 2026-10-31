@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.33.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.33.1, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -1314,9 +1314,9 @@ body.reduce-motion .page-title--brand {
     align-content: flex-start;
     gap: 6px;
     margin-top: 8px;
-    /* Two rows of tags (the most any Pixel needs), so stepping between
-       Pixels never moves the picker or PLAY. */
-    min-height: 46px;
+    /* The tier line plus two rows of tags (the most any Pixel needs), so
+       stepping between Pixels never moves the picker or PLAY. */
+    min-height: 74px;
 }
 
 /* Best and last run, on one line. */
@@ -1960,6 +1960,12 @@ body.reduce-motion .page-title--brand {
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
+}
+
+/* The tier badge's own first line, above the perk chips (tierLine). */
+.tier-line {
+    flex-basis: 100%;
+    text-align: center;
 }
 
 .overlay-btn.cant-afford {
@@ -3671,7 +3677,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.33.0';
+    const EMBEDDED = '1.33.1';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -3869,7 +3875,7 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.33.0';
+const GAME_VERSION = '1.33.1';
 const NET_PROTOCOL = 11;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
@@ -10141,7 +10147,7 @@ class GameShop {
 
         if (this.ui.gemDisplay) this.ui.gemDisplay.innerHTML = counted(fmtNum(this.state.gems), 'gem');
         this.updateShopBadge();
-        if (this.ui.skinAbility) this.ui.skinAbility.innerHTML = this.tierBadge(s) + this.renderPerkTags(s.ability);
+        if (this.ui.skinAbility) this.ui.skinAbility.innerHTML = this.tierLine(s) + this.renderPerkTags(s.ability);
         if (!this.state.running) this.updateHeartUI(); // the heart cap goes with the Pixel
         this.renderShop();
     }
@@ -10160,6 +10166,11 @@ class GameShop {
     tierBadge(skin) {
         const t = pixelTier(skin);
         return `<span class="tier-badge tier-${t}">${PIXEL_TIERS[t].label}</span>`;
+    }
+
+    // The tier badge on a line of its own, above a row of perk chips.
+    tierLine(skin) {
+        return `<div class="tier-line">${this.tierBadge(skin)}</div>`;
     }
 
     // Short, colour-coded perk chips shared by the menu picker and the shop.
@@ -10399,7 +10410,7 @@ class GameShop {
         this.buyConfirmOpen = true;
         ui.buyConfirmPreview.innerHTML = this.pixelPreviewHTML(s, 'hourly-pixel');
         ui.buyConfirmName.innerText = s.name;
-        ui.buyConfirmPerks.innerHTML = this.tierBadge(s) + this.renderPerkTags(s.ability);
+        ui.buyConfirmPerks.innerHTML = this.tierLine(s) + this.renderPerkTags(s.ability);
         ui.buyConfirmNote.innerText = fmtNum(s.cost) + ' gems. You\'ll have ' + fmtNum(Math.max(0, this.state.gems - s.cost)) + ' left.';
         setHTML(ui.buyConfirmYes, counted(fmtNum(s.cost), 'gem') + ' BUY ' + this.escapeHtml(s.name.toUpperCase()));
         ui.buyConfirm.hidden = false;

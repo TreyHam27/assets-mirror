@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.33.1, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.34.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -52,8 +52,10 @@
     /* The menus' design language (see MENUS: ONE DESIGN LANGUAGE below).
        Each colour means one thing on every screen. */
     --night: #070b14;                 /* panel glass over the scenery */
-    --glass: rgba(7, 11, 20, 0.84);
-    --line: rgba(255, 255, 255, 0.1);
+    --glass: rgba(9, 13, 23, 0.86);
+    --sheet: #0a0f1b;                 /* dialogs: solid, nothing shows through */
+    --line: rgba(255, 255, 255, 0.09);
+    --text: #e6ecf7;
     --muted: #93a0b8;
     --teal: #00ffcc;                  /* every action, and the lit edges */
     --teal-rgb: 0, 255, 204;
@@ -74,6 +76,8 @@
     --font-display: 'Orbitron', 'Courier New', monospace;
     --font-text: 'Chakra Petch', 'Orbitron', system-ui, sans-serif;
     --panel-w: min(360px, 88vw);
+    --radius-card: 16px;
+    --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px rgba(0, 0, 0, 0.5);
     /* Room for notches and home indicators (viewport-fit=cover). */
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
@@ -343,16 +347,27 @@ body {
     z-index: 10;
 }
 
+/* The right-hand stack (gems, hearts, pause, the 2X GEMS booster) is laid
+   out from these: each counter is a pill --pill-h tall. */
+#game-container {
+    --count-size: clamp(16px, 4.6vw, 24px);
+    --pill-h: calc(var(--count-size) + 14px);
+    --stack-top: calc(var(--hud-top) + 14px + var(--safe-top));
+    --stack-right: calc(var(--hud-right) + 14px + var(--safe-right));
+}
+
 #score-display {
     position: absolute;
-    top: calc(var(--hud-top) + 20px + var(--safe-top));
-    left: calc(var(--hud-left) + 20px + var(--safe-left));
+    top: calc(var(--hud-top) + 14px + var(--safe-top));
+    left: calc(var(--hud-left) + 18px + var(--safe-left));
     white-space: nowrap;
     font-size: clamp(26px, 8vw, 50px);
     font-weight: 900;
+    line-height: 1.1;
     color: #fff;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-    letter-spacing: -2px;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 0 18px rgba(255, 255, 255, 0.35);
+    letter-spacing: -1px;
 }
 
 #best-display-hud {
@@ -361,44 +376,60 @@ body {
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
-    font-size: clamp(16px, 4.5vw, 28px);
-    color: #ff3366;
-    text-shadow: 0 0 10px rgba(255, 51, 102, 0.6);
-    font-weight: bold;
+    font-size: clamp(13px, 3.6vw, 20px);
+    color: var(--gold);
+    text-shadow: 0 0 12px rgba(var(--gold-rgb), 0.45);
+    font-weight: 900;
+    letter-spacing: 1.5px;
     text-align: center;
 }
 
-#gem-display {
+/* Gems and hearts: glass pills, persistent on every screen (the menu's
+   wallet and the run's counters). */
+#gem-display,
+#life-display {
     position: absolute;
-    top: calc(var(--hud-top) + 8px + var(--safe-top));
-    right: calc(var(--hud-right) + 8px + var(--safe-right));
+    right: var(--stack-right);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    box-sizing: border-box;
+    height: var(--pill-h);
+    padding: 0 0.55em 0 0.7em;
+    border: 1px solid rgba(var(--pill-rgb), 0.35);
+    border-radius: var(--radius-pill);
+    background: rgba(6, 10, 18, 0.78);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 18px rgba(0, 0, 0, 0.35);
     white-space: nowrap;
-    font-size: clamp(20px, 6.5vw, 40px);
+    font-size: var(--count-size);
     line-height: 1;
-    color: var(--gem);
-    font-weight: bold;
-    text-shadow: 0 0 15px rgba(var(--gem-rgb), 0.6);
-    transform-origin: center;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    transform-origin: right center;
     /* Persistent across every screen (menu/shop/gameplay), so it must sit
        above #menus-wrapper (20) and #shop-menu-layer (25). */
     z-index: 40;
 }
 
+#gem-display .count + .ico,
+#life-display .count + .ico {
+    margin-left: 0;
+}
+
+#gem-display {
+    --pill-rgb: var(--gem-rgb);
+    top: var(--stack-top);
+}
+
+#gem-display .ico {
+    filter: drop-shadow(0 0 6px rgba(var(--gem-rgb), 0.7));
+}
+
 @keyframes gem-collect-pop {
-    0% {
-        transform: scale(1);
-        text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-    }
-
-    40% {
-        transform: scale(1.35);
-        text-shadow: 0 0 28px rgba(0, 255, 255, 1), 0 0 40px rgba(150, 255, 255, 0.8);
-    }
-
-    100% {
-        transform: scale(1);
-        text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-    }
+    0% { transform: scale(1); border-color: rgba(var(--gem-rgb), 0.35); }
+    40% { transform: scale(1.18); border-color: rgba(var(--gem-rgb), 1); }
+    100% { transform: scale(1); border-color: rgba(var(--gem-rgb), 0.35); }
 }
 
 #gem-display.gem-pop {
@@ -408,26 +439,22 @@ body {
 /* Banked hearts, right under the gem counter (and just as persistent).
    Dimmed at zero. */
 #life-display {
-    position: absolute;
-    top: calc(var(--hud-top) + 8px + clamp(20px, 6.5vw, 40px) + 6px + var(--safe-top));
-    right: calc(var(--hud-right) + 8px + var(--safe-right));
-    white-space: nowrap;
-    font-size: clamp(20px, 6.5vw, 40px);
-    line-height: 1;
-    color: #ff3366;
-    font-weight: bold;
-    text-shadow: 0 0 12px rgba(255, 51, 102, 0.6);
-    z-index: 40;
+    --pill-rgb: var(--pixel-rgb);
+    top: calc(var(--stack-top) + var(--pill-h) + 6px);
     transition: opacity 0.2s;
 }
 
+#life-display .ico {
+    filter: drop-shadow(0 0 6px rgba(var(--pixel-rgb), 0.7));
+}
+
 #life-display.empty {
-    opacity: 0.4;
+    opacity: 0.45;
 }
 
 @keyframes life-pop {
     0% { transform: scale(1); }
-    40% { transform: scale(1.35); }
+    40% { transform: scale(1.18); }
     100% { transform: scale(1); }
 }
 
@@ -439,10 +466,10 @@ body {
    the score. */
 @media (max-width: 480px) {
     #best-display-hud {
-        top: calc(var(--hud-top) + 62px + var(--safe-top));
-        left: calc(var(--hud-left) + 20px + var(--safe-left));
+        top: calc(var(--hud-top) + 58px + var(--safe-top));
+        left: calc(var(--hud-left) + 18px + var(--safe-left));
         transform: none;
-        font-size: 14px;
+        font-size: 12px;
         text-align: left;
     }
 
@@ -450,31 +477,25 @@ body {
         font-size: clamp(24px, 7.5vw, 34px);
     }
 
-    #gem-display {
-        font-size: clamp(18px, 6vw, 28px);
-    }
-
-    #life-display {
-        top: calc(var(--hud-top) + 8px + clamp(18px, 6vw, 28px) + 6px + var(--safe-top));
-        font-size: clamp(18px, 6vw, 28px);
-    }
-
-    .hud-btn {
-        top: calc(var(--hud-top) + 78px + var(--safe-top));
-    }
-
     #system-alert {
         padding: 8px 14px;
         gap: 8px;
-        font-size: 13px;
-        letter-spacing: 0.3px;
+        font-size: 12px;
+        letter-spacing: 0.5px;
     }
 }
 
 /* Phones (the strip layout): the numbers live in the black HUD strip above
    the playfield. Score with BEST under it on the left, gems over hearts on
-   the right, pause in the middle. Run-time pills (power-up bar, target,
-   spectating, alerts) pin to the top of the playfield instead. */
+   the right, pause in the middle. On the playfield, top down: the target or
+   spectating pill, the power-up bar, then notices, so none land on another. */
+#game-container[data-layout="strip"] {
+    --count-size: 16px;
+    --pill-h: 32px;
+    --stack-top: calc(9px + var(--safe-top));
+    --stack-right: calc(14px + var(--safe-right));
+}
+
 #game-container[data-layout="strip"] #hud {
     height: calc(var(--hud-strip-h) + var(--safe-top));
 }
@@ -489,22 +510,12 @@ body {
     top: calc(56px + var(--safe-top));
     left: calc(16px + var(--safe-left));
     transform: none;
-    font-size: 14px;
+    font-size: 12px;
     text-align: left;
 }
 
-#game-container[data-layout="strip"] #gem-display,
 #game-container[data-layout="strip"] #life-display {
-    right: calc(16px + var(--safe-right));
-    font-size: 26px;
-}
-
-#game-container[data-layout="strip"] #gem-display {
-    top: calc(12px + var(--safe-top));
-}
-
-#game-container[data-layout="strip"] #life-display {
-    top: calc(48px + var(--safe-top));
+    top: calc(var(--stack-top) + var(--pill-h) + 6px);
 }
 
 #game-container[data-layout="strip"] .hud-btn {
@@ -514,17 +525,17 @@ body {
     transform: translateX(-50%);
 }
 
-#game-container[data-layout="strip"] #system-alert {
-    margin-top: 10px;
+#game-container[data-layout="strip"] #challenge-hud,
+#game-container[data-layout="strip"] #spectate-hud {
+    top: calc(var(--pf-top, 0px) + 10px);
 }
 
 #game-container[data-layout="strip"] #power-hud {
-    top: calc(var(--pf-top, 0px) + 56px);
+    top: calc(var(--pf-top, 0px) + 40px);
 }
 
-#game-container[data-layout="strip"] #challenge-hud,
-#game-container[data-layout="strip"] #spectate-hud {
-    top: calc(var(--pf-top, 0px) + 12px);
+#game-container[data-layout="strip"] #system-alert {
+    margin-top: 92px;
 }
 
 /* Wide windows (the flank layout): the HUD sits beside the column instead of
@@ -535,7 +546,8 @@ body {
 #game-container[data-layout="flank"] {
     --flank-gap: 24px;
     --flank-num: min(50px, calc(var(--pf-left, 350px) / 7));
-    --flank-count: min(40px, calc(var(--pf-left, 350px) / 8));
+    --count-size: min(26px, calc(var(--pf-left, 350px) / 10));
+    --stack-top: calc(var(--pf-top, 0px) + 20px + var(--safe-top));
 }
 
 #game-container[data-layout="flank"] #score-display,
@@ -547,13 +559,13 @@ body {
 }
 
 #game-container[data-layout="flank"] #score-display {
-    top: calc(var(--pf-top, 0px) + 16px + var(--safe-top));
+    top: calc(var(--pf-top, 0px) + 14px + var(--safe-top));
     font-size: var(--flank-num);
 }
 
 #game-container[data-layout="flank"] #best-display-hud {
-    top: calc(var(--pf-top, 0px) + 28px + var(--flank-num) + var(--safe-top));
-    font-size: min(24px, calc(var(--pf-left, 350px) / 14));
+    top: calc(var(--pf-top, 0px) + 26px + 1.1 * var(--flank-num) + var(--safe-top));
+    font-size: min(18px, calc(var(--pf-left, 350px) / 16));
 }
 
 #game-container[data-layout="flank"] #gem-display,
@@ -561,26 +573,10 @@ body {
 #game-container[data-layout="flank"] .hud-btn {
     right: auto;
     left: calc(var(--pf-left, 0px) + var(--pf-w, 0px) + var(--flank-gap));
+    transform-origin: left center;
 }
 
-#game-container[data-layout="flank"] #gem-display,
-#game-container[data-layout="flank"] #life-display {
-    font-size: var(--flank-count);
-}
-
-#game-container[data-layout="flank"] #gem-display {
-    top: calc(var(--pf-top, 0px) + 20px + var(--safe-top));
-}
-
-#game-container[data-layout="flank"] #life-display {
-    top: calc(var(--pf-top, 0px) + 30px + var(--flank-count) + var(--safe-top));
-}
-
-#game-container[data-layout="flank"] .hud-btn {
-    top: calc(var(--pf-top, 0px) + 44px + 2 * var(--flank-count) + var(--safe-top));
-}
-
-/* POWER UP HUD */
+/* POWER UP HUD: the power's name over its timer, on a glass pill. */
 #power-hud {
     position: absolute;
     top: calc(var(--hud-top) + 80px + var(--safe-top));
@@ -589,32 +585,38 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 6px;
+    padding: 7px 14px 9px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(6, 10, 18, 0.8);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
     opacity: 0;
     transition: opacity 0.2s;
     z-index: 10;
 }
 
 #power-text {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 5px;
-    text-shadow: 0 0 8px #000;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    line-height: 1;
+    white-space: nowrap;
     color: #fff;
 }
 
 #power-bar-bg {
-    width: 200px;
-    height: 10px;
-    background: #222;
-    border: 1px solid #fff;
+    width: 180px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-pill);
     overflow: hidden;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 #power-bar-fill {
     height: 100%;
     width: 100%;
+    border-radius: inherit;
     background: #fff;
     transition: width 0.1s linear, background-color 0.2s;
 }
@@ -692,22 +694,23 @@ body {
     gap: 10px;
     /* Solid glass. (It used to blur what was behind it, which the browser
        had to redo on every frame of the game underneath.) */
-    background: rgba(8, 10, 16, 0.94);
-    border: 1px solid rgba(0, 204, 255, 0.35);
-    border-left: 4px solid #00ccff;
-    border-radius: var(--radius);
-    padding: 10px 22px;
+    background: rgba(8, 12, 20, 0.95);
+    border: 1px solid rgba(0, 204, 255, 0.3);
+    border-left: 3px solid #00ccff;
+    border-radius: 12px;
+    padding: 9px 18px 9px 14px;
     /* Below the HUD row (and the notch), and never wide enough to reach the
        pause button in the top-right corner. */
     margin-top: calc(var(--hud-top) + 20px + var(--safe-top));
-    font-weight: bold;
-    font-size: 15px;
+    font-weight: 900;
+    font-size: 13px;
+    line-height: 1.3;
     width: fit-content;
     max-width: min(500px, calc(100% - 2 * (60px + max(var(--safe-left), var(--safe-right)))));
     box-sizing: border-box;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
+    letter-spacing: 1px;
+    text-align: left;
     color: #00ccff;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 16px rgba(0, 204, 255, 0.15);
     opacity: 0;
@@ -862,7 +865,9 @@ body {
     height: 1.2em;
 }
 
-/* ---- Panel: a platform ---- */
+/* ---- Panel: a glass card ----
+   A hairline-edged card with a lit accent line along its top, like a
+   platform's lit edge. --edge is the accent (teal unless it says otherwise). */
 .panel {
     --edge: var(--teal);
     --edge-rgb: var(--teal-rgb);
@@ -871,26 +876,24 @@ body {
     max-width: 100%;
     box-sizing: border-box;
     padding: 18px 16px 16px;
-    border: 1px solid rgba(var(--edge-rgb), 0.2);
-    border-top: 0;
-    border-radius: 5px 5px 12px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
     background:
-        linear-gradient(rgba(var(--edge-rgb), 0.13), rgba(var(--edge-rgb), 0.02) 56px),
+        linear-gradient(rgba(var(--edge-rgb), 0.08), rgba(var(--edge-rgb), 0) 80px),
         var(--glass);
-    box-shadow: inset 0 3px 0 var(--edge), 0 -1px 14px rgba(var(--edge-rgb), 0.35), 0 12px 28px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--shadow-card);
 }
 
-/* Its hover lights. */
-.panel::after {
+.panel::before {
     content: "";
     position: absolute;
-    left: 16px;
-    right: 16px;
-    bottom: -5px;
-    height: 3px;
-    background: linear-gradient(to right,
-        var(--edge) 0 12px, transparent 12px calc(100% - 12px), var(--edge) calc(100% - 12px));
-    opacity: 0.75;
+    top: -1px;
+    left: 18px;
+    right: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--edge) 20%, var(--edge) 80%, transparent);
+    box-shadow: 0 0 12px rgba(var(--edge-rgb), 0.6);
     pointer-events: none;
 }
 
@@ -942,9 +945,9 @@ body {
     gap: 8px;
     box-sizing: border-box;
     padding: 10px 16px;
-    border: 2px solid var(--k);
-    border-radius: 9px;
-    background: linear-gradient(rgba(var(--k-rgb), 0.12), rgba(var(--k-rgb), 0.12)), var(--glass);
+    border: 1.5px solid rgba(var(--k-rgb), 0.75);
+    border-radius: 12px;
+    background: linear-gradient(rgba(var(--k-rgb), 0.12), rgba(var(--k-rgb), 0.06)), var(--glass);
     color: var(--k);
     font-family: var(--font-display);
     font-size: 14px;
@@ -955,7 +958,7 @@ body {
     cursor: pointer;
     pointer-events: auto;
     user-select: none;
-    box-shadow: 0 4px 0 rgba(var(--k-rgb), 0.4);
+    box-shadow: 0 4px 0 rgba(var(--k-rgb), 0.3);
     transition: transform 0.07s, box-shadow 0.07s, background 0.15s, color 0.15s, opacity 0.15s;
 }
 
@@ -987,9 +990,9 @@ body {
 .btn--primary,
 .gem-skin-buy-btn {
     border-color: transparent;
-    background: linear-gradient(#6affe4, #00d6b0);
+    background: linear-gradient(#7affe8, #00d6b0);
     color: var(--ink);
-    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 0 4px 0 var(--teal-deep), 0 0 20px rgba(var(--teal-rgb), 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 4px 0 var(--teal-deep), 0 8px 24px rgba(var(--teal-rgb), 0.28);
 }
 
 @media (hover: hover) {
@@ -1001,7 +1004,7 @@ body {
 
 .btn--primary:active:not(:disabled),
 .gem-skin-buy-btn:active:not(:disabled) {
-    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3), 0 1px 0 var(--teal-deep), 0 0 12px rgba(var(--teal-rgb), 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 1px 0 var(--teal-deep), 0 0 12px rgba(var(--teal-rgb), 0.3);
 }
 
 /* Filled red: spend a life-saving ad. */
@@ -1032,10 +1035,10 @@ body {
 }
 
 .btn--big {
-    padding: 14px 20px;
-    border-radius: 12px;
+    padding: 15px 20px;
+    border-radius: 14px;
     font-size: 22px;
-    letter-spacing: 4px;
+    letter-spacing: 5px;
 }
 
 /* A price inside a BUY cap. */
@@ -1091,8 +1094,9 @@ body {
     top: calc(16px + var(--safe-top));
     left: calc(16px + var(--safe-left));
     z-index: 1;
-    padding: 8px 14px;
+    padding: 9px 14px 9px 11px;
     font-size: 12px;
+    letter-spacing: 2px;
 }
 
 /* Phones: BACK gets its own row instead of sitting on the title. */
@@ -1182,12 +1186,13 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     color: #fff;
-    font-size: clamp(22px, 5.5vw, 32px);
+    font-size: clamp(22px, 5.5vw, 30px);
     font-weight: 900;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     text-align: center;
+    text-shadow: 0 0 22px rgba(255, 255, 255, 0.2);
 }
 
 .page-title::before {
@@ -1200,8 +1205,10 @@ body {
         linear-gradient(var(--night), var(--night)) 20% 32% / 20% 20% no-repeat,
         linear-gradient(var(--night), var(--night)) 80% 32% / 20% 20% no-repeat,
         var(--accent);
-    box-shadow: 0 0 14px var(--accent);
+    box-shadow: 0 0 16px var(--accent);
 }
+
+.page-title--mp { --accent: var(--teal); }
 
 .page-title--shop { --accent: var(--gem); }
 .page-title--records { --accent: var(--gold); }
@@ -1214,12 +1221,13 @@ body {
     color: #fff;
     font-size: clamp(30px, 8.5vw, 58px);
     letter-spacing: clamp(1px, 0.8vw, 4px);
+    line-height: 1.05;
     text-shadow:
-        -6px 0 14px #ff2d55,
-        -3px 0 18px #ffb000,
-        0 0 22px #3dff7a,
-        3px 0 26px #2db7ff,
-        6px 0 30px #b04dff;
+        0 2px 0 #ff2d55,
+        0 4px 0 #b31440,
+        0 6px 0 #5a0a24,
+        0 0 26px rgba(255, 45, 85, 0.55),
+        0 0 60px rgba(255, 45, 85, 0.25);
     animation: title-hue 24s linear infinite;
 }
 
@@ -1264,12 +1272,12 @@ body.reduce-motion .page-title--brand {
     width: 100%;
 }
 
-/* The Pixel picker. */
+/* The Pixel picker: the equipped Pixel standing on a lit platform, with
+   ‹ › either side and its name, tier and perks underneath. */
 #skin-container {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 18px 12px 14px;
+    padding: 14px 14px 16px;
     cursor: default;
 }
 
@@ -1281,30 +1289,86 @@ body.reduce-motion .page-title--brand {
     align-items: center;
 }
 
+.skin-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 2px 0 6px;
+}
+
+/* The stand: room for the Pixel's hop, and its platform underneath. */
+.skin-stand {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    width: 150px;
+    height: 112px;
+}
+
+.skin-stand::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 120px;
+    height: 7px;
+    margin-left: -60px;
+    border-radius: 3px;
+    background: linear-gradient(#5fffe0, #00b896);
+    box-shadow: 0 0 16px rgba(var(--teal-rgb), 0.55), 0 6px 18px rgba(var(--teal-rgb), 0.2);
+}
+
 #skin-preview-box {
     position: relative;
-    width: 56px;
-    height: 56px;
-    margin-bottom: 10px;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 9px;
     border-radius: 8%; /* PIXEL_CORNER_RADIUS / 26, like the in-game Pixel */
-    box-shadow: 0 0 22px rgba(0, 0, 0, 0.5);
-    transition: transform 0.2s;
+    color: var(--pixel); /* updateSkinUI sets the Pixel's colour: its glow */
+    outline: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 0 44px -6px currentColor;
+    animation: pixel-idle 2.6s ease-in-out infinite;
+}
+
+/* A small idle hop on the menu (never during a run, never with reduced motion). */
+@keyframes pixel-idle {
+    0%, 62%, 100% { transform: translateY(0) scale(1, 1); }
+    70% { transform: translateY(0) scale(1.08, 0.92); }
+    80% { transform: translateY(-14px) scale(0.95, 1.06); }
+    90% { transform: translateY(0) scale(1.05, 0.95); }
+}
+
+#game-container:not(.menu-open) #skin-preview-box,
+body.reduce-motion #skin-preview-box {
+    animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #skin-preview-box { animation: none; }
 }
 
 #skin-name {
-    margin-bottom: 3px;
+    max-width: 100%;
+    margin-top: 6px;
+    overflow: hidden;
     color: #fff;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 900;
+    letter-spacing: 0.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #skin-status {
     min-height: 1.3em; /* kept when empty, so PLAY doesn't move */
-    color: var(--muted);
+    margin-top: 2px;
+    color: var(--gold);
     font-family: var(--font-text);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 #skin-ability {
@@ -1313,7 +1377,7 @@ body.reduce-motion .page-title--brand {
     justify-content: center;
     align-content: flex-start;
     gap: 6px;
-    margin-top: 8px;
+    margin-top: 4px;
     /* The tier line plus two rows of tags (the most any Pixel needs), so
        stepping between Pixels never moves the picker or PLAY. */
     min-height: 74px;
@@ -1325,12 +1389,16 @@ body.reduce-motion .page-title--brand {
     flex-wrap: wrap;
     justify-content: center;
     gap: 4px 16px;
-    font-size: 13px;
+    margin-bottom: 2px;
+    font-size: 12px;
     font-weight: 900;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
-#menu-highscore { color: var(--pixel); }
+#menu-highscore {
+    color: var(--gold);
+    text-shadow: 0 0 12px rgba(var(--gold-rgb), 0.35);
+}
 #menu-lastscore { color: var(--muted); }
 
 /* PLAY breathes, so it reads as the thing to press. */
@@ -1461,10 +1529,14 @@ body.reduce-motion .page-title--brand {
         padding-bottom: 10px;
     }
 
+    .skin-stand {
+        height: 80px;
+    }
+
     #skin-preview-box {
-        width: 44px;
-        height: 44px;
-        margin-bottom: 6px;
+        width: 50px;
+        height: 50px;
+        margin-bottom: 9px;
     }
 
     .btn--big {
@@ -1486,20 +1558,58 @@ body.reduce-motion .page-title--brand {
 .mp-box-title {
     display: block;
     margin-bottom: 8px;
-    color: #c9d4e8;
+    color: var(--muted);
     font-family: var(--font-text);
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.3px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+/* The setup card: name, then JOIN, an OR rule, then HOST. */
+.mp-card {
+    padding: 20px 18px 18px;
+}
+
+.mp-section {
+    margin-top: 18px;
+}
+
+.mp-or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 14px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 3px;
+}
+
+.mp-or::before,
+.mp-or::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+}
+
+.mp-hint {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
 }
 
 .mp-box input[type="text"] {
     width: 100%;
     box-sizing: border-box;
-    padding: 10px;
-    border: 2px solid rgba(255, 255, 255, 0.16);
-    border-radius: 9px;
-    background: rgba(0, 0, 0, 0.45);
+    padding: 11px 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.4);
     color: #fff;
     font-family: inherit;
     font-size: 16px;
@@ -1596,9 +1706,9 @@ body.reduce-motion .page-title--brand {
     min-width: 0;
     /* letter-spacing trails the last glyph; the extra left padding evens it. */
     padding: 8px 0 8px 6px;
-    border: 2px dashed rgba(var(--teal-rgb), 0.45);
-    border-radius: 9px;
-    background: rgba(0, 0, 0, 0.35);
+    border: 1.5px dashed rgba(var(--teal-rgb), 0.5);
+    border-radius: 12px;
+    background: rgba(var(--teal-rgb), 0.05);
     color: var(--teal);
     font-size: 22px;
     font-weight: 900;
@@ -1627,9 +1737,9 @@ body.reduce-motion .page-title--brand {
     align-items: center;
     gap: 10px;
     margin-top: 6px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.3);
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
     color: #fff;
     font-size: 14px;
     font-weight: bold;
@@ -1763,7 +1873,15 @@ body.reduce-motion .page-title--brand {
     }
 
     .mp-box {
-        padding: 13px 14px 12px;
+        padding: 15px 14px 14px;
+    }
+
+    .mp-section {
+        margin-top: 12px;
+    }
+
+    .mp-or {
+        margin: 10px 0;
     }
 
     .mp-box label,
@@ -1980,12 +2098,14 @@ body.reduce-motion .page-title--brand {
 #achievement-pop {
     position: relative;
     margin-top: 10px;
-    background: var(--gold);
-    color: #000;
-    padding: 10px 20px;
-    font-weight: bold;
-    border-radius: 9px;
-    box-shadow: 0 4px 0 #a8820a, 0 0 20px rgba(var(--gold-rgb), 0.7);
+    background: linear-gradient(#ffe27a, var(--gold));
+    color: #2a1d00;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 4px 0 #a8820a, 0 8px 24px rgba(var(--gold-rgb), 0.35);
     display: none;
     z-index: 100;
     animation: slideIn 0.5s forwards;
@@ -2018,20 +2138,20 @@ body.reduce-motion .page-title--brand {
 .hud-btn {
     position: absolute;
     /* Below the gem and heart counters in the top-right corner. */
-    top: calc(var(--hud-top) + 102px + var(--safe-top));
-    right: calc(var(--hud-right) + 10px + var(--safe-right));
+    top: calc(var(--stack-top) + 2 * var(--pill-h) + 16px);
+    right: var(--stack-right);
     width: 40px;
     height: 40px;
     padding: 0;
-    background: var(--glass);
-    border: 2px solid rgba(201, 212, 232, 0.6);
-    border-radius: 9px;
-    color: #dfe6f5;
+    background: rgba(6, 10, 18, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 12px;
+    color: #e6ecf7;
     font-size: 14px;
     letter-spacing: -2px;
     cursor: pointer;
     pointer-events: auto;
-    box-shadow: 0 3px 0 rgba(201, 212, 232, 0.3);
+    box-shadow: 0 3px 0 rgba(255, 255, 255, 0.12), 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 /* The pause icon's two bars, drawn rather than a glyph (Orbitron has none). */
@@ -2039,14 +2159,15 @@ body.reduce-motion .page-title--brand {
 #pause-btn::after {
     content: "";
     position: absolute;
-    top: 10px;
-    width: 5px;
-    height: 16px;
+    top: 12px;
+    width: 4px;
+    height: 14px;
+    border-radius: 1px;
     background: currentColor;
 }
 
-#pause-btn::before { left: 11px; }
-#pause-btn::after { right: 11px; }
+#pause-btn::before { left: 13px; }
+#pause-btn::after { right: 13px; }
 
 @media (hover: hover) {
     .hud-btn:hover {
@@ -2065,9 +2186,20 @@ body.reduce-motion .page-title--brand {
     justify-content: center;
     padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
     box-sizing: border-box;
-    background: rgba(2, 4, 10, 0.74);
+    background: radial-gradient(ellipse at 50% 40%, rgba(2, 4, 10, 0.62), rgba(2, 4, 10, 0.86));
     pointer-events: auto;
     z-index: 60;
+}
+
+/* Dialogs opened from the menus rise in. (Not PAUSED: in co-op that one
+   opens over a live run, where the page stays still.) */
+.overlay:not(#pause-overlay) > .overlay-box {
+    animation: sheet-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes sheet-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to { opacity: 1; transform: none; }
 }
 
 #run-card {
@@ -2083,17 +2215,20 @@ body.reduce-motion .page-title--brand {
     width: min(340px, 100%);
     max-height: 100%;
     overflow-y: auto;
-    padding: 24px 18px 20px;
+    padding: 26px 20px 20px;
+    border-radius: 20px;
     /* Solid, unlike the menu's panels: whatever is under a dialog must not
        show through it. */
     background:
-        linear-gradient(rgba(var(--edge-rgb), 0.13), rgba(var(--edge-rgb), 0.02) 56px),
-        #080d18;
+        linear-gradient(rgba(var(--edge-rgb), 0.1), rgba(var(--edge-rgb), 0) 90px),
+        var(--sheet);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 60px rgba(0, 0, 0, 0.6);
     text-align: center;
 }
 
 /* Long labels wrap here rather than run out of the box. */
 .overlay-btn {
+    min-height: 46px;
     font-size: 13px;
     white-space: normal;
 }
@@ -2106,9 +2241,9 @@ body.reduce-motion .page-title--brand {
 .overlay-title {
     margin-bottom: 4px;
     color: #fff;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 900;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
 }
 
 .overlay-note {
@@ -2121,8 +2256,8 @@ body.reduce-motion .page-title--brand {
 
 /* A neutral cap unless it says otherwise (primary, danger, gem, gold). */
 .overlay-btn:not(.btn--primary):not(.btn--danger):not(.btn--gem):not(.btn--gold) {
-    --k: #c9d4e8;
-    --k-rgb: 201, 212, 232;
+    --k: #d5ddec;
+    --k-rgb: 213, 221, 236;
 }
 
 /* The caps sink 3px when pressed: leave the last one room to. */
@@ -2137,43 +2272,99 @@ body.reduce-motion .page-title--brand {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 8px 2px;
+    min-height: 48px;
+    padding: 6px 2px;
+    box-sizing: border-box;
     border-bottom: 1px solid var(--line);
-    color: #dfe6f5;
+    color: var(--text);
     font-family: var(--font-text);
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     letter-spacing: 0.5px;
     text-align: left;
     cursor: pointer;
 }
 
+/* The volume slider: a slim track and a teal Pixel-square thumb. */
 .setting-row input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
     width: 55%;
-    accent-color: var(--teal);
+    height: 22px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
 }
 
-/* A checkbox is a socket; ticked, a small Pixel sits in it. */
+.setting-row input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.setting-row input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.setting-row input[type="range"]::-moz-range-progress {
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--teal);
+}
+
+.setting-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-top: -7px;
+    border: 0;
+    border-radius: 4px;
+    background: var(--teal);
+    box-shadow: 0 0 12px rgba(var(--teal-rgb), 0.6);
+}
+
+.setting-row input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: 4px;
+    background: var(--teal);
+    box-shadow: 0 0 12px rgba(var(--teal-rgb), 0.6);
+}
+
+/* A checkbox is a switch, and its knob is a little Pixel: grey and to the
+   left when off, dark on a lit teal track when on. */
 .setting-row input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
     flex: none;
-    width: 26px;
-    height: 26px;
+    width: 48px;
+    height: 28px;
     margin: 0;
-    border: 2px solid rgba(var(--teal-rgb), 0.7);
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-pill);
+    /* Two eyes, then the knob, then the track (positions in px from the
+       padding box: the knob is 18px, 4px in). */
+    background:
+        linear-gradient(var(--sheet), var(--sheet)) 8px 9px / 4px 4px no-repeat,
+        linear-gradient(var(--sheet), var(--sheet)) 14px 9px / 4px 4px no-repeat,
+        linear-gradient(#8f9bb3, #8f9bb3) 4px 4px / 18px 18px no-repeat,
+        rgba(255, 255, 255, 0.07);
     cursor: pointer;
-    transition: background 0.12s;
+    transition: background-position 0.16s ease, background-color 0.16s, border-color 0.16s;
 }
 
 .setting-row input[type="checkbox"]:checked {
+    border-color: transparent;
     background:
-        linear-gradient(var(--night), var(--night)) 22% 34% / 20% 20% no-repeat,
-        linear-gradient(var(--night), var(--night)) 78% 34% / 20% 20% no-repeat,
+        linear-gradient(var(--teal), var(--teal)) 28px 9px / 4px 4px no-repeat,
+        linear-gradient(var(--teal), var(--teal)) 34px 9px / 4px 4px no-repeat,
+        linear-gradient(var(--ink), var(--ink)) 24px 4px / 18px 18px no-repeat,
         var(--teal);
-    box-shadow: 0 0 10px rgba(var(--teal-rgb), 0.5);
+    box-shadow: 0 0 14px rgba(var(--teal-rgb), 0.45);
 }
 
 .setting-row input:focus-visible {
@@ -2182,18 +2373,43 @@ body.reduce-motion .page-title--brand {
 }
 
 /* ---------- End-of-run card ---------- */
+/* RUN OVER is a small label; the height is the headline. */
+#run-card-title {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 5px;
+}
+
 .run-card-distance {
+    margin: -4px 0 2px;
     color: #fff;
-    font-size: 44px;
+    font-size: clamp(44px, 14vw, 60px);
     font-weight: 900;
-    line-height: 1.1;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 3px 0 rgba(0, 0, 0, 0.4), 0 0 28px rgba(255, 255, 255, 0.25);
 }
 
 .run-card-best {
+    align-self: center;
+    margin-top: -4px;
+    padding: 5px 14px;
+    border: 1px solid rgba(var(--gold-rgb), 0.6);
+    border-radius: var(--radius-pill);
+    background: rgba(var(--gold-rgb), 0.12);
     color: var(--gold);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 900;
     letter-spacing: 2px;
+    box-shadow: 0 0 20px rgba(var(--gold-rgb), 0.25);
+}
+
+/* A new best lights the whole card gold. */
+.run-card-box:has(.run-card-best:not([hidden])) {
+    --edge: var(--gold);
+    --edge-rgb: var(--gold-rgb);
 }
 
 .run-card-stats,
@@ -2210,28 +2426,32 @@ body.reduce-motion .page-title--brand {
 
 /* A stat tile: the number, and what it counts. */
 .run-stat {
-    padding: 9px 8px 8px;
+    padding: 11px 8px 10px;
     border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--glass);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
     text-align: center;
 }
 
 .run-stat-value {
     display: block;
+    overflow: hidden;
     color: #fff;
     font-size: 16px;
     font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .run-stat-label {
     display: block;
-    margin-top: 2px;
+    margin-top: 4px;
     color: var(--muted);
     font-family: var(--font-text);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
 }
 
 .run-card-actions {
@@ -2265,10 +2485,10 @@ body.reduce-motion .page-title--brand {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 10px;
-    border: 1px solid rgba(var(--gold-rgb), 0.45);
-    border-radius: 10px;
-    background: rgba(var(--gold-rgb), 0.08);
+    padding: 12px;
+    border: 1px solid rgba(var(--gold-rgb), 0.4);
+    border-radius: 14px;
+    background: rgba(var(--gold-rgb), 0.07);
 }
 
 .run-card-lb-title {
@@ -2288,9 +2508,9 @@ body.reduce-motion .page-title--brand {
     min-width: 0;
     box-sizing: border-box;
     padding: 9px 10px;
-    border: 2px solid rgba(255, 255, 255, 0.16);
-    border-radius: 9px;
-    background: rgba(0, 0, 0, 0.45);
+    border: 1.5px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.4);
     color: #fff;
     font-family: var(--font-display);
     font-size: 16px;
@@ -2334,23 +2554,23 @@ body.reduce-motion .page-title--brand {
 .fame-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 8px;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
     text-align: left;
 }
 
 /* Rank chip: gold, silver and bronze on the podium. */
 .fame-rank {
     flex: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    background: #2a3142;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #222a3a;
     color: var(--muted);
     font-size: 11px;
-    font-weight: bold;
-    line-height: 20px;
+    font-weight: 900;
+    line-height: 22px;
     text-align: center;
 }
 
@@ -2392,7 +2612,7 @@ body.reduce-motion .page-title--brand {
 }
 
 .fame-row--1 {
-    background: rgba(var(--gold-rgb), 0.1);
+    background: linear-gradient(90deg, rgba(var(--gold-rgb), 0.16), rgba(var(--gold-rgb), 0.03));
 }
 
 .fame-row--1 .fame-rank {
@@ -2456,7 +2676,7 @@ body.reduce-motion .page-title--brand {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 9px 2px;
+    padding: 11px 2px;
     border-top: 1px solid var(--line);
     text-align: left;
 }
@@ -2472,15 +2692,20 @@ body.reduce-motion .page-title--brand {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
     color: #5d6880;
-    font-size: 20px;
-    opacity: 0.6;
+    font-size: 18px;
+    opacity: 0.7;
 }
 
 .achievement-row.earned .achievement-icon {
+    background: rgba(var(--gold-rgb), 0.12);
     color: var(--gold);
     opacity: 1;
+    box-shadow: inset 0 0 0 1px rgba(var(--gold-rgb), 0.35);
 }
 
 .achievement-pixel {
@@ -2570,7 +2795,7 @@ body.reduce-motion *::after {
 }
 
 .touch-pad.is-active {
-    background: rgba(0, 255, 255, 0.2);
+    background: rgba(var(--teal-rgb), 0.18);
     color: #fff;
 }
 
@@ -2612,11 +2837,11 @@ body.reduce-motion *::after {
     top: calc(var(--hud-top) + 116px + var(--safe-top));
     left: 50%;
     transform: translateX(-50%);
-    padding: 3px 10px;
-    border: 1px solid rgba(255, 215, 0, 0.5);
+    padding: 4px 12px;
+    border: 1px solid rgba(var(--gold-rgb), 0.5);
     border-radius: var(--radius-pill);
-    background: rgba(0, 0, 0, 0.5);
-    color: #ffd700;
+    background: rgba(6, 10, 18, 0.8);
+    color: var(--gold);
     font-size: 12px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -2646,7 +2871,7 @@ body.reduce-motion *::after {
     padding: 4px 12px;
     border: 1px solid rgba(192, 77, 255, 0.5);
     border-radius: var(--radius-pill);
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(6, 10, 18, 0.8);
     color: #d896ff;
     font-size: 12px;
     font-weight: bold;
@@ -2808,9 +3033,11 @@ body.reduce-motion *::after {
 
 .achievement-bar {
     display: block;
-    height: 6px;
-    margin-top: 5px;
-    background: rgba(255, 255, 255, 0.1);
+    height: 5px;
+    margin-top: 6px;
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .achievement-bar > span {
@@ -2819,28 +3046,37 @@ body.reduce-motion *::after {
     background: var(--gold);
 }
 
-/* ---------- The menu's owned-Pixel picker ---------- */
-.skin-picker {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 12px;
-}
+/* ---------- The menu's owned-Pixel picker: ‹ › and the count ---------- */
 .skin-step {
-    min-width: 44px;
-    min-height: 40px;
-    padding: 2px 10px;
-    font-size: 22px;
+    flex: none;
+    width: 44px;
+    min-height: 56px;
+    padding: 0;
+    border-color: var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: none;
+    color: var(--teal);
+    font-size: 26px;
 }
+
+.skin-step:disabled {
+    transform: none;
+    box-shadow: none;
+    opacity: 0.25;
+}
+
 .skin-owned-count {
-    min-width: 92px;
+    align-self: flex-end;
+    padding: 2px 8px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
     color: var(--muted);
     font-family: var(--font-text);
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    text-align: center;
+    letter-spacing: 1px;
 }
+
 /* ---------- The shop: RENT / PIXELS / BOOSTERS (js/shop.js) ----------
    A stage for one Pixel at a time, tabs pinned to the bottom for thumbs. */
 .shop-page {
@@ -3411,19 +3647,22 @@ body.reduce-motion *::after {
                 <div class="home">
                     <div id="skin-container" class="panel">
                         <div id="skin-display">
-                            <div id="skin-preview-box">
-                                <div id="skin-eyes-l" class="pixel-eye pixel-eye-l"></div>
-                                <div id="skin-eyes-r" class="pixel-eye pixel-eye-r"></div>
+                            <span id="skin-owned-count" class="skin-owned-count">1 / 1</span>
+                            <!-- The equipped Pixel on a platform, with ‹ › either side:
+                                 owned Pixels only, one step at a time; the shop sells the rest. -->
+                            <div class="skin-picker">
+                                <button id="skin-prev-btn" class="btn skin-step" type="button" aria-label="Previous owned Pixel">&lsaquo;</button>
+                                <div class="skin-stand">
+                                    <div id="skin-preview-box">
+                                        <div id="skin-eyes-l" class="pixel-eye pixel-eye-l"></div>
+                                        <div id="skin-eyes-r" class="pixel-eye pixel-eye-r"></div>
+                                    </div>
+                                </div>
+                                <button id="skin-next-btn" class="btn skin-step" type="button" aria-label="Next owned Pixel">&rsaquo;</button>
                             </div>
                             <div id="skin-name">Unit 734</div>
                             <div id="skin-status">UNLOCKED</div>
                             <div id="skin-ability"></div>
-                            <!-- Owned Pixels only, one step at a time; the shop sells the rest. -->
-                            <div class="skin-picker">
-                                <button id="skin-prev-btn" class="btn skin-step" type="button" aria-label="Previous owned Pixel">&lsaquo;</button>
-                                <span id="skin-owned-count" class="skin-owned-count">1 / 1</span>
-                                <button id="skin-next-btn" class="btn skin-step" type="button" aria-label="Next owned Pixel">&rsaquo;</button>
-                            </div>
                         </div>
                     </div>
 
@@ -3534,24 +3773,27 @@ body.reduce-motion *::after {
 
                 <!-- Lobby setup: evaporates once you host or join a party -->
                 <div id="mp-setup" class="mp-setup">
-                    <div class="panel mp-box">
+                    <!-- One card: who you are, then join a code OR host your own. -->
+                    <div class="panel mp-box mp-card">
                         <label for="mp-name-input">Your name</label>
                         <input type="text" id="mp-name-input" maxlength="20" placeholder="PLAYER"
                             autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done">
-                    </div>
 
-                    <div class="panel mp-box mp-box--join">
-                        <label for="mp-join-input">Join a friend</label>
-                        <div class="mp-join-row">
-                            <input type="text" id="mp-join-input" maxlength="6" placeholder="CODE"
-                                autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go">
-                            <button id="mp-join-btn" class="btn btn--primary">JOIN</button>
+                        <div class="mp-section">
+                            <label for="mp-join-input">Join a friend</label>
+                            <div class="mp-join-row">
+                                <input type="text" id="mp-join-input" maxlength="6" placeholder="CODE"
+                                    autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go">
+                                <button id="mp-join-btn" class="btn btn--primary">JOIN</button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="panel mp-box mp-box--host">
-                        <div class="mp-box-title">Host a party</div>
-                        <button id="mp-host-btn" class="btn btn--primary">GET A CODE</button>
+                        <div class="mp-or" aria-hidden="true"><span>OR</span></div>
+
+                        <div class="mp-box--host">
+                            <button id="mp-host-btn" class="btn">HOST A PARTY</button>
+                            <p class="mp-hint">You get a code to share. Up to 4 players.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -3677,7 +3919,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.33.1';
+    const EMBEDDED = '1.34.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -3875,7 +4117,7 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.33.1';
+const GAME_VERSION = '1.34.0';
 const NET_PROTOCOL = 11;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
@@ -10134,6 +10376,7 @@ class GameShop {
         // The pattern (a Rental), over the body colour.
         this.ui.preview.style.background = pixelBodyCSS(s);
         this.ui.preview.style.backgroundColor = s.color;
+        this.ui.preview.style.color = s.color; // its glow (currentColor in CSS)
         this.ui.eyesL.style.backgroundColor = s.eye;
         this.ui.eyesR.style.backgroundColor = s.eye;
         this.ui.skinName.innerText = s.name;

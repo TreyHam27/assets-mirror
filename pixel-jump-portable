@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.34.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.34.1, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -3919,7 +3919,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.34.0';
+    const EMBEDDED = '1.34.1';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4117,7 +4117,7 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.34.0';
+const GAME_VERSION = '1.34.1';
 const NET_PROTOCOL = 11;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
@@ -10726,13 +10726,17 @@ class GameShop {
         if (hearts) {
             // Between runs, only the bought hearts that fit this Pixel count.
             const shown = this.state.running ? this.state.hearts : this.state.hearts - extra;
-            const html = counted(shown, 'heart');
-            if (hearts.innerHTML !== html && hearts.classList) {
+            // Pop only when the count itself changes (a heart spent, picked up
+            // or bought, or a Pixel that holds fewer), never on a redraw.
+            // (Comparing innerHTML popped every time: the browser serializes
+            // the SVG differently from the markup it was given.)
+            if (this.heartsShown !== undefined && shown !== this.heartsShown && hearts.classList) {
                 hearts.classList.remove('life-pop');
                 void hearts.offsetWidth; // restart the animation
                 hearts.classList.add('life-pop');
             }
-            hearts.innerHTML = html;
+            this.heartsShown = shown;
+            setHTML(hearts, counted(shown, 'heart'));
             if (hearts.classList) hearts.classList.toggle('empty', shown <= 0);
         }
         if (!this.ui.shopLifeBtn) return;

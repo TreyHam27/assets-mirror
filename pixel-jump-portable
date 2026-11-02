@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.38.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.39.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -1571,7 +1571,7 @@ body.reduce-motion #skin-preview-box {
     }
 }
 
-/* ---- Co-op ---- */
+/* ---- Multiplayer: Freeplay, then Co-op ---- */
 .mp-box {
     text-align: left;
 }
@@ -1662,8 +1662,54 @@ body.reduce-motion #skin-preview-box {
     min-width: 0;
 }
 
-.mp-box--host .btn {
+.mp-box--host .btn,
+.mp-freeplay .btn {
     width: 100%;
+}
+
+/* ---- Freeplay: between runs (js/freeplay.js) ----
+   Shown once when a Freeplay run ends and hidden when the next starts; the
+   countdown is written once a second. Nothing here animates during a run. */
+.fp-banner {
+    position: absolute;
+    left: var(--pf-left, 0px);
+    top: calc(var(--pf-top, 0px) + var(--pf-h, 100vh) * 0.36);
+    width: var(--pf-w, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 18px 16px;
+    box-sizing: border-box;
+    background: rgba(2, 4, 10, 0.78);
+    border-block: 1px solid var(--line);
+    text-align: center;
+    z-index: 12;
+}
+
+.fp-banner[hidden] {
+    display: none;
+}
+
+.fp-banner-title {
+    color: var(--pixel);
+    font-family: var(--font-display);
+    font-size: clamp(18px, 4vw, 26px);
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.fp-banner-count {
+    color: var(--text);
+    font-family: var(--font-text);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.fp-leave-btn {
+    margin-top: 4px;
+    min-width: 140px;
 }
 
 /* ---- Lobby setup <-> party view ----
@@ -3879,6 +3925,13 @@ body.reduce-motion *::after {
                 </div>
             </div>
 
+            <!-- FREEPLAY: between runs, out of hearts (js/freeplay.js) -->
+            <div id="fp-banner" class="fp-banner" hidden role="status" aria-live="polite">
+                <div id="fp-banner-title" class="fp-banner-title">OUT OF HEARTS</div>
+                <div id="fp-banner-count" class="fp-banner-count">NEW RUN IN 3...</div>
+                <button id="fp-leave-btn" class="btn btn--danger fp-leave-btn">LEAVE</button>
+            </div>
+
             <!-- Entering a biome: its name across the playfield (Game.showBiomeBanner). -->
             <div id="biome-banner" role="status" aria-live="polite">
                 <!-- Drawn once into these when it is shown (Game.paintBiomeBanner);
@@ -3971,7 +4024,7 @@ body.reduce-motion *::after {
                         <div id="menu-streak" class="menu-streak" hidden></div>
                         <button id="start-prompt" class="btn btn--primary btn--big">PLAY</button>
                         <button id="race-btn" class="btn btn--gold" type="button" hidden>RACE TODAY'S #1</button>
-                        <button id="to-mp-btn" class="btn"><svg class="ico" aria-hidden="true"><use href="#i-coop"/></svg> CO-OP</button>
+                        <button id="to-mp-btn" class="btn"><svg class="ico" aria-hidden="true"><use href="#i-coop"/></svg> MULTIPLAYER</button>
                         <div class="menu-actions">
                             <button id="shop-open-btn" class="btn"><svg class="ico ico-gem" aria-hidden="true"><use href="#i-gem"/></svg> SHOP<span class="shop-badge" hidden>BUY</span></button>
                             <button id="records-open-btn" class="btn"><svg class="ico ico-gold" aria-hidden="true"><use href="#i-trophy"/></svg> RECORDS</button>
@@ -4069,11 +4122,11 @@ body.reduce-motion *::after {
                 </div>
             </div>
 
-            <!-- CO-OP -->
+            <!-- MULTIPLAYER: Freeplay (public lobbies) and Co-op (a party) -->
             <div id="mp-menu-layer" class="menu-page">
                 <button id="to-sp-btn" class="btn back-btn" aria-label="Back to solo"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg> BACK</button>
 
-                <div class="page-title page-title--mp">CO-OP</div>
+                <div class="page-title page-title--mp">MULTIPLAYER</div>
 
                 <!-- Lobby setup: evaporates once you host or join a party -->
                 <div id="mp-setup" class="mp-setup">
@@ -4082,6 +4135,14 @@ body.reduce-motion *::after {
                         <label for="mp-name-input">Your name</label>
                         <input type="text" id="mp-name-input" maxlength="20" placeholder="PLAYER"
                             autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done">
+
+                        <div class="mp-section mp-freeplay">
+                            <span class="mp-box-title">Freeplay</span>
+                            <button id="fp-quick-btn" class="btn btn--primary">QUICK PLAY</button>
+                            <p class="mp-hint">Today's climb with up to 7 others. Everyone runs their own world.</p>
+                        </div>
+
+                        <div class="mp-or mp-or--coop" aria-hidden="true"><span>CO-OP</span></div>
 
                         <div class="mp-section">
                             <label for="mp-join-input">Join a friend</label>
@@ -4230,7 +4291,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.38.0';
+    const EMBEDDED = '1.39.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4428,8 +4489,8 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.38.0';
-const NET_PROTOCOL = 15;
+const GAME_VERSION = '1.39.0';
+const NET_PROTOCOL = 16;
 
 // Game logic runs in fixed steps of STEP_MS (ADR-0007); a frame runs at most
 // MAX_STEPS_PER_FRAME of them and drops the rest of a longer stall. A step
@@ -4934,6 +4995,23 @@ const TURN_CACHE_MS = 30 * 60 * 1000;     // reuse fetched logins this long
 // can't be reached the game shows no board. Empty = no board.
 const SCORES_URL = 'https://scores.pixeljump.online/';
 const SCORES_FETCH_TIMEOUT_MS = 5000;
+// Freeplay (js/freeplay.js, ADR-0009): public lobbies of up to 8 on today's
+// layout, through the relay in cloudflare/freeplay-worker/ (a Durable Object
+// per lobby). The relay only passes positions and feed lines; every player
+// climbs their own run. Empty = no Freeplay.
+const FREEPLAY_URL = 'wss://freeplay.pixeljump.online/play';
+const FREEPLAY_LOBBY_MAX = 8;             // the relay's LOBBY_MAX
+const FREEPLAY_POS_FRAMES = 15;           // a position every 15 steps: 4 a second
+const FREEPLAY_SMOOTH_FRAMES = 15;        // others glide to each new position over this many steps
+const FREEPLAY_RESPAWN_MS = 3000;         // out of hearts: the banner, then a new run at 0m
+const FREEPLAY_CONNECT_TIMEOUT_MS = 8000;
+const FREEPLAY_RETRY_MS = [2000, 5000, 10000]; // reconnecting after a lost lobby
+const FREEPLAY_QUIET_FRAMES = 180;        // 3 s without a position: a player is away (paused, hidden tab)
+const FREEPLAY_ALPHA = 0.4;               // others are see-through
+const FREEPLAY_FEED_MAX = 3;              // lines in the feed
+const FREEPLAY_FEED_MIN_METERS = 10;      // a shorter fall makes no feed line
+const FREEPLAY_FEED_FRAMES = 360;         // a feed line's life (6 s), fading for the last third
+const FREEPLAY_ARROW_RANGE = 800;         // px: an edge arrow for players within about a screen
 const LEADERBOARD_SIZE = 3;
 // The score Worker's MAX_CLIMB_RATE (m/s over a whole run), quoted on the run
 // card when a climb is refused as too fast.
@@ -12778,15 +12856,17 @@ class GameLeaderboard {
         // A solo run's seed is the day it was played; co-op seeds aren't days.
         if (s.multiplayer || !/^\d{8}$/.test(day)) return;
         const meters = Math.max(0, Math.floor(s.score / 10) - (s.startMeters || 0));
-        if (meters < 1) return;
-        const offer = { day, meters, secs: Math.round(this.runSeconds() * 10) / 10, pixel: this.player.skin.id };
+        // Leaving Freeplay offers the session's best climb, if it beats this one.
+        const offer = this.takeFreeplayOffer(day, meters) ||
+            { day, meters, secs: Math.round(this.runSeconds() * 10) / 10, pixel: this.player.skin.id };
+        if (offer.meters < 1) return;
         this.lbOffer = offer;
         this.fetchLeaderboard(day).then(top => {
             if (this.lbOffer !== offer || !this.runCardOpen || !top) return;
             const mine = top.find(r => r.me);
-            if (mine && mine.meters >= meters) return;
+            if (mine && mine.meters >= offer.meters) return;
             // Ties go to whoever was there first.
-            const rank = top.filter(r => !r.me && r.meters >= meters).length + 1;
+            const rank = top.filter(r => !r.me && r.meters >= offer.meters).length + 1;
             if (rank > LEADERBOARD_SIZE) return;
             offer.rank = rank;
             this.showLeaderboardPrompt(offer);
@@ -12851,7 +12931,11 @@ class GameLeaderboard {
                 return;
             }
             offer.done = true;
-            if (Number.isInteger(r.body.rank)) this.uploadGhost(offer.day);
+            if (Number.isInteger(r.body.rank)) {
+                // A Freeplay session's best climb brings its own Ghost.
+                if (offer.ghost) saveItem('lp_ghost', offer.ghost);
+                this.uploadGhost(offer.day);
+            }
             if (!this.portalName) saveItem('lp_lb_name', name);
             const top = cleanLeaderboard(r.body.top);
             if (top) this.keepLeaderboard(offer.day, top);
@@ -13330,6 +13414,8 @@ class GameMenus {
         this.pauseMenuOpen = true;
         this.state.paused = !this.state.multiplayer;
         if (this.state.paused) this.pauseStartedAt = performance.now();
+        // Freeplay: the lobby sees this player as down while paused.
+        if (this.freeplay) this.fpSendPos();
         this.input.resetInput();
         this.ui.pauseNote.hidden = !this.state.multiplayer;
         this.ui.pauseQuitBtn.innerText = this.state.multiplayer ? "LEAVE PARTY" : "QUIT RUN";
@@ -14026,6 +14112,8 @@ class GameRun {
     quitRun() {
         if (!this.state.running) return;
         this.closePauseUI();
+        // Freeplay: leaving the lobby ends the session, and its run card shows.
+        if (this.freeplay) this.leaveFreeplay();
         if (this.state.multiplayer) {
             this.endPartyRun();
             this.leaveParty("LEFT THE PARTY");
@@ -14110,6 +14198,7 @@ class GameRun {
         this.setHearts(this.heartCap());
         this.state.nextBossAt = Math.floor(this.state.score / 10) + CONFIG.BOSS_LOOP_DISTANCE;
         this.notify(`TITAN DOWN  +${fmtNum(bounty)} GEMS  HEARTS FULL`, 'reward');
+        if (this.freeplay) this.fpFeedOut('boss', this.fpMeters());
         sounds.play('reward');
         portal.happytime();
     }
@@ -14450,7 +14539,8 @@ class GameRun {
     // every death. Hearts are the way to keep going without ads.
     canOfferRevive() {
         const s = this.state;
-        if (s.multiplayer || s.revived) return false;
+        // Freeplay respawns at 0m for free, in the same lobby.
+        if (s.multiplayer || s.revived || this.freeplay) return false;
         if (Math.floor(s.score / 10) - (s.startMeters || 0) < REVIVE_MIN_METERS) return false;
         if (this.lastReviveOfferAt !== undefined && performance.now() - this.lastReviveOfferAt < REVIVE_OFFER_COOLDOWN_MS) return false;
         return this.ads.rewardedAvailable();
@@ -14553,6 +14643,20 @@ class GameRun {
         if (!this.state.multiplayer) {
             this.updateFame(finalScore);
         }
+
+        // Freeplay: the records are kept; a banner, then a new run in the
+        // same lobby. (A lobby lost for good ends the session here.)
+        if (this.freeplay && !this.freeplay.offline) {
+            this.fpRunOver(finalScore);
+            return;
+        }
+        if (this.freeplay) this.leaveFreeplay();
+        this.finishGameOver(finalScore);
+    }
+
+    // The menu and the run card after a run (gameOver(), or leaving
+    // Freeplay between runs).
+    finishGameOver(finalScore) {
 
         clearTimeout(this.menuHideTimer);
         this.menuHideTimer = null;
@@ -15244,6 +15348,569 @@ function catmullRom(a, b, c, d, t) {
 }
 
 </script>
+<script>/* ---- js/freeplay.js ---- */
+// Freeplay (ADR-0009): QUICK PLAY drops you into a public lobby of up to 8 on
+// today's layout. Every player climbs their own world (enemies, boss,
+// hazards), so a Freeplay run is an ordinary solo daily run
+// (state.multiplayer stays false: both leaderboards, the Ghost and the
+// Streak work unchanged) plus a WebSocket to the relay at FREEPLAY_URL
+// (cloudflare/freeplay-worker/). The relay only passes positions (4 a
+// second) and feed lines between players.
+//
+// Others are drawn see-through with their name, Pixel and cosmetics, and
+// never collide with anything. Out of hearts, the run ends as any run does
+// (best height, gems, Streak), a FREEPLAY_RESPAWN_MS banner shows, and a new
+// run starts at 0m in the same lobby; the run card only comes on leaving
+// (QUIT RUN, or LEAVE on the banner), with the session's best climb offered
+// to the Online leaderboard.
+//
+// The altimeter (a bar at the playfield's right edge, beside the side panel
+// on wide screens), the edge arrows and the feed are drawn on the canvas.
+//
+// GameFreeplay is never instantiated: app.js copies these methods onto
+// Game.prototype, so `this` is always the Game.
+
+const FREEPLAY_FEED_TEXT = {
+    fell: (name, m) => name + ' FELL FROM ' + fmtNum(m) + 'm',
+    biome: (name, m, b) => name + ' REACHED ' + ((BIOMES[b] && BIOMES[b].name) || 'A NEW BIOME').toUpperCase(),
+    boss: (name, m) => name + ' BEAT A BOSS AT ' + fmtNum(m) + 'm',
+    best: (name, m) => name + ': NEW BEST ' + fmtNum(m) + 'm'
+};
+
+// Where the HUD pieces sit, in game px (clear of the score, the pause button
+// and the touch pads on every layout; checked by screenshot).
+const FP_ALT_RIGHT = 12, FP_ALT_W = 4;      // the altimeter's distance from the right edge, its width
+const FP_ALT_TOP = 165, FP_ALT_BOTTOM = 150; // its ends: below the pause button, above the touch pads
+const FP_ARROW_TOP = 96, FP_ARROW_BOTTOM = 130, FP_ARROW_MARGIN = 60;
+const FP_FEED_TOP = 118, FP_FEED_LEFT = 10;
+
+class GameFreeplay {
+    freeplayAvailable() {
+        return !!FREEPLAY_URL && typeof WebSocket === 'function';
+    }
+
+    // ------------------------------------------------------------ joining
+    // QUICK PLAY on the Multiplayer page.
+    quickPlay() {
+        if (this.state.running || this.freeplay || this.installGated || this.inParty()) return;
+        if (!this.freeplayAvailable()) {
+            this.setMpStatus('FREEPLAY IS OFFLINE — TRY CO-OP', 'danger');
+            return;
+        }
+        this.freeplay = {
+            ws: null, gen: 0, id: null, name: null, started: false, offline: false,
+            // The layout's day (every lobby is one day's), and the lobby to
+            // ask for back after a dropped connection.
+            day: String(this.getDailySeed()), lobby: null,
+            refusal: null, tries: 0, timer: null, retryTimer: null, respawnTimer: null, countTimer: null,
+            // Other players by lobby id, and the same objects in a plain
+            // array the draw path walks with an index (no closures, no iterators).
+            others: new Map(), list: [], best: null, between: false, lastScore: 0,
+            // The feed: FREEPLAY_FEED_MAX lines, reused (newest first). `w`
+            // is the line's measured width, kept until the text or size changes.
+            feed: Array.from({ length: FREEPLAY_FEED_MAX }, () => ({ text: '', life: 0, w: -1 }))
+        };
+        this.setFreeplayBusy(true);
+        this.setMpStatus('FINDING A LOBBY...', 'pending');
+        this.fpConnect();
+    }
+
+    setFreeplayBusy(busy) {
+        if (this.ui.fpQuickBtn) this.ui.fpQuickBtn.disabled = busy;
+        if (this.ui.mpHostBtn) this.ui.mpHostBtn.disabled = busy;
+        if (this.ui.mpJoinBtn) this.ui.mpJoinBtn.disabled = busy;
+    }
+
+    fpConnect() {
+        const fp = this.freeplay;
+        if (!fp) return;
+        const gen = ++fp.gen;
+        const stale = () => this.freeplay !== fp || fp.gen !== gen;
+        let ws;
+        try {
+            ws = new WebSocket(FREEPLAY_URL + '?v=' + NET_PROTOCOL + '&d=' + fp.day +
+                (fp.lobby ? '&l=' + encodeURIComponent(fp.lobby) : ''));
+        } catch (e) {
+            this.fpLost();
+            return;
+        }
+        fp.ws = ws;
+        fp.refusal = null;
+        clearTimeout(fp.timer);
+        fp.timer = setTimeout(() => {
+            if (stale() || fp.id) return;
+            fp.gen++; // whatever this socket says now is too late
+            try { ws.close(); } catch (e) { /* closed */ }
+            this.fpLost();
+        }, FREEPLAY_CONNECT_TIMEOUT_MS);
+        ws.onopen = () => {
+            if (stale()) return;
+            const skin = SKINS[this.viewParams.skinIndex] || SKINS[0];
+            this.fpSend({ type: 'join', v: NET_PROTOCOL, name: this.getMpName(), pixel: skin.id, cos: this.cosmeticIds() });
+        };
+        ws.onmessage = (e) => {
+            if (stale()) return;
+            let m = null;
+            try { m = JSON.parse(e.data); } catch (err) { return; }
+            if (m && typeof m === 'object') this.fpHandle(m);
+        };
+        ws.onclose = () => {
+            if (stale()) return;
+            fp.gen++;
+            clearTimeout(fp.timer);
+            this.fpLost();
+        };
+        ws.onerror = () => { /* onclose follows */ };
+    }
+
+    fpSend(msg) {
+        const fp = this.freeplay;
+        if (!fp || !fp.ws || fp.ws.readyState !== 1) return;
+        try { fp.ws.send(JSON.stringify(msg)); } catch (e) { /* closing */ }
+    }
+
+    // What the relay says. Everything from it is checked here: it relays
+    // what other players' pages sent.
+    fpHandle(m) {
+        const fp = this.freeplay;
+        switch (m.type) {
+            case 'welcome': {
+                if (!Number.isInteger(m.id)) return;
+                clearTimeout(fp.timer);
+                fp.id = m.id;
+                fp.lobby = typeof m.lobby === 'string' && /^[0-9a-z-]{1,40}$/.test(m.lobby) ? m.lobby : null;
+                fp.name = typeof m.name === 'string' ? m.name.slice(0, MP_NAME_MAX) : this.getMpName();
+                fp.tries = 0;
+                this.fpClearOthers();
+                if (Array.isArray(m.players)) m.players.slice(0, FREEPLAY_LOBBY_MAX - 1).forEach(p => this.fpAdd(p));
+                if (!fp.started) {
+                    fp.started = true;
+                    this.setFreeplayBusy(false);
+                    this.setMpStatus('READY', null);
+                    this.fpStartRun();
+                } else {
+                    this.notify('BACK IN THE LOBBY', 'info');
+                }
+                return;
+            }
+            case 'joined': this.fpAdd(m); return;
+            case 'left': this.fpRemove(m.id); return;
+            case 'pos': this.fpPos(m); return;
+            case 'feed': this.fpFeedIn(m); return;
+            case 'full': case 'retry': fp.refusal = m.type; return;
+            case 'refused': fp.refusal = m.why === 'day' ? 'day' : 'version'; return;
+        }
+    }
+
+    // Another player, as the relay introduced them.
+    fpAdd(p) {
+        const fp = this.freeplay;
+        if (!p || !Number.isInteger(p.id) || p.id === fp.id || fp.others.size >= FREEPLAY_LOBBY_MAX - 1 && !fp.others.has(p.id)) return;
+        const skinAt = typeof p.pixel === 'string' ? skinIndexById(p.pixel) : -1;
+        const skin = SKINS[skinAt] || SKINS[0];
+        const o = {
+            id: p.id,
+            name: nameTag(typeof p.name === 'string' && p.name ? p.name.slice(0, MP_NAME_MAX) : 'PLAYER'),
+            skin, color: skin.color,
+            // Known cosmetics in their own slot only (as co-op's sanitizeSync).
+            cos: COSMETIC_SLOTS.map((slot, i) => {
+                const c = Array.isArray(p.cos) ? cosmeticById(p.cos[i]) : null;
+                return c && c.slot === slot ? c.id : null;
+            }),
+            x: 0, y: 0, w: 26, h: 26, vx: 0, vy: 0, wy: 0, m: 0, dead: true, seen: false,
+            fromX: 0, fromWY: 0, toX: 0, toWY: 0, t: 1, trailTick: 'fpTrail' + p.id,
+            // The edge arrow's text, rebuilt only when its direction or distance changes.
+            arrowKey: 0, arrowLabel: '',
+            // Steps since their last position: a paused or hidden tab goes quiet.
+            quiet: 0
+        };
+        if (fp.others.has(o.id)) this.fpRemove(o.id);
+        fp.others.set(o.id, o);
+        fp.list.push(o);
+        if (Number.isFinite(p.x) && Number.isFinite(p.wy)) this.fpPos(Object.assign({ id: p.id }, p));
+    }
+
+    fpRemove(id) {
+        const fp = this.freeplay;
+        const o = fp.others.get(id);
+        if (!o) return;
+        fp.others.delete(id);
+        fp.list.splice(fp.list.indexOf(o), 1);
+    }
+
+    fpClearOthers() {
+        this.freeplay.others.clear();
+        this.freeplay.list.length = 0;
+    }
+
+    // A position: the other glides there over FREEPLAY_SMOOTH_FRAMES (it
+    // snaps across a screen wrap, and to the start of a new run).
+    fpPos(m) {
+        const o = this.freeplay.others.get(m.id);
+        if (!o || !Number.isFinite(m.x) || !Number.isFinite(m.wy)) return;
+        const meters = Number.isInteger(m.m) && m.m >= 0 ? m.m : 0;
+        const snap = !o.seen || Math.abs(m.x - o.x) > CONFIG.WIDTH / 2 || Math.abs(m.wy - o.wy) > CONFIG.HEIGHT || meters < o.m - 30;
+        const wasDead = o.dead;
+        o.dead = m.dead === true;
+        if (!o.dead && !wasDead && o.vy > 2 && m.vy === 0 && o.cos[1]) this.landFx(o, o.cos[1]);
+        if (o.dead && !wasDead && o.seen) this.deathFx(o, o.cos[2]);
+        o.fromX = snap ? m.x : o.x;
+        o.fromWY = snap ? m.wy : o.wy;
+        o.toX = m.x;
+        o.toWY = m.wy;
+        o.t = snap ? 1 : 0;
+        if (snap) { o.x = m.x; o.wy = m.wy; }
+        o.vy = Number.isFinite(m.vy) ? m.vy : 0;
+        o.m = meters;
+        o.seen = true;
+        o.quiet = 0;
+    }
+
+    fpFeedIn(m) {
+        const fp = this.freeplay;
+        const o = fp.others.get(m.id);
+        const text = FREEPLAY_FEED_TEXT[m.kind];
+        if (!o || !text || !Number.isInteger(m.m) || m.m < 0) return;
+        if (m.kind === 'biome' && !(Number.isInteger(m.b) && m.b > 0 && BIOMES[m.b])) return;
+        this.fpFeedLine(text(o.name, m.m, m.b));
+    }
+
+    // Newest on top; the oldest of FREEPLAY_FEED_MAX goes.
+    fpFeedLine(text) {
+        const feed = this.freeplay.feed;
+        const line = feed.pop();
+        line.text = text;
+        line.life = FREEPLAY_FEED_FRAMES;
+        line.w = -1;
+        feed.unshift(line);
+    }
+
+    // Tells the lobby something happened on this player's climb.
+    fpFeedOut(kind, m, b) {
+        if (!this.freeplay) return;
+        const msg = { type: 'feed', kind, m: Math.max(0, Math.floor(m)) };
+        if (b !== undefined) msg.b = b;
+        this.fpSend(msg);
+    }
+
+    // The socket closed (or never opened). On the menu that is the answer
+    // to QUICK PLAY; mid-session the lobby is tried again a few times, and
+    // after that the climb carries on alone.
+    fpLost() {
+        const fp = this.freeplay;
+        if (!fp) return;
+        fp.ws = null;
+        fp.id = null;
+        this.fpClearOthers();
+        if (!fp.started) {
+            if (fp.refusal === 'retry' && fp.tries < 2) {
+                fp.tries++;
+                this.fpConnect();
+                return;
+            }
+            this.freeplay = null;
+            this.setFreeplayBusy(false);
+            this.setMpStatus(fp.refusal === 'full' ? 'FREEPLAY IS FULL TODAY — TRY CO-OP'
+                : fp.refusal === 'version' ? 'UPDATE THE GAME TO PLAY FREEPLAY'
+                    : fp.refusal === 'day' ? 'CHECK THE DATE ON THIS DEVICE'
+                    : 'FREEPLAY IS OFFLINE — TRY CO-OP', 'danger');
+            return;
+        }
+        if (fp.refusal === 'full' || fp.refusal === 'version' || fp.refusal === 'day' || fp.tries >= FREEPLAY_RETRY_MS.length) {
+            fp.offline = true;
+            this.notify('LOST THE LOBBY: CLIMBING SOLO', 'info');
+            return;
+        }
+        if (fp.tries === 0) this.notify('RECONNECTING TO FREEPLAY...', 'info');
+        const wait = FREEPLAY_RETRY_MS[fp.tries++];
+        clearTimeout(fp.retryTimer);
+        fp.retryTimer = setTimeout(() => { if (this.freeplay === fp && !fp.offline) this.fpConnect(); }, wait);
+    }
+
+    // ---------------------------------------------------------------- runs
+    fpStartRun() {
+        const fp = this.freeplay;
+        if (!fp) return;
+        fp.between = false;
+        this.hideFreeplayBanner();
+        // Past midnight the new run is on a new layout: on to that day's lobby.
+        const day = String(this.getDailySeed());
+        if (day !== fp.day && !fp.offline) {
+            fp.day = day;
+            fp.lobby = null;
+            fp.gen++;
+            if (fp.ws) { try { fp.ws.close(1000); } catch (e) { /* closed */ } }
+            fp.ws = null;
+            fp.id = null;
+            this.fpClearOthers();
+            this.fpConnect();
+        }
+        this.raceGhost = null;
+        this.enterFullscreen();
+        this.startGame(false);
+    }
+
+    // Each step of a run: this player's position, 4 times a second.
+    updateFreeplay(dt) {
+        if (!this.freeplay || !this.freeplay.id) return;
+        if (this.tick('fpPos', dt, FREEPLAY_POS_FRAMES)) this.fpSendPos();
+    }
+
+    fpMeters() {
+        return Math.max(0, Math.floor(this.state.score / 10) - (this.state.startMeters || 0));
+    }
+
+    fpSendPos() {
+        const p = this.player;
+        const r = v => Math.round(v * 10) / 10;
+        // Paused counts as down: the others stop drawing a Pixel that isn't moving.
+        const dead = !this.state.running || this.state.paused || this.state.dying > 0 || p.isDead;
+        this.fpSend({ type: 'pos', x: r(p.x), wy: Math.round(p.y - this.state.score), vy: r(p.vy), m: this.fpMeters(), dead });
+    }
+
+    // Every step, running or not (the others keep climbing through the
+    // banner): glide each other player, and age the feed.
+    updateFreeplayOthers(dt) {
+        const fp = this.freeplay;
+        if (!fp) return;
+        const score = this.state.score;
+        for (let i = 0; i < fp.list.length; i++) {
+            const o = fp.list[i];
+            const px = o.x;
+            o.quiet += dt;
+            if (o.t < 1) {
+                o.t = Math.min(1, o.t + dt / FREEPLAY_SMOOTH_FRAMES);
+                o.x = o.fromX + (o.toX - o.fromX) * o.t;
+                o.wy = o.fromWY + (o.toWY - o.fromWY) * o.t;
+            }
+            o.vx = o.x - px;
+            o.y = o.wy + score;
+            if (!o.dead && this.state.running) this.trailFx(o, o.cos[0], o.trailTick, dt);
+        }
+        for (let i = 0; i < fp.feed.length; i++) if (fp.feed[i].life > 0) fp.feed[i].life -= dt;
+    }
+
+    // From gameOver(), once the run's records are kept: the lobby hears,
+    // the banner shows, and a new run starts at 0m after FREEPLAY_RESPAWN_MS.
+    fpRunOver(finalScore) {
+        const fp = this.freeplay;
+        const meters = this.fpMeters();
+        this.fpSendPos();
+        if (this.state.isNewBest) this.fpFeedOut('best', this.state.bestHeight);
+        if (meters >= FREEPLAY_FEED_MIN_METERS) this.fpFeedOut('fell', meters);
+        // The session's best climb is what leaving offers to the board.
+        const day = String(this.state.runSeed);
+        if (meters >= 1 && /^\d{8}$/.test(day) && (!fp.best || meters > fp.best.meters)) {
+            fp.best = { day, meters, secs: Math.round(this.runSeconds() * 10) / 10, pixel: this.player.skin.id, ghost: storageGet('lp_ghost') };
+        }
+        fp.between = true;
+        fp.lastScore = finalScore;
+        this.clearNotices();
+        this.hideAlert();
+        this.updateTouchControls();
+        this.showFreeplayBanner(finalScore);
+        clearTimeout(fp.respawnTimer);
+        fp.respawnTimer = setTimeout(() => {
+            if (this.freeplay === fp && fp.between && !this.state.running) this.fpStartRun();
+        }, FREEPLAY_RESPAWN_MS);
+    }
+
+    // The 3-second banner: written when it opens and once a second.
+    showFreeplayBanner(finalScore) {
+        const ui = this.ui;
+        if (!ui.fpBanner) return;
+        const fp = this.freeplay;
+        setText(ui.fpBannerTitle, this.state.isNewBest ? 'NEW BEST: ' + fmtNum(finalScore) + 'm' : 'OUT OF HEARTS: ' + fmtNum(finalScore) + 'm');
+        let left = Math.round(FREEPLAY_RESPAWN_MS / 1000);
+        const count = () => setText(ui.fpBannerCount, 'NEW RUN IN ' + left + '...');
+        count();
+        clearInterval(fp.countTimer);
+        fp.countTimer = setInterval(() => {
+            left--;
+            if (left <= 0 || this.freeplay !== fp) { clearInterval(fp.countTimer); return; }
+            count();
+        }, 1000);
+        ui.fpBanner.hidden = false;
+    }
+
+    hideFreeplayBanner() {
+        if (this.freeplay) clearInterval(this.freeplay.countTimer);
+        if (this.ui.fpBanner) this.ui.fpBanner.hidden = true;
+    }
+
+    // Leaves the lobby. Returns the session it ended (or null).
+    leaveFreeplay() {
+        const fp = this.freeplay;
+        if (!fp) return null;
+        this.freeplay = null;
+        fp.gen++;
+        for (const t of [fp.timer, fp.retryTimer, fp.respawnTimer]) clearTimeout(t);
+        clearInterval(fp.countTimer);
+        if (fp.ws) { try { fp.ws.close(1000); } catch (e) { /* closed */ } }
+        if (this.ui.fpBanner) this.ui.fpBanner.hidden = true;
+        this.setFreeplayBusy(false);
+        // gameOver()'s leaderboard offer takes the session's best climb.
+        this.fpLeftBest = fp.best;
+        return fp;
+    }
+
+    // LEAVE on the banner, between runs: the last run is already over, so
+    // straight to the menu and its run card.
+    leaveFreeplayBetweenRuns() {
+        const fp = this.freeplay;
+        if (!fp || !fp.between || this.state.running) return;
+        this.leaveFreeplay();
+        this.finishGameOver(fp.lastScore);
+    }
+
+    // The session's best climb, if it beats this run's, for the board offer
+    // (with its Ghost: the saved lp_ghost is the last run's).
+    takeFreeplayOffer(day, meters) {
+        const best = this.fpLeftBest;
+        this.fpLeftBest = null;
+        if (!best || best.day !== day || best.meters <= meters) return null;
+        // Its Ghost replaces lp_ghost only if it is sent and places (submitLeaderboard).
+        return { day, meters: best.meters, secs: best.secs, pixel: best.pixel, ghost: best.ghost };
+    }
+
+    // -------------------------------------------------------------- drawing
+    // Other players, see-through, with their name over them.
+    drawFreeplayOthers(ctx) {
+        const fp = this.freeplay;
+        if (!fp || !fp.list.length) return;
+        const top = this.renderer.viewTop;
+        for (let i = 0; i < fp.list.length; i++) {
+            const o = fp.list[i];
+            if (this.fpAway(o) || o.y > CONFIG.HEIGHT + 30 || o.y < top - 40) continue;
+            const look = o.vx > 0.5 ? 4 : (o.vx < -0.5 ? -4 : 0);
+            ctx.globalAlpha = FREEPLAY_ALPHA;
+            drawPixel(ctx, o.x, o.y, o.skin, look);
+            if (o.x > CONFIG.WIDTH - o.w) drawPixel(ctx, o.x - CONFIG.WIDTH, o.y, o.skin, look);
+            ctx.globalAlpha = 0.75;
+            this.renderer.drawText(o.name, o.x + 13, o.y - 10, '10px Courier New', o.color);
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // Down, paused, not heard from yet, or silent for FREEPLAY_QUIET_FRAMES
+    // (a hidden tab): not drawn, no arrow, a dim dot on the altimeter.
+    fpAway(o) {
+        return o.dead || !o.seen || o.quiet > FREEPLAY_QUIET_FRAMES;
+    }
+
+    // Which edge arrow another player gets: -1 (above, off the top), 1
+    // (below, off the bottom) or 0 (on screen, too far, or not climbing).
+    fpArrowFor(o) {
+        if (this.fpAway(o)) return 0;
+        const top = this.renderer.viewTop;
+        if (o.y + o.h < top) return top - o.y <= FREEPLAY_ARROW_RANGE ? -1 : 0;
+        if (o.y > CONFIG.HEIGHT) return o.y - CONFIG.HEIGHT <= FREEPLAY_ARROW_RANGE ? 1 : 0;
+        return 0;
+    }
+
+    // The altimeter, the edge arrows and the feed: over the playfield,
+    // never shaken. Nothing here is made per frame: index loops, and text
+    // and widths rebuilt only when they change.
+    drawFreeplayHud(ctx) {
+        const fp = this.freeplay;
+        if (!fp) return;
+        // Text at least TIP_MIN_SCREEN_PX tall on screen, however small the
+        // playfield is shown (a phone shows it at about 65%).
+        const k = Math.min(1.6, Math.max(1, TIP_MIN_SCREEN_PX / (13 * (this.renderer.cssScale || 1))));
+        if (fp.fontK !== k) {
+            fp.fontK = k;
+            fp.arrowFont = '700 ' + Math.round(13 * k) + 'px "Chakra Petch", system-ui, sans-serif';
+            fp.feedFont = '600 ' + Math.round(13 * k) + 'px "Chakra Petch", system-ui, sans-serif';
+            for (let i = 0; i < fp.feed.length; i++) fp.feed[i].w = -1;
+        }
+        this.drawAltimeter(ctx, fp);
+        this.drawFreeplayArrows(ctx, fp);
+        this.drawFreeplayFeed(ctx, fp, Math.round(20 * k));
+    }
+
+    // A bar at the playfield's right edge: 0m at the bottom, the lobby's
+    // highest at the top, banded in biome colours, a dot per player.
+    drawAltimeter(ctx, fp) {
+        const list = fp.list;
+        const mine = this.fpMeters();
+        let high = Math.max(100, mine);
+        for (let i = 0; i < list.length; i++) if (list[i].seen && list[i].m > high) high = list[i].m;
+        const x = CONFIG.WIDTH - FP_ALT_RIGHT, w = FP_ALT_W;
+        const y0 = CONFIG.HEIGHT - FP_ALT_BOTTOM, y1 = this.renderer.viewTop + FP_ALT_TOP;
+        const span = y0 - y1;
+        ctx.globalAlpha = 0.85;
+        for (let i = 0; i < BIOMES.length; i++) {
+            const from = BIOMES[i].threshold;
+            if (from >= high) break;
+            const to = i + 1 < BIOMES.length ? Math.min(high, BIOMES[i + 1].threshold) : high;
+            ctx.fillStyle = BIOMES[i].platform;
+            ctx.fillRect(x, y0 - span * to / high, w, span * (to - from) / high);
+        }
+        for (let i = 0; i < list.length; i++) {
+            const o = list[i];
+            if (!o.seen) continue;
+            ctx.globalAlpha = this.fpAway(o) ? 0.35 : 0.9;
+            ctx.fillStyle = o.color;
+            ctx.fillRect(x - 2, y0 - span * Math.min(o.m, high) / high - 3, w + 4, 6);
+        }
+        ctx.globalAlpha = 1;
+        const my = y0 - span * Math.min(mine, high) / high;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x - 5, my - 6, w + 10, 12);
+        ctx.fillStyle = this.player.color;
+        ctx.fillRect(x - 3, my - 4, w + 6, 8);
+    }
+
+    // SAM ↑ 42m at the top or bottom edge, for players within about a screen.
+    drawFreeplayArrows(ctx, fp) {
+        const list = fp.list;
+        const top = this.renderer.viewTop;
+        ctx.save();
+        ctx.textBaseline = 'middle';
+        ctx.globalAlpha = 0.85;
+        for (let i = 0; i < list.length; i++) {
+            const o = list[i];
+            const dir = this.fpArrowFor(o);
+            if (!dir) continue;
+            const dist = Math.round(Math.abs(o.y - this.player.y) / 10);
+            const key = dir * (dist + 1);
+            if (o.arrowKey !== key) {
+                o.arrowKey = key;
+                o.arrowLabel = o.name + (dir < 0 ? ' ↑ ' : ' ↓ ') + fmtNum(dist) + 'm';
+            }
+            const ax = Math.max(FP_ARROW_MARGIN, Math.min(CONFIG.WIDTH - FP_ARROW_MARGIN - 20, o.x + 13));
+            const ay = dir < 0 ? top + FP_ARROW_TOP : CONFIG.HEIGHT - FP_ARROW_BOTTOM;
+            this.renderer.drawText(o.arrowLabel, ax, ay, fp.arrowFont, o.color);
+        }
+        ctx.restore();
+    }
+
+    // At most FREEPLAY_FEED_MAX lines in the top corner, newest first, fading out.
+    drawFreeplayFeed(ctx, fp, lineH) {
+        const feed = fp.feed;
+        const y = this.renderer.viewTop + FP_FEED_TOP;
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = fp.feedFont;
+        let row = 0;
+        for (let i = 0; i < feed.length; i++) {
+            const line = feed[i];
+            if (line.life <= 0) continue;
+            if (line.w < 0) line.w = ctx.measureText ? ctx.measureText(line.text).width : line.text.length * 7;
+            ctx.globalAlpha = Math.min(1, line.life / (FREEPLAY_FEED_FRAMES / 3));
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.fillRect(FP_FEED_LEFT, y + row * lineH, line.w + 12, lineH - 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(line.text, FP_FEED_LEFT + 6, y + row * lineH + (lineH - 2) / 2);
+            row++;
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+    }
+}
+
+</script>
 <script>/* ---- app.js ---- */
 // Reads a JSON save. A missing, corrupt or wrong-shaped value falls back
 // instead of throwing, so one bad localStorage entry can't stop the game from
@@ -15548,6 +16215,11 @@ class Game {
             menusWrapper: document.getElementById("menus-wrapper"),
             menuLayer2: document.getElementById("mp-menu-layer"),
             toMpBtn: document.getElementById("to-mp-btn"),
+            fpQuickBtn: document.getElementById("fp-quick-btn"),
+            fpBanner: document.getElementById("fp-banner"),
+            fpBannerTitle: document.getElementById("fp-banner-title"),
+            fpBannerCount: document.getElementById("fp-banner-count"),
+            fpLeaveBtn: document.getElementById("fp-leave-btn"),
             toSpBtn: document.getElementById("to-sp-btn"),
             mpNameInput: document.getElementById("mp-name-input"),
             mpJoinInput: document.getElementById("mp-join-input"),
@@ -15661,6 +16333,9 @@ class Game {
             : null;
         // Everyone else in the run, keyed by peer ID (pid).
         this.remotePlayers = new Map();
+        // A Freeplay session (js/freeplay.js), or null.
+        this.freeplay = null;
+        this.fpLeftBest = null;
         // Current party: [{ pid, name, slot, isHost }]. The host owns the
         // authoritative copy and broadcasts it; guests mirror it. Empty when
         // not in a party.
@@ -15835,6 +16510,8 @@ class Game {
         });
 
         this.bindCoopEvents();
+        onTap(this.ui.fpQuickBtn, () => this.quickPlay());
+        onTap(this.ui.fpLeaveBtn, () => this.leaveFreeplayBetweenRuns());
     }
 
     // Pause, settings, records and the run card.
@@ -16266,6 +16943,8 @@ class Game {
     }
 
     update(dt) {
+        // Freeplay's others keep climbing through the banner between runs.
+        if (this.freeplay) this.updateFreeplayOthers(dt);
         if (!this.state.running || this.state.paused) return;
         if (this.state.dying) { this.updateDying(dt); return; }
 
@@ -16313,6 +16992,7 @@ class Game {
         if (this.renderer.currentBiome.name !== this.lastBiomeName) {
             if (this.lastBiomeName) { // skip the callout on the very first frame of a run
                 this.showBiomeBanner(this.renderer.currentBiome);
+                if (this.freeplay) this.fpFeedOut('biome', this.fpMeters(), BIOMES.indexOf(this.renderer.currentBiome));
             }
             this.lastBiomeName = this.renderer.currentBiome.name;
         }
@@ -16593,6 +17273,7 @@ class Game {
         this.updateFx(dt);
         this.updateCosFx(dt);
         this.updateSafetyNet(dt);
+        if (this.freeplay) this.updateFreeplay(dt);
         if (this.state.multiplayer) {
             if (authority) this.broadcastEnemies(dt);
             this.updateSpectateHud();
@@ -16748,6 +17429,7 @@ class Game {
 
         // (A RACE #1 Ghost shows even with SHOW GHOST off: it's what the run is.)
         if (this.state.running && (this.settings.showGhost || this.raceGhost)) this.drawGhost();
+        if (this.freeplay) this.drawFreeplayOthers(ctx);
         if (this.state.running) this.drawBestLine();
         if (this.state.running) this.drawChallengeLine();
 
@@ -16781,6 +17463,7 @@ class Game {
         this.drawCosFx(ctx);
         this.drawFx(ctx);
         if (shaking) ctx.restore();
+        if (this.freeplay) this.drawFreeplayHud(ctx);
     }
 
     // ------------------------------------------------- fixed steps (ADR-0007)
@@ -16827,6 +17510,7 @@ class Game {
     eachBlendable(fn, pickupFn) {
         fn(this.player);
         this.remotePlayers.forEach(fn);
+        if (this.freeplay) this.freeplay.list.forEach(fn);
         this.enemies.forEach(fn);
         this.projectiles.forEach(fn);
         this.platforms.forEach(fn);
@@ -16929,7 +17613,7 @@ function blendedY(o, y) {
 // (loaded before this file). They're written as classes so they
 // run in strict mode like the rest of Game, and copied onto it here exactly
 // as if they were written in the class above.
-for (const part of [GameCoop, GameShop, GameShare, GameHourly, GameLeaderboard, GameMeta, GameCosmetics, GameMenus, GameRun, GameEffects]) {
+for (const part of [GameCoop, GameShop, GameShare, GameHourly, GameLeaderboard, GameMeta, GameCosmetics, GameMenus, GameRun, GameEffects, GameFreeplay]) {
     for (const name of Object.getOwnPropertyNames(part.prototype)) {
         if (name === 'constructor') continue;
         if (Object.prototype.hasOwnProperty.call(Game.prototype, name)) throw new Error('Game.' + name + ' is defined twice');

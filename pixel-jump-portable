@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.34.1, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.35.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -924,6 +924,20 @@ body {
     font-size: 15px;
     font-weight: 900;
     letter-spacing: 1px;
+}
+
+.panel-head--stack {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.panel-sub {
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 13px;
+    font-weight: 600;
+    padding-left: 26px;
 }
 
 .panel-count {
@@ -2424,6 +2438,11 @@ body.reduce-motion #skin-preview-box {
     max-width: 100%;
 }
 
+/* An odd tile out spans the row rather than leaving a hole. */
+.records-stats .run-stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+
 /* A stat tile: the number, and what it counts. */
 .run-stat {
     padding: 11px 8px 10px;
@@ -2479,7 +2498,7 @@ body.reduce-motion #skin-preview-box {
     word-break: break-all;
 }
 
-/* Today's top 10 (js/leaderboard.js): a climb that makes the board asks for
+/* The Online leaderboard (js/leaderboard.js): a climb that makes the board asks for
    a name. */
 .run-card-lb {
     display: flex;
@@ -2544,7 +2563,7 @@ body.reduce-motion #skin-preview-box {
 }
 
 /* ---------- Records ---------- */
-/* Hall of Fame: your three best climbs. */
+/* Personal leaderboard: your three best climbs. */
 #fame-list {
     display: flex;
     flex-direction: column;
@@ -2634,8 +2653,8 @@ body.reduce-motion #skin-preview-box {
     color: #000;
 }
 
-/* Today's top 10 in Records: rows like the Hall of Fame's, a name in
-   place of the Pixel, and your own row outlined. */
+/* The Online leaderboard in Records: rows like the Personal one's, with
+   the player's name after their Pixel's swatch, and your own row outlined. */
 .lb-name {
     flex: 1 1 auto;
     min-width: 0;
@@ -3740,16 +3759,16 @@ body.reduce-motion *::after {
                 <div class="page-title page-title--records">RECORDS</div>
 
                 <div id="lb-container" class="panel panel--gold" hidden>
-                    <div class="panel-head">
-                        <span class="panel-title"><svg class="ico ico-gold" aria-hidden="true"><use href="#i-trophy"/></svg> Today's Top 10</span>
-                        <span class="panel-count">CLIMBED</span>
+                    <div class="panel-head panel-head--stack">
+                        <span class="panel-title"><svg class="ico ico-gold" aria-hidden="true"><use href="#i-trophy"/></svg> ONLINE LEADERBOARD</span>
+                        <span class="panel-sub">today</span>
                     </div>
                     <div id="lb-list"></div>
                 </div>
 
                 <div id="fame-container" class="panel panel--gold">
                     <div class="panel-head">
-                        <span class="panel-title"><svg class="ico ico-gold" aria-hidden="true"><use href="#i-trophy"/></svg> Hall of Fame</span>
+                        <span class="panel-title"><svg class="ico ico-gold" aria-hidden="true"><use href="#i-trophy"/></svg> PERSONAL LEADERBOARD</span>
                     </div>
                     <div id="fame-list"></div>
                 </div>
@@ -3833,7 +3852,7 @@ body.reduce-motion *::after {
                 <div id="run-card-lb" class="run-card-lb" hidden>
                     <div id="run-card-lb-title" class="run-card-lb-title"></div>
                     <div id="run-card-lb-row" class="run-card-lb-row">
-                        <input type="text" id="lb-name-input" maxlength="20" placeholder="YOUR NAME" aria-label="Your name for today's top 10"
+                        <input type="text" id="lb-name-input" maxlength="20" placeholder="YOUR NAME" aria-label="Your name for the Online leaderboard"
                             autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="send">
                         <button id="lb-submit-btn" class="btn btn--gold">SUBMIT</button>
                     </div>
@@ -3919,7 +3938,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.34.1';
+    const EMBEDDED = '1.35.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4117,8 +4136,18 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.34.1';
-const NET_PROTOCOL = 11;
+const GAME_VERSION = '1.35.0';
+const NET_PROTOCOL = 12;
+
+// Game logic runs in fixed steps of STEP_MS (ADR-0007); a frame runs at most
+// MAX_STEPS_PER_FRAME of them and drops the rest of a longer stall. A step
+// may run up to STEP_SNAP early (the time is owed back), so 60Hz frame jitter
+// can't alternate 0 and 2 steps. Drawing blends between steps, except for moves
+// longer than BLEND_MAX_PX (screen wrap, respawn).
+const STEP_MS = 1000 / 60;
+const MAX_STEPS_PER_FRAME = 4;
+const STEP_SNAP = 0.05;
+const BLEND_MAX_PX = 200;
 
 // Where the game lives. On OLD_HOSTS the page carries the player's saves over
 // to NEW_ORIGIN and redirects there (js/migrate.js). Empty = no move yet.
@@ -4227,7 +4256,7 @@ const CONFIG = {
 
 // Level generation version: bump when spawnPlatform() would build a different
 // layout from the same seed (saved ghosts from other versions are dropped).
-const PLATFORM_GEN_VERSION = 6;
+const PLATFORM_GEN_VERSION = 7;
 // Platform types, rolled per platform from its height (see spawnPlatform):
 //  - springs launch whoever lands on them (CONFIG.SPRING_FORCE);
 //  - crumbling platforms break CRUMBLE_FRAMES after being landed on and
@@ -4267,9 +4296,9 @@ function nextMilestone(meters) {
 // beyond (see powerUpChanceAt); hearts are rarer, and only exist for a player
 // below their Pixel's heart cap (see Game.visiblePickups()); otherwise 40% of
 // platforms carry a gem, worth its biome's `gem.value` (see BIOMES).
-const POWERUP_CHANCE_START = 0.20;
-const POWERUP_CHANCE_END = 0.07;
-const POWERUP_PLATEAU_METERS = 5000;
+const POWERUP_CHANCE_START = 0.12;
+const POWERUP_CHANCE_END = 0.01;
+const POWERUP_PLATEAU_METERS = 15000;
 function powerUpChanceAt(meters) {
     const t = Math.max(0, Math.min(1, meters / POWERUP_PLATEAU_METERS));
     return POWERUP_CHANCE_END + (POWERUP_CHANCE_START - POWERUP_CHANCE_END) * (1 - t) * (1 - t);
@@ -4422,12 +4451,17 @@ const MP_TAG_MAX = 12;
 const TURN_CREDENTIALS_URL = 'https://turn.pixeljump.online/';
 const TURN_FETCH_TIMEOUT_MS = 4000;       // host/join never wait longer
 const TURN_CACHE_MS = 30 * 60 * 1000;     // reuse fetched logins this long
-// Today's top 10 (js/leaderboard.js): the Cloudflare Worker in
-// cloudflare/score-worker/ keeps each day's ten best solo climbs. If it
+// The Online leaderboard, today's top 3 (js/leaderboard.js): the Cloudflare Worker in
+// cloudflare/score-worker/ keeps each day's three best solo climbs. If it
 // can't be reached the game shows no board. Empty = no board.
 const SCORES_URL = 'https://scores.pixeljump.online/';
 const SCORES_FETCH_TIMEOUT_MS = 5000;
-const LEADERBOARD_SIZE = 10;
+const LEADERBOARD_SIZE = 3;
+// The score Worker's MAX_CLIMB_RATE (m/s over a whole run), quoted on the run
+// card when a climb is refused as too fast.
+const LEADERBOARD_MAX_CLIMB_RATE = 100;
+// Climbs kept on the Personal leaderboard (lp_fame).
+const FAME_SIZE = 3;
 const LEADERBOARD_REFRESH_MS = 30 * 1000; // Records refetches a board older than this
 // Extra hand-configured WebRTC ICE servers, appended after Google's public
 // STUN servers and the relay above, e.g.
@@ -10247,7 +10281,7 @@ class GameCoop {
 <script>/* ---- js/shop.js ---- */
 // Game's progress screens: the shop (RENT / PIXELS / BOOSTERS: owning,
 // buying and equipping Pixels, hearts and 2X GEMS), the menu's owned-Pixel
-// picker, the Records screen, the Hall of Fame and achievements.
+// picker, the Records screen, the Personal leaderboard and achievements.
 
 // Which tab the shop opens on: the one last used this session, else PIXELS.
 function shopDefaultTab(lastTab) {
@@ -10272,7 +10306,6 @@ class GameShop {
         const st = this.stats;
         const rows = [
             [fmtNum(st.runs), 'RUNS'],
-            [fmtNum(this.state.bestHeight) + 'm', 'BEST HEIGHT'],
             [fmtNum(Math.round(st.meters)) + 'm', 'TOTAL CLIMBED'],
             [counted(fmtNum(st.gems), 'gem'), 'GEMS EARNED', true],
             [fmtNum(this.state.loops || 0), 'BOSSES BEATEN'],
@@ -10873,12 +10906,21 @@ class GameShop {
         const skin = SKINS[this.viewParams.skinIndex];
         fame.push({ score, skin: skin.name, skinId: skin.id, date: new Date().toLocaleDateString() });
         fame.sort((a, b) => b.score - a.score);
-        fame = fame.slice(0, 5);
+        fame = fame.slice(0, FAME_SIZE);
         saveItem('lp_fame', JSON.stringify(fame));
     }
 
+    // A Pixel's body as a small square (a Rental's pattern too); grey for
+    // none or one this build doesn't know.
+    pixelSwatchHTML(skin) {
+        const style = skin ? ` style="background:${pixelBodyCSS(skin)}" title="${this.escapeHtml(skin.name)}"` : '';
+        return `<div class="fame-swatch"${style}></div>`;
+    }
+
+    // The Personal leaderboard: your FAME_SIZE best climbs (saves from before
+    // 1.35.0 kept five).
     updateFameUI() {
-        let fame = this.loadFame();
+        let fame = this.loadFame().slice(0, FAME_SIZE);
 
         if (!fame.length) {
             this.ui.fame.innerHTML = `<div class="fame-empty">No runs yet. Your three best climbs will show here.</div>`;
@@ -10889,11 +10931,10 @@ class GameShop {
             // Newer entries store the skin id; older ones only its name. A
             // renamed or removed skin falls back to the neutral swatch colour.
             const skin = SKINS.find(s => s.id === f.skinId) || SKINS.find(s => s.name === f.skin);
-            const swatch = skin ? ` style="background:${skin.color}"` : '';
             const name = skin ? skin.name : String(f.skin || '???');
             return `<div class="fame-row fame-row--${i + 1}">
                 <div class="fame-rank">${i + 1}</div>
-                <div class="fame-swatch"${swatch}></div>
+                ${this.pixelSwatchHTML(skin)}
                 <div class="fame-skin">${this.escapeHtml(name)}</div>
                 <div class="fame-date">${this.escapeHtml(f.date || '')}</div>
                 <div class="fame-score">${fmtNum(Math.floor(f.score))}m</div>
@@ -11273,12 +11314,12 @@ class GameHourly {
 
 </script>
 <script>/* ---- js/leaderboard.js ---- */
-// Today's top 10: the ten highest solo climbs on the day's layout, from
-// everyone who plays, kept by the score Worker at SCORES_URL
-// (cloudflare/score-worker/). A solo run that would make the board offers a
-// name box on the run card, and Records shows the board. Climbs are ranked by
-// metres climbed from the run's start, so every Pixel competes on the same
-// footing.
+// The Online leaderboard: today's three highest solo climbs on the day's
+// layout, from everyone who plays, each with the Pixel it was climbed with,
+// kept by the score Worker at SCORES_URL (cloudflare/score-worker/). A solo
+// run that would make the board offers a name box on the run card, and
+// Records shows the board. Climbs are ranked by metres climbed from the
+// run's start, so every Pixel competes on the same footing.
 //
 // With no network, or the Worker down, there's simply no board: the panel
 // stays hidden and the run card never asks.
@@ -11287,12 +11328,18 @@ class GameHourly {
 // a day) and lp_lb_name (the name last put on the board).
 
 // The board as the Worker sent it, checked: at most LEADERBOARD_SIZE rows of
-// { name, meters, me }. null when it isn't a board at all.
+// { name, meters, pixel, me }, pixel being a SKINS id this build knows (or
+// null). null when it isn't a board at all.
 function cleanLeaderboard(top) {
     if (!Array.isArray(top)) return null;
     return top.slice(0, LEADERBOARD_SIZE)
         .filter(r => r && typeof r.name === 'string' && Number.isFinite(r.meters))
-        .map(r => ({ name: r.name.slice(0, MP_NAME_MAX), meters: Math.max(0, Math.floor(r.meters)), me: r.me === true }));
+        .map(r => ({
+            name: r.name.slice(0, MP_NAME_MAX),
+            meters: Math.max(0, Math.floor(r.meters)),
+            pixel: typeof r.pixel === 'string' && SKINS.some(s => s.id === r.pixel) ? r.pixel : null,
+            me: r.me === true
+        }));
 }
 
 // The characters the board accepts in a name (the Worker checks the same).
@@ -11380,6 +11427,7 @@ class GameLeaderboard {
         ui.lbList.innerHTML = lb.top.length
             ? lb.top.map((r, i) => `<div class="fame-row fame-row--${i + 1}${r.me ? ' lb-row--me' : ''}">
                 <div class="fame-rank">${i + 1}</div>
+                ${this.pixelSwatchHTML(SKINS.find(s => s.id === r.pixel))}
                 <div class="lb-name">${this.escapeHtml(r.name)}</div>
                 <div class="fame-score">${fmtNum(r.meters)}m</div>
             </div>`).join('')
@@ -11398,7 +11446,7 @@ class GameLeaderboard {
         if (s.multiplayer || !/^\d{8}$/.test(day)) return;
         const meters = Math.max(0, Math.floor(s.score / 10) - (s.startMeters || 0));
         if (meters < 1) return;
-        const offer = { day, meters, secs: Math.round(this.runSeconds() * 10) / 10 };
+        const offer = { day, meters, secs: Math.round(this.runSeconds() * 10) / 10, pixel: this.player.skin.id };
         this.lbOffer = offer;
         this.fetchLeaderboard(day).then(top => {
             if (this.lbOffer !== offer || !this.runCardOpen || !top) return;
@@ -11415,7 +11463,7 @@ class GameLeaderboard {
     showLeaderboardPrompt(offer) {
         const ui = this.ui;
         if (!ui.lbPrompt) return;
-        ui.lbTitle.innerText = '#' + offer.rank + ' ON TODAY\'S TOP ' + LEADERBOARD_SIZE + ': ' + fmtNum(offer.meters) + 'm CLIMBED';
+        ui.lbTitle.innerText = '#' + offer.rank + ' ON TODAY\'S ONLINE LEADERBOARD: ' + fmtNum(offer.meters) + 'm CLIMBED';
         // Logged in on CrazyGames: the board uses that username, like co-op.
         const locked = !!this.portalName;
         let name = '';
@@ -11448,17 +11496,24 @@ class GameLeaderboard {
         offer.sending = true;
         ui.lbSubmitBtn.disabled = true;
         this.leaderboardNote('SENDING...', false);
-        const body = { day: offer.day, id: this.leaderboardPlayerId(), name, meters: offer.meters, secs: offer.secs };
+        const body = { day: offer.day, id: this.leaderboardPlayerId(), name, meters: offer.meters, secs: offer.secs, pixel: offer.pixel };
         // text/plain keeps it a simple request (no CORS preflight).
         this.scoresRequest('/submit', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) }).then(r => {
             offer.sending = false;
             ui.lbSubmitBtn.disabled = false;
             if (!r || !r.ok) {
                 const error = r && r.body && r.body.error;
+                // Refused for speed: say why, and don't offer to try again.
+                if (error === 'implausible') {
+                    offer.done = true;
+                    ui.lbRow.hidden = true;
+                    ui.lbTitle.innerText = 'CLIMB NOT SENT';
+                    this.leaderboardNote('FASTER THAN THE BOARD ALLOWS (ABOUT ' + LEADERBOARD_MAX_CLIMB_RATE + ' m/s OVER THE RUN), SO IT WASN\'T SENT', true);
+                    return;
+                }
                 this.leaderboardNote(
                     error === 'name' ? 'THAT NAME ISN\'T ALLOWED. TRY ANOTHER' :
                     r && r.status === 429 ? 'TOO MANY TRIES. WAIT A WHILE' :
-                    error === 'implausible' ? 'THE BOARD COULDN\'T ACCEPT THIS RUN' :
                     'COULDN\'T REACH THE BOARD. TRY AGAIN', true);
                 return;
             }
@@ -11468,7 +11523,7 @@ class GameLeaderboard {
             if (top) this.keepLeaderboard(offer.day, top);
             ui.lbRow.hidden = true;
             const rank = Number.isInteger(r.body.rank) ? r.body.rank : null;
-            ui.lbTitle.innerText = rank ? 'YOU\'RE #' + rank + ' ON TODAY\'S TOP ' + LEADERBOARD_SIZE : 'OTHERS CLIMBED PAST YOU FIRST';
+            ui.lbTitle.innerText = rank ? 'YOU\'RE #' + rank + ' ON TODAY\'S ONLINE LEADERBOARD' : 'OTHERS CLIMBED PAST YOU FIRST';
             this.leaderboardNote('', false);
         });
     }
@@ -11828,7 +11883,7 @@ class Game {
             recordsBackBtn: document.getElementById("records-back-btn"),
             recordsLayer: document.getElementById("records-menu-layer"),
             recordsStats: document.getElementById("records-stats"),
-            // Today's top 10 (js/leaderboard.js)
+            // The Online leaderboard (js/leaderboard.js)
             lbPanel: document.getElementById("lb-container"),
             lbList: document.getElementById("lb-list"),
             lbPrompt: document.getElementById("run-card-lb"),
@@ -11900,7 +11955,14 @@ class Game {
         // not in a party.
         this.party = [];
         this.viewParams = { skinIndex: this.state.skinIndex };
+        // Fixed-step clock (ADR-0007): frame time piles up in stepAcc, and
+        // each whole 1/60s of it is one update(1). stepNo counts steps, so
+        // drawing knows which saved previous positions are current.
         this.lastTime = 0;
+        this.stepAcc = 0;
+        this.stepNo = 0;
+        this.prevScore = 0;
+        this.prevBgOffset = 0;
         // Which top-level menu panel is showing: 'sp' | 'mp' | 'shop'.
         // Gates keyboard-start (only from 'sp') and is updated by every
         // panel-switch handler below.
@@ -11952,7 +12014,7 @@ class Game {
         // and keep the ad buttons (and the booster countdown) current.
         this.gemBoostUntil = PLATFORM === 'portable' ? 0 : this.loadGemBoost();
         this.ads.onAdStart = () => { this.input.resetInput(); this.applySettings(); };
-        this.ads.onAdEnd = () => { this.applySettings(); this.lastTime = 0; };
+        this.ads.onAdEnd = () => { this.applySettings(); this.resetFrameClock(); };
         this.ads.onChange = () => this.updateAdButtons();
         setInterval(() => { this.updateAdButtons(); this.tickHourly(); }, 1000);
         this.updateAdButtons();
@@ -12140,7 +12202,7 @@ class Game {
         this.closePauseUI();
         this.blurFocus();
         // Restart the frame clock so the paused time isn't one giant step.
-        this.lastTime = 0;
+        this.resetFrameClock();
     }
 
     closePauseUI() {
@@ -12618,9 +12680,13 @@ class Game {
         return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
     }
 
+    // mulberry32: state.seed is its running 32-bit state, started from the
+    // layout's seed (the daily seed, or co-op's shared one).
     seededRandom() {
-        this.state.seed = (this.state.seed * 9301 + 49297) % 233280;
-        return this.state.seed / 233280;
+        let t = this.state.seed = (this.state.seed + 0x6D2B79F5) | 0;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     }
 
     // Visual state for the SAFETY NET trampoline drawn across the bottom of the
@@ -12891,6 +12957,13 @@ class Game {
         this.lastBiomeName = this.renderer.currentBiome.name;
 
         this.lastTime = performance.now();
+        this.stepAcc = 0;
+        // A new run has no previous step: the camera mustn't blend from the
+        // last run's height, and nothing saved before now is blended (stepNo
+        // moves on, so no entity's _ps matches until the next step).
+        this.stepNo++;
+        this.prevScore = this.state.score;
+        this.prevBgOffset = this.state.bgOffset;
 
         // Standing on the launch pad, where the menu showed it waiting.
         this.player = new Player(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 40 - 26, this.viewParams.skinIndex);
@@ -13919,7 +13992,7 @@ class Game {
 
     die(forceDie = false) {
         // Two hits in the same frame after the last life is spent must not
-        // end the run twice (double Hall of Fame entry, two interstitials).
+        // end the run twice (double Personal leaderboard entry, two interstitials).
         if (!this.state.running || this.state.dying) return;
         // Down in co-op already (spectating): there's nothing left to lose.
         if (this.state.multiplayer && this.player.isDead) return;
@@ -14052,6 +14125,7 @@ class Game {
         // must not turn into a jump that overrides the revive bounce.
         this.input.resetInput();
         this.lastTime = performance.now();
+        this.stepAcc = 0;
 
         this.deployRescueNet();
         this.player.grantPower(POWERS.SHIELD);
@@ -14591,6 +14665,85 @@ class Game {
             ' enemies' + this.enemies.length + ' particles' + this.particles.particles.length;
     }
 
+    // ------------------------------------------------- fixed steps (ADR-0007)
+    resetFrameClock() {
+        this.lastTime = 0;
+        this.stepAcc = 0;
+    }
+
+    // Runs `ms` of real time: whole 1/60s steps of game logic (at most
+    // MAX_STEPS_PER_FRAME; a longer stall is dropped, not caught up).
+    // Returns the blend alpha: the leftover fraction of a step (stepAcc).
+    advance(ms) {
+        let dt = Math.max(0, ms) / STEP_MS;
+        if (dt > MAX_STEPS_PER_FRAME) dt = MAX_STEPS_PER_FRAME;
+        if (!this.state.paused) this.sceneClock += dt;
+        if (this.menuSceneShown()) this.updateMenuScene(dt);
+        this.stepAcc += dt;
+        // A 60Hz screen's frames jitter around one step, so a step may run up
+        // to STEP_SNAP early (stepAcc goes a little negative): one step a
+        // frame, not 0 then 2. The debt is carried, so over time every screen
+        // runs exactly 60 steps a second.
+        let steps = 0;
+        while (this.stepAcc >= 1 - STEP_SNAP && steps < MAX_STEPS_PER_FRAME) {
+            this.snapshotPrev();
+            this.update(1);
+            this.stepAcc -= 1;
+            steps++;
+        }
+        if (this.stepAcc >= 1) this.stepAcc %= 1;
+        return Math.max(0, this.stepAcc);
+    }
+
+    // Before each step: where every moving thing is now, as plain numbers on
+    // the thing itself (no allocation), tagged with the step number.
+    snapshotPrev() {
+        BLEND.savingStep = ++this.stepNo;
+        this.prevScore = this.state.score;
+        this.prevBgOffset = this.state.bgOffset;
+        this.eachBlendable(markPrev, markPrevPickup);
+    }
+
+    // Every moving thing drawing blends: fn for most, pickupFn for pickups
+    // (which draw from startY). A new moving list goes here, once.
+    eachBlendable(fn, pickupFn) {
+        fn(this.player);
+        this.remotePlayers.forEach(fn);
+        this.enemies.forEach(fn);
+        this.projectiles.forEach(fn);
+        this.platforms.forEach(fn);
+        this.particles.particles.forEach(fn);
+        this.afterimages.forEach(fn);
+        this.floaters.forEach(fn);
+        this.rings.forEach(fn);
+        this.powerups.forEach(pickupFn);
+    }
+
+    // Draws the run `alpha` of the way from the previous step to the current
+    // one (advance()'s leftover), then puts every position back exactly as
+    // the logic left it.
+    drawBlended(alpha) {
+        // 0 is the previous step itself (a whole step behind, like every
+        // other fraction), not the current one: drawing that would jump back.
+        if (!(alpha >= 0) || !this.state.running || this.state.paused || this.menuSceneShown()) {
+            this.draw();
+            return;
+        }
+        BLEND.alpha = alpha;
+        BLEND.drawStep = this.stepNo;
+        const score = this.state.score, bg = this.state.bgOffset;
+        this.state.score = this.prevScore + (score - this.prevScore) * alpha;
+        this.state.bgOffset = this.prevBgOffset + (bg - this.prevBgOffset) * alpha;
+        this.eachBlendable(blendIn, blendInPickup);
+        try {
+            this.draw();
+        } finally {
+            this.state.score = score;
+            this.state.bgOffset = bg;
+            this.eachBlendable(blendOut, blendOutPickup);
+        }
+    }
+
     loop(timestamp) {
         // Book the next frame first: an error in this one must not stop the
         // game for good.
@@ -14599,21 +14752,45 @@ class Game {
         const deltaTime = timestamp - this.lastTime;
         this.lastTime = timestamp;
 
-        // performance.now() (reset on revive) and the rAF timestamp can
-        // disagree by a hair, so clamp at 0 as well as capping long frames.
-        let dt = Math.max(0, deltaTime) / (1000 / 60);
-        if (dt > 4) dt = 4;
-
-        if (!this.state.paused) this.sceneClock += dt;
         const t0 = this.meter.on ? performance.now() : 0;
-        if (this.menuSceneShown()) this.updateMenuScene(dt);
-        this.update(dt);
-        this.draw();
+        // performance.now() (reset on revive) and the rAF timestamp can
+        // disagree by a hair; advance() clamps at 0 and caps long frames.
+        this.drawBlended(this.advance(deltaTime));
         this.meter.frame(deltaTime, this.meter.on ? performance.now() - t0 : 0, this.frameNote);
         // The portal wants to know when someone is actually playing: not in
         // a menu, the pause menu or the run-over screens.
         portal.setGameplay(this.state.running && !this.pauseMenuOpen);
     }
+}
+
+// Blending helpers for snapshotPrev()/drawBlended(): top-level functions
+// handed to forEach, so no closure is made per frame. They read BLEND:
+// savingStep (the step snapshotPrev() is saving), alpha (how far to blend)
+// and drawStep (the step a saved position must come from to be blended).
+// A move bigger than BLEND_MAX_PX (wrapping across the screen, a respawn) is
+// drawn where it landed, not swept across.
+const BLEND = { savingStep: 0, alpha: 0, drawStep: 0 };
+function markPrev(o) { o._px = o.x; o._py = o.y; o._ps = BLEND.savingStep; }
+function blendIn(o) {
+    o._cx = o.x; o._cy = o.y;
+    o.y = blendedY(o, o.y);
+}
+function blendOut(o) { o.x = o._cx; o.y = o._cy; }
+// Pickups are drawn from startY (drawPickups adds the bob to y), so that's
+// what blends; y keeps whatever drawing wrote, as before.
+function markPrevPickup(o) { o._px = o.x; o._py = o.startY; o._ps = BLEND.savingStep; }
+function blendInPickup(o) {
+    o._cx = o.x; o._cy = o.startY;
+    o.startY = blendedY(o, o.startY);
+}
+function blendOutPickup(o) { o.x = o._cx; o.startY = o._cy; }
+// Blends o.x in place and returns the blended y (from `y`, o's current one).
+function blendedY(o, y) {
+    if (o._ps !== BLEND.drawStep) return y;
+    const dx = o.x - o._px, dy = y - o._py;
+    if (dx > BLEND_MAX_PX || dx < -BLEND_MAX_PX || dy > BLEND_MAX_PX || dy < -BLEND_MAX_PX) return y;
+    o.x = o._px + dx * BLEND.alpha;
+    return o._py + dy * BLEND.alpha;
 }
 
 // Game's co-op, shop, sharing, Rental and leaderboard methods live

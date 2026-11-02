@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.35.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.36.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -3938,7 +3938,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.35.0';
+    const EMBEDDED = '1.36.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4136,8 +4136,8 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.35.0';
-const NET_PROTOCOL = 12;
+const GAME_VERSION = '1.36.0';
+const NET_PROTOCOL = 13;
 
 // Game logic runs in fixed steps of STEP_MS (ADR-0007); a frame runs at most
 // MAX_STEPS_PER_FRAME of them and drops the rest of a longer stall. A step
@@ -4230,12 +4230,13 @@ const CONFIG = {
     BOUNCE_FORCE: -25,
     // A spring platform's launch: about three platforms' worth of height.
     SPRING_FORCE: -21,
-    // Vertical px between platforms. 110 since v1.9.2 (was 95), picked by
-    // playtest. A plain jump rises about 138px, so keep it at 128 or less
-    // (tests/test_platform_gap.js checks).
-    // Changing it changes level generation: bump PLATFORM_GEN_VERSION and
+    // Vertical px between platforms at 0m. It eases up to PLATFORM_TOP_GAP
+    // by The Void (platformGapAt). A plain jump rises 138.6px, so keep both
+    // at 128 or less (tests/test_platform_gap.js checks).
+    // Changing either changes level generation: bump PLATFORM_GEN_VERSION and
     // NET_PROTOCOL too.
     PLATFORM_BASE_GAP: 110,
+    PLATFORM_TOP_GAP: 125,
     SCROLL_THRESHOLD: 0.5,
     DRONE_BASE_VELOCITY: 2,
     DRONE_MAX_VELOCITY: 8,
@@ -4256,7 +4257,7 @@ const CONFIG = {
 
 // Level generation version: bump when spawnPlatform() would build a different
 // layout from the same seed (saved ghosts from other versions are dropped).
-const PLATFORM_GEN_VERSION = 7;
+const PLATFORM_GEN_VERSION = 8;
 // Platform types, rolled per platform from its height (see spawnPlatform):
 //  - springs launch whoever lands on them (CONFIG.SPRING_FORCE);
 //  - crumbling platforms break CRUMBLE_FRAMES after being landed on and
@@ -4270,6 +4271,58 @@ const CRUMBLE_CHANCE = 0.09;
 const CRUMBLE_FRAMES = 26;
 const CRUMBLE_REFORM_FRAMES = 130;
 const MOVING_START_METERS = 150;
+// The `moving` dose (see BIOMES) adds to the moving share: up to
+// MOVING_DOSE_CHANCE more at full strength.
+const MOVING_DOSE_CHANCE = 0.25;
+// Platform types of the upper biomes, each rolled at its chance times the
+// biome's dose (see BIOMES), never on a moving platform:
+//  - conveyor: carries whoever stands on it CONVEYOR_PUSH px a step, its
+//    direction seeded;
+//  - blink: fades out and back every BLINK_PERIOD steps (solid until
+//    BLINK_FADE_AT, gone from BLINK_GONE_AT to BLINK_BACK_AT), its phase seeded;
+//  - shrinking: loses SHRINK_FACTOR of its width each landing, never under
+//    SHRINK_MIN_W;
+//  - shock: idle SHOCK_IDLE steps, crackles SHOCK_WARN, then shocks for
+//    SHOCK_LIVE; standing on it then is a hit. Its phase is seeded.
+// Each screen runs its own blink and shock clocks; landings are local.
+const CONVEYOR_CHANCE = 0.14;
+const CONVEYOR_PUSH = 1.4;
+const BLINK_CHANCE = 0.14;
+const BLINK_PERIOD = 120;
+const BLINK_FADE_AT = 70;
+const BLINK_GONE_AT = 85;
+const BLINK_BACK_AT = 110;
+const SHRINK_CHANCE = 0.14;
+const SHRINK_FACTOR = 0.25;
+const SHRINK_MIN_W = 40;
+const SHOCK_CHANCE = 0.1;
+const SHOCK_IDLE = 120;
+const SHOCK_WARN = 60;
+const SHOCK_LIVE = 30;
+// The order spawnPlatform() rolls them in (part of level generation).
+const PLATFORM_TYPE_ROLLS = [['conveyor', CONVEYOR_CHANCE], ['blink', BLINK_CHANCE], ['shrinking', SHRINK_CHANCE], ['shock', SHOCK_CHANCE]];
+// Platform widths ease from PLATFORM_W_START to PLATFORM_W_TOP ([min, max]
+// px) by The Void, along with the gap.
+const PLATFORM_W_START = [100, 180];
+const PLATFORM_W_TOP = [70, 130];
+// Hazards (see BIOMES). Meteors: one every METEOR_EVERY steps at full dose,
+// falling METEOR_VY px a step ([min, max]) and drifting up to METEOR_VX
+// sideways, entering the screen METEOR_WARN steps after spawning while a red
+// marker at the top edge shows where. Laser drones: one every LASER_EVERY
+// steps, warning LASER_WARN steps before the beam. Black holes: one every
+// BLACK_HOLE_EVERY steps (at most BLACK_HOLE_CAP out), drifting; within
+// BLACK_HOLE_RADIUS they pull the Pixel (up to BLACK_HOLE_PULL px/step^2) and
+// gems, and touching the centre is a hit. A half dose spawns half as often.
+const METEOR_EVERY = 120;
+const METEOR_VY = [2.5, 5];
+const METEOR_VX = 1;
+const METEOR_WARN = 60;
+const LASER_EVERY = 240;
+const LASER_WARN = 60;
+const BLACK_HOLE_EVERY = 600;
+const BLACK_HOLE_CAP = 1;
+const BLACK_HOLE_RADIUS = 140;
+const BLACK_HOLE_PULL = 0.35;
 // Ice (the `ice` hazard, see BIOMES): standing on a platform, the Pixel keeps
 // ICE_FRICTION of its sideways speed each frame (CONFIG.FRICTION otherwise)
 // and steers with ICE_GRIP of its usual push. The two are picked together so
@@ -4361,8 +4414,24 @@ const BOSS = {
     RECOVER: 45,         // time to climb back to hover height
     HIT_HOLD: 15,        // after a hit it holds still this long before climbing away
     HIT_INVULN: 40,      // invulnerability after each hit
-    ABOVE_FEET: 50       // exposed: its top sits this far above the target's feet
+    ABOVE_FEET: 50,      // exposed: its top sits this far above the target's feet
+    // Boss 2 on: the laser sweep. SWEEP_WARN steps of aiming line, then the
+    // beam crosses the screen in SWEEP steps, reaching SWEEP_REACH below the
+    // boss (short of the hover height, so a Pixel that stays low is safe).
+    SWEEP_WARN: 50, SWEEP: 110, SWEEP_REACH: 260,
+    // Boss 3 on: SUMMON steps of warning, then SUMMON_COUNT drones (never
+    // more than SUMMON_CAP drones out at once).
+    SUMMON: 45, SUMMON_COUNT: 2, SUMMON_CAP: 4
 };
+// What the boss-th boss of a run does (BossDrone.startAttack): every boss
+// dives, the 2nd adds a laser sweep, the 3rd summons drones, and from the 4th
+// each dive also crumbles the platform under its target.
+function bossAttacks(level) {
+    const list = ['dive'];
+    if (level >= 2) list.push('sweep');
+    if (level >= 3) list.push('summon');
+    return list;
+}
 // Beating the boss pays gems only (score is height, ADR-0006): a bounty
 // multiplied by the player's own GEMS x2 perk and 2X GEMS booster, which
 // stack. The next boss is BOSS_LOOP_DISTANCE metres further on.
@@ -4374,22 +4443,86 @@ const BOSS_GEM_BOUNTY = 300;
 const bossBountyFor = (perks, gemBoostActive) =>
     BOSS_GEM_BOUNTY * ((perks && perks.gemMult) || 1) * (gemBoostActive ? 2 : 1);
 
-// Each biome's `hazards` list is cumulative: once a hazard is introduced by a
-// biome, it stays active in every later biome too (by The Void, everything is
-// stacked at once — that's the intended "hardest tier" feel).
+// Each biome's `hazards` (ADR-0008) maps a hazard or platform type to its
+// dose: 1 is the biome's signature at full strength, 0.5 a lighter carry-over
+// from an earlier biome, missing is none. Only The Void has everything (and
+// brings the ice back, at a lighter dose). Read it with hazardDose(). Hazards: ice (slippery
+// platforms, scaled by dose), meteor, blackHole and laser (spawned that much
+// less often at a half dose). Platform types: moving, conveyor, blink, shock
+// and shrinking (rolled that much more or less often by spawnPlatform, so
+// changing them changes level generation: bump PLATFORM_GEN_VERSION and
+// NET_PROTOCOL). The SHIELDED perk covers only ice and black-hole pull.
 // `note` is the line under the biome's name when you enter it (what's new).
 // `gem` is what a gem found in that biome is worth, and its colour: higher
 // biomes pay more, from 5 at the start up to 100 in The Void.
 const BIOMES = [
-    { threshold: 0, name: "Atmosphere", bg: "#050505", grid: "#1a1a1a", platform: "#00ffcc", hazards: [], gem: { value: 5, color: "#00ffff" } },
-    { threshold: 600, name: "Ionosphere", note: "Platforms are icy", bg: "#0a001a", grid: "#330066", platform: "#ff00ff", hazards: ["ice"], gem: { value: 10, color: "#33ff66" } },
-    { threshold: 1800, name: "Low Orbit", note: "More platforms on the move", bg: "#000a1a", grid: "#003366", platform: "#00ccff", hazards: ["ice", "moving"], gem: { value: 15, color: "#3399ff" } },
-    { threshold: 3200, name: "Deep Space", note: "Meteors fall", bg: "#0a0a0a", grid: "#222", platform: "#ffd700", hazards: ["ice", "moving", "meteor"], gem: { value: 25, color: "#b266ff" } },
-    { threshold: 5000, name: "The Rift", note: "Gravity pulses", bg: "#1a0022", grid: "#4d0066", platform: "#cc00ff", hazards: ["ice", "moving", "meteor", "gravityPulse"], gem: { value: 35, color: "#ff66cc" } },
-    { threshold: 8000, name: "Neon Grid", note: "Laser drones", bg: "#001010", grid: "#00ffaa", platform: "#00ff99", hazards: ["ice", "moving", "meteor", "gravityPulse", "laser"], gem: { value: 50, color: "#ff9900" } },
-    { threshold: 12000, name: "Static Field", note: "Controls glitch", bg: "#0a0a0a", grid: "#555555", platform: "#ffffff", hazards: ["ice", "moving", "meteor", "gravityPulse", "laser", "glitch"], gem: { value: 75, color: "#ff3344" } },
-    { threshold: 17000, name: "The Void", note: "Everything at once", bg: "#000000", grid: "#220022", platform: "#ff0055", hazards: ["ice", "moving", "meteor", "gravityPulse", "laser", "glitch"], gem: { value: 100, color: "#ffffff" } }
+    { threshold: 0, name: "Atmosphere", bg: "#050505", grid: "#1a1a1a", platform: "#00ffcc", hazards: {}, gem: { value: 5, color: "#00ffff" } },
+    { threshold: 500, name: "Ionosphere", note: "Platforms are icy", bg: "#0a001a", grid: "#330066", platform: "#ff00ff", hazards: { ice: 1 }, gem: { value: 10, color: "#33ff66" } },
+    { threshold: 1500, name: "Low Orbit", note: "More platforms on the move", bg: "#000a1a", grid: "#003366", platform: "#00ccff", hazards: { moving: 1 }, gem: { value: 15, color: "#3399ff" } },
+    { threshold: 2500, name: "Deep Space", note: "Meteors fall: watch the red markers", bg: "#0a0a0a", grid: "#222", platform: "#ffd700", hazards: { meteor: 1, moving: 0.5 }, gem: { value: 25, color: "#b266ff" } },
+    { threshold: 4000, name: "The Rift", note: "Black holes and conveyor belts", bg: "#1a0022", grid: "#4d0066", platform: "#cc00ff", hazards: { blackHole: 1, conveyor: 1, meteor: 0.5 }, gem: { value: 35, color: "#ff66cc" } },
+    { threshold: 5500, name: "Neon Grid", note: "Laser drones and blinking platforms", bg: "#001010", grid: "#00ffaa", platform: "#00ff99", hazards: { laser: 1, blink: 1, blackHole: 0.5 }, gem: { value: 50, color: "#ff9900" } },
+    { threshold: 7500, name: "Static Field", note: "Shock and shrinking platforms", bg: "#0a0a0a", grid: "#555555", platform: "#ffffff", hazards: { shock: 1, shrinking: 1, laser: 0.5 }, gem: { value: 75, color: "#ff3344" } },
+    { threshold: 10000, name: "The Void", note: "Everything at once, and the ice is back", bg: "#000000", grid: "#220022", platform: "#ff0055",
+      hazards: { ice: 0.5, moving: 1, meteor: 1, blackHole: 1, conveyor: 1, laser: 1, blink: 1, shock: 1, shrinking: 1 }, gem: { value: 100, color: "#ffffff" } }
 ];
+
+// How strong a hazard or platform type is in a biome: 1, 0.5 or 0.
+function hazardDose(biome, name) {
+    return (biome && biome.hazards && biome.hazards[name]) || 0;
+}
+
+// How far up the climb is toward The Void, 0..1 (layouts tighten with it).
+function climbProgress(meters) {
+    return Math.max(0, Math.min(1, meters / BIOMES[BIOMES.length - 1].threshold));
+}
+
+// The vertical gap (whole px) above a platform at this height.
+function platformGapAt(meters) {
+    const t = climbProgress(meters);
+    return Math.round(CONFIG.PLATFORM_BASE_GAP + (CONFIG.PLATFORM_TOP_GAP - CONFIG.PLATFORM_BASE_GAP) * t);
+}
+
+// [min, max] platform width at this height.
+function platformWidthRange(meters) {
+    const t = climbProgress(meters);
+    return [0, 1].map(i => PLATFORM_W_START[i] + (PLATFORM_W_TOP[i] - PLATFORM_W_START[i]) * t);
+}
+
+// A Pixel's body is PIXEL_SIZE px square (Player, and a black hole's centre).
+const PIXEL_SIZE = 26;
+// The sideways gap between two platforms' facing edges, the shorter way
+// round the wrap; 0 when they overlap.
+function wrappedEdgeGap(ax, aw, bx, bw) {
+    const direct = Math.max(0, bx - (ax + aw), ax - (bx + bw));
+    if (!direct) return 0;
+    const wrapped = Math.max(0, bx + CONFIG.WIDTH - (ax + aw), ax + CONFIG.WIDTH - (bx + bw));
+    return Math.min(direct, wrapped);
+}
+// The widest sideways gap (edge to edge, px) a plain jump crosses up onto a
+// platform `gap` px higher, taking off from a standstill at the very edge and
+// steering all the way: the Player's own step order (steer, friction, move;
+// then gravity, rise), at the slowest Pixel's sideways speed (the Rocket's
+// 0.85; jump perks only help), so no Pixel is ever stranded. Its 26px body
+// overlaps both edges, and REACH_MARGIN keeps the guard on the safe side.
+// Cached per gap.
+const REACH_MARGIN = 8;
+const jumpReachCache = new Map();
+function jumpReachPx(gap) {
+    if (jumpReachCache.has(gap)) return jumpReachCache.get(gap);
+    const speed = CONFIG.SPEED * Math.min(1, ...SKINS.map(s => (s.ability && s.ability.speedMult) || 1));
+    let x = 0, vx = 0, y = 0, vy = CONFIG.JUMP_FORCE, reach = 0;
+    for (let step = 0; step < 200; step++) {
+        vx = (vx + speed) * CONFIG.FRICTION;
+        x += vx;
+        vy += CONFIG.GRAVITY;
+        y += vy;
+        if (vy > 0 && -y <= gap) { reach = x; break; }
+    }
+    const px = Math.max(0, Math.floor(reach + PIXEL_SIZE - 1 - REACH_MARGIN));
+    jumpReachCache.set(gap, px);
+    return px;
+}
 
 // The biome at a given height in meters (the single source of truth for both
 // the renderer and level generation).
@@ -4621,7 +4754,7 @@ const PERKS = [
     { key: 'gemMult', label: 'GEMS x2', color: '#33e0ff', active: v => !!v && v !== 1,
       describe: v => 'Gem pickups are worth ' + v + 'x' },
     { key: 'biomeImmune', label: 'SHIELDED', color: '#3399ff', active: v => !!v,
-      describe: () => 'Immune to ice, gravity pulses and glitches' }
+      describe: () => 'Immune to ice and black-hole pull' }
 ];
 
 // The perks a Pixel actually grants, in PERKS order, each with its value.
@@ -7267,7 +7400,7 @@ function platformLook(biome) {
         const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
         const mix = (k) => 'rgb(' + c.map((v, i) => Math.round(v * k + [12, 16, 24][i] * (1 - k))).join(', ') + ')';
         const tint = (a) => `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${a})`;
-        biome.look = { body: mix(0.2), under: mix(0.08), trim: tint(0.4), faint: tint(0.2), core: tint(0.6), icy: biome.hazards.includes('ice') };
+        biome.look = { body: mix(0.2), under: mix(0.08), trim: tint(0.4), faint: tint(0.2), core: tint(0.6), icy: hazardDose(biome, 'ice') > 0 };
     }
     return biome.look;
 }
@@ -7405,9 +7538,65 @@ function drawPlatform(ctx, p, y, biome, index, t) {
 // either art style. A spring carries a yellow plate on three coils, which
 // dips and kicks back when it fires (p.sprung counts down). A crumbling one
 // is cracked, with a broken amber edge.
+// Where a shock platform is in its cycle: 'idle', 'warn' (crackling) or
+// 'live' (a hit to stand on).
+function shockPhase(p) {
+    const t = p.shockT || 0;
+    return t < SHOCK_IDLE ? 'idle' : t < SHOCK_IDLE + SHOCK_WARN ? 'warn' : 'live';
+}
+
+// How solid a blink platform looks (1 solid, 0 gone), for drawing.
+function blinkAlpha(p) {
+    const t = p.blinkT || 0;
+    if (t < BLINK_FADE_AT) return 1;
+    if (t < BLINK_GONE_AT) return 1 - 0.85 * (t - BLINK_FADE_AT) / (BLINK_GONE_AT - BLINK_FADE_AT);
+    if (t < BLINK_BACK_AT) return 0.15;
+    return 0.15 + 0.85 * (t - BLINK_BACK_AT) / (BLINK_PERIOD - BLINK_BACK_AT);
+}
+
 function drawPlatformType(ctx, p, y, t) {
     const x = p.x, w = p.w;
-    if (p.type === 'spring') {
+    if (p.type === 'conveyor') {
+        // Chevrons running the way it carries you.
+        const dir = p.dir || 1, shift = ((t * CONVEYOR_PUSH * dir) % 16 + 16) % 16;
+        ctx.strokeStyle = '#ffd23d';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let cx = x + 4 + shift; cx < x + w - 6; cx += 16) {
+            ctx.moveTo(cx, y + 3);
+            ctx.lineTo(cx + 4 * dir, y + 9);
+            ctx.lineTo(cx, y + 15);
+        }
+        ctx.stroke();
+    } else if (p.type === 'blink') {
+        ctx.fillStyle = 'rgba(180, 255, 255, 0.8)';
+        for (let px = x + 6; px < x + w - 6; px += 12) ctx.fillRect(px, y + 2, 4, 2);
+    } else if (p.type === 'shrinking') {
+        // Brackets closing in at both ends.
+        ctx.fillStyle = '#ff7de9';
+        ctx.fillRect(x, y - 3, 3, 9);
+        ctx.fillRect(x, y - 3, 8, 3);
+        ctx.fillRect(x + w - 3, y - 3, 3, 9);
+        ctx.fillRect(x + w - 8, y - 3, 8, 3);
+    } else if (p.type === 'shock') {
+        const phase = shockPhase(p);
+        const flick = Math.floor(t / 3) % 2;
+        ctx.fillStyle = phase === 'live' ? '#ffffff' : phase === 'warn' ? (flick ? '#7df9ff' : '#2a6b80') : '#2f7f99';
+        for (let px = x + 6; px < x + w - 8; px += 14) ctx.fillRect(px, y + 6, 8, 6);
+        if (phase !== 'idle') {
+            // Sparks along the top: a crackle, then a live arc.
+            ctx.strokeStyle = phase === 'live' ? '#ffffff' : '#7df9ff';
+            ctx.lineWidth = phase === 'live' ? 2 : 1;
+            ctx.beginPath();
+            let px = x + 2;
+            ctx.moveTo(px, y - 1);
+            while (px < x + w - 2) {
+                px += 7;
+                ctx.lineTo(Math.min(px, x + w - 2), y - 1 - ((Math.floor(px + t) % 3) - 1) * (phase === 'live' ? 5 : 3));
+            }
+            ctx.stroke();
+        }
+    } else if (p.type === 'spring') {
         const k = (p.sprung || 0) / 14;                       // 1 just fired -> 0
         const lift = k > 0.6 ? 2 : 7 + Math.sin(k * Math.PI / 0.6) * 5;
         ctx.strokeStyle = '#b8c0d0';
@@ -7570,7 +7759,7 @@ class Player extends Entity {
         this.justLanded = 0;
         this.standOn = null;
         // Set by the Game each frame: the ice hazard is on for this Pixel.
-        this.icy = false;
+        this.icy = 0;
         // NINJA: frames left in which a wall touch still allows a wall jump,
         // which way it pushes (+1 right, -1 left), and the jumps left.
         this.wallContact = 0;
@@ -7655,14 +7844,15 @@ class Player extends Entity {
         const ability = this.skin.ability || { jumpMult: 1, speedMult: 1, gravityMult: 1 };
         // Ice: standing on a platform (not the launch pad), the Pixel
         // slides on and is slow to stop or turn. Jumping gets it off.
-        const sliding = this.icy && this.grounded && !!this.standOn && this.standOn.h < 30;
-        let moveSpeed = CONFIG.SPEED * (ability.speedMult || 1) * (sliding ? ICE_GRIP : 1) * dt;
+        // `icy` is the biome's ice dose (0..1): a half dose is half as slippery.
+        const ice = this.icy > 0 && this.grounded && !!this.standOn && this.standOn.h < 30 ? this.icy : 0;
+        let moveSpeed = CONFIG.SPEED * (ability.speedMult || 1) * (1 + (ICE_GRIP - 1) * ice) * dt;
 
         if (input.keys.left) this.vx -= moveSpeed;
         if (input.keys.right) this.vx += moveSpeed;
 
         // Friction
-        this.vx *= Math.pow(sliding ? ICE_FRICTION : CONFIG.FRICTION, dt);
+        this.vx *= Math.pow(CONFIG.FRICTION + (ICE_FRICTION - CONFIG.FRICTION) * ice, dt);
 
         // Apply Movement
         this.x += this.vx * dt;
@@ -7799,7 +7989,7 @@ class Player extends Entity {
                 // Platforms scrolled below the screen are kept around briefly
                 // before being culled; don't let an invisible one catch a fall.
                 if (p.y >= CONFIG.HEIGHT - 3) continue;
-                if (p.gone > 0) continue; // crumbled away, not yet reformed
+                if (p.gone > 0 || p.blinkOff) continue; // crumbled away, or blinked out
                 // Also the part of us that has wrapped round to the left edge.
                 const overlaps = (x) => x + this.w > p.x && x < p.x + p.w;
                 if (overlaps(this.x) || overlaps(this.x - CONFIG.WIDTH)) {
@@ -7821,6 +8011,13 @@ class Player extends Entity {
                         if (!wasGrounded && !this.grounded) {
                             this.justLanded = this.vy;
                             this.bump(-Math.min(0.28, 0.06 + this.vy * 0.015));
+                            // Shrinking: a quarter narrower each landing,
+                            // about its middle.
+                            if (p.type === 'shrinking') {
+                                const nw = Math.max(SHRINK_MIN_W, p.w * (1 - SHRINK_FACTOR));
+                                p.x += (p.w - nw) / 2;
+                                p.w = nw;
+                            }
                         }
                         this.standOn = p;
                         this.grounded = true;
@@ -7830,6 +8027,7 @@ class Player extends Entity {
                         if (p.vx) {
                             this.x += p.vx * dt; // Stick to moving platform
                         }
+                        if (p.type === 'conveyor') this.x += CONVEYOR_PUSH * p.dir * dt;
                     }
                 }
             }
@@ -8173,7 +8371,7 @@ class LaserDrone extends Entity {
         if (this.timer <= 0) {
             if (this.phase === "cooldown") {
                 this.phase = "telegraph";
-                this.timer = 45; // warning window before the beam fires
+                this.timer = LASER_WARN; // warning window before the beam fires
             } else if (this.phase === "telegraph") {
                 this.phase = "firing";
                 this.timer = 18; // beam stays live briefly
@@ -8283,20 +8481,86 @@ class Meteor extends Entity {
     }
 }
 
+// The swirl's arms, outer to inner (made once: nothing is built per frame).
+const BLACK_HOLE_ARM_COLORS = [0, 1, 2].map(i => 'rgba(179, 136, 255, ' + (0.15 + i * 18 / 110).toFixed(3) + ')');
+
+// A drifting swirl (The Rift, Neon Grid, The Void). Its x/y/w/h are the
+// centre, which is a hit; within BLACK_HOLE_RADIUS it pulls the Pixel and
+// gems (Game.updateBlackHolePull). Host-run in co-op, like the drones.
+class BlackHole extends Entity {
+    constructor(cx, y) {
+        super(cx - PIXEL_SIZE / 2, y, PIXEL_SIZE, PIXEL_SIZE, "#b388ff");
+        this.vx = (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.4);
+        this.t = 0; // animation clock (guests advance it in followNetEnemy)
+    }
+
+    update(dt) {
+        this.t += dt;
+        this.x += this.vx * dt;
+        if (this.x < 40 || this.x + this.w > CONFIG.WIDTH - 40) {
+            this.vx = -this.vx;
+            this.x = Math.max(40, Math.min(CONFIG.WIDTH - 40 - this.w, this.x));
+        }
+        if (this.y > CONFIG.HEIGHT + 200) this.markedForDeletion = true;
+    }
+
+    draw(ctx) {
+        const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
+        // The reach, faintly; then arms of the swirl turning inward.
+        ctx.strokeStyle = 'rgba(179, 136, 255, 0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, BLACK_HOLE_RADIUS, 0, Math.PI * 2);
+        ctx.stroke();
+        const spin = this.t * 0.06;
+        for (let i = 0; i < 4; i++) {
+            const a = spin + i * Math.PI / 2;
+            for (let ring = 0; ring < 3; ring++) {
+                const r = 70 - ring * 18;
+                ctx.strokeStyle = BLACK_HOLE_ARM_COLORS[ring];
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, a + (70 - r) * 0.03, a + (70 - r) * 0.03 + 0.9);
+                ctx.stroke();
+            }
+        }
+        ctx.fillStyle = '#05000a';
+        ctx.beginPath();
+        ctx.arc(cx, cy, this.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#e0ccff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, this.w / 2, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+}
+
 // Snapshot encodings for co-op (index = wire value).
-const BOSS_STATES = ['enter', 'hover', 'telegraph', 'dive', 'exposed', 'recover'];
+const BOSS_STATES = ['enter', 'hover', 'telegraph', 'dive', 'exposed', 'recover', 'sweepWarn', 'sweep', 'summon'];
 const LASER_PHASES = ['cooldown', 'telegraph', 'firing'];
 
 class BossDrone extends Entity {
-    // A dt-driven state machine: enter -> hover -> telegraph -> dive ->
-    // exposed -> recover -> hover ... (see BOSS in config.js). The boss lives
-    // in screen space like everything else; shiftY() keeps its anchors in
-    // step when the camera scrolls. It keeps its own clock, so TIME WARP
-    // (which slows enemy dt) slows the whole fight.
-    constructor(y, hp = 10) {
+    // A dt-driven state machine: enter -> hover -> an attack -> ... -> hover
+    // (see BOSS in config.js). The boss lives in screen space like everything
+    // else; shiftY() keeps its anchors in step when the camera scrolls. It
+    // keeps its own clock, so TIME WARP (which slows enemy dt) slows the
+    // whole fight.
+    // Its attacks build up with `level`, the boss's number in the run
+    // (bossAttacks): 1 dives (telegraph -> dive -> exposed -> recover);
+    // 2 adds a laser sweep (sweepWarn -> sweep); 3 summons two drones
+    // (summon, then the Game spawns them from pendingSummon); 4 and later
+    // also crumble the platform under the target of each dive (the Game
+    // reads crumbleTarget). Taken in turn, a dive between each other attack.
+    constructor(y, hp = 10, level = 1) {
         super(CONFIG.WIDTH / 2 - 60, y, 120, 80, "#880000");
         this.hp = hp;
         this.maxHp = hp;
+        this.level = level;
+        this.attackTurn = 0;
+        this.pendingSummon = 0;
+        this.crumbleTarget = null;
+        this.sweepFrom = this.sweepTo = this.x;
         this.state = 'enter';
         this.timer = 120;
         this.shootTimer = BOSS.VOLLEY;
@@ -8344,7 +8608,35 @@ class BossDrone extends Entity {
                     this.shootTimer = this.raging ? BOSS.VOLLEY_RAGE : BOSS.VOLLEY;
                 }
                 this.timer -= dt;
-                if (this.timer <= 0) this.lockOn(pickDiveTarget() || focus);
+                if (this.timer <= 0) this.startAttack(pickDiveTarget() || focus);
+                break;
+
+            case 'sweepWarn':
+                // Slide to one side; a thin line shows where the beam will be.
+                this.x += (this.sweepFrom - this.x) * (1 - Math.pow(0.85, dt));
+                easeY(hoverY, 0.08);
+                this.timer -= dt;
+                if (this.timer <= 0) {
+                    this.x = this.sweepFrom;
+                    this.state = 'sweep';
+                    this.timer = BOSS.SWEEP;
+                }
+                break;
+
+            case 'sweep':
+                this.timer -= dt;
+                this.x = this.sweepFrom + (this.sweepTo - this.sweepFrom) * Math.min(1, 1 - this.timer / BOSS.SWEEP);
+                easeY(hoverY, 0.08);
+                if (this.timer <= 0) this.enterHover();
+                break;
+
+            case 'summon':
+                easeY(hoverY, 0.08);
+                this.timer -= dt;
+                if (this.timer <= 0) {
+                    this.pendingSummon = BOSS.SUMMON_COUNT;
+                    this.enterHover();
+                }
                 break;
 
             case 'telegraph':
@@ -8393,6 +8685,35 @@ class BossDrone extends Entity {
         this.timer = BOSS.RECOVER + hold;
     }
 
+    // The next attack in turn: a dive, then the level's next other attack,
+    // then a dive again.
+    startAttack(target) {
+        const others = bossAttacks(this.level).filter(a => a !== 'dive');
+        const turn = this.attackTurn++;
+        const attack = turn % 2 === 0 || !others.length ? 'dive' : others[((turn - 1) / 2) % others.length];
+        if (attack === 'sweep') {
+            const leftHalf = this.x + this.w / 2 < CONFIG.WIDTH / 2;
+            this.sweepFrom = leftHalf ? 0 : CONFIG.WIDTH - this.w;
+            this.sweepTo = leftHalf ? CONFIG.WIDTH - this.w : 0;
+            this.state = 'sweepWarn';
+            this.timer = BOSS.SWEEP_WARN;
+        } else if (attack === 'summon') {
+            this.state = 'summon';
+            this.timer = BOSS.SUMMON;
+        } else {
+            this.lockOn(target);
+            if (this.level >= 4) this.crumbleTarget = target;
+        }
+    }
+
+    // The laser sweep's beam, straight down from the eye, while it's live
+    // (null otherwise). It reaches BOSS.SWEEP_REACH, short of the player the
+    // boss hovers over, so staying low dodges it.
+    beamRect() {
+        if (this.state !== 'sweep') return null;
+        return { x: this.x + this.w / 2 - 6, y: this.y + this.h, w: 12, h: BOSS.SWEEP_REACH };
+    }
+
     // Commit to a dive at `target`: its lane, and a landing height that puts
     // the boss's top just above the target's feet (a normal jump clears it).
     lockOn(target) {
@@ -8426,6 +8747,27 @@ class BossDrone extends Entity {
     }
 
     draw(ctx) {
+        // Laser sweep: a thin aiming line, then the beam.
+        if (this.state === 'sweepWarn' || this.state === 'sweep') {
+            const bx = Math.round(this.x + this.w / 2), by = this.y + this.h;
+            if (this.state === 'sweepWarn') {
+                ctx.fillStyle = `rgba(255, 0, 85, ${0.3 + 0.3 * Math.abs(Math.sin(this.t * 0.3))})`;
+                ctx.fillRect(bx - 1, by, 2, BOSS.SWEEP_REACH);
+            } else {
+                drawGlow(ctx, bx - 6, by, 12, BOSS.SWEEP_REACH, "#ff0055", 20);
+                ctx.fillStyle = "#ffd6e4";
+                ctx.fillRect(bx - 2, by, 4, BOSS.SWEEP_REACH);
+            }
+        }
+        // Summoning: rings closing in on the eye.
+        if (this.state === 'summon') {
+            const k = Math.max(0, this.timer / BOSS.SUMMON);
+            ctx.strokeStyle = "#ff3355";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.x + this.w / 2, this.y + 40, 20 + 60 * k, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         // Warning column down to the landing spot while it winds up.
         if (this.state === 'telegraph') {
             const blink = 0.18 + 0.17 * Math.abs(Math.sin(this.t * 0.3));
@@ -9924,7 +10266,8 @@ class GameCoop {
     // Enemy rows are positional arrays to keep packets small:
     //   drone/shooter [nid, 0|1, x, wy, v, hidden, warning]
     //   laser         [nid, 2, x, wy, phase, w, h]
-    //   boss          [nid, 3, x, wy, state, hp, invuln, laneX, anchorWy, warning]
+    //   boss          [nid, 3, x, wy, state, hp, invuln, laneX, anchorWy, warning, crumbleSeq, crumbleWy]
+    //   black hole    [nid, 4, x, wy]
     // plus the ids of every live projectile (anything missing is gone).
     buildSnapshot() {
         const score = this.state.score;
@@ -9935,9 +10278,11 @@ class GameCoop {
             const wy = Math.round(en.y - score);
             if (en instanceof BossDrone) {
                 e.push([en.nid, 3, r1(en.x), wy, BOSS_STATES.indexOf(en.state), en.hp, en.invuln > 0 ? 1 : 0, r1(en.laneX), Math.round(en.anchorY - score),
-                    en.shootTimer < 20 ? 1 : 0]);
+                    en.shootTimer < 20 ? 1 : 0, en.crumbleSeq || 0, Number.isInteger(en.crumbleWy) ? en.crumbleWy : null]);
             } else if (en instanceof LaserDrone) {
                 e.push([en.nid, 2, r1(en.x), wy, LASER_PHASES.indexOf(en.phase), en.w, en.h]);
+            } else if (en instanceof BlackHole) {
+                e.push([en.nid, 4, r1(en.x), wy]);
             } else {
                 e.push([en.nid, en instanceof ShooterDrone ? 1 : 0, r1(en.x), wy, r1(en.v), en.hidden ? 1 : 0,
                     en.shootTimer !== undefined && en.shootTimer < 20 ? 1 : 0]);
@@ -9961,12 +10306,16 @@ class GameCoop {
             seen.add(nid);
             let en = this.netEnemies.get(nid);
             if (!en) {
-                en = kind === 3 ? new BossDrone(row[3] + this.state.score, Number.isFinite(row[5]) ? row[5] : bossHpFor(this.state.runLoops))
+                en = kind === 4 ? new BlackHole(row[2] + PIXEL_SIZE / 2, row[3] + this.state.score)
+                    : kind === 3 ? new BossDrone(row[3] + this.state.score, Number.isFinite(row[5]) ? row[5] : bossHpFor(this.state.runLoops))
                     : kind === 2 ? new LaserDrone(row[3] + this.state.score)
                     : kind === 1 ? new ShooterDrone(row[3] + this.state.score)
                     : new Drone(row[3] + this.state.score);
                 en.nid = nid;
                 en.x = row[2];
+                // A boss seen for the first time: crumbles from before now
+                // are history, not news.
+                if (kind === 3 && Number.isInteger(row[10])) en.crumbleSeq = row[10];
                 this.netEnemies.set(nid, en);
                 this.enemies.push(en);
                 if (en instanceof BossDrone) this.state.bossActive = true;
@@ -9979,6 +10328,13 @@ class GameCoop {
                 en.laneX = Number.isFinite(row[7]) ? row[7] : en.laneX;
                 en.anchorY = (Number.isFinite(row[8]) ? row[8] : row[3]) + this.state.score;
                 en.shootTimer = row[9] ? 10 : BOSS.VOLLEY; // the volley warning light
+                // A new platform crumble (boss 4 on): break it here too.
+                if (Number.isInteger(row[10]) && row[10] !== (en.crumbleSeq || 0)) {
+                    en.crumbleSeq = row[10];
+                    if (Number.isInteger(row[11])) this.bossCrumble(row[11]);
+                }
+            } else if (en instanceof BlackHole) {
+                // Position only (en.net above).
             } else if (en instanceof LaserDrone) {
                 en.phase = LASER_PHASES[row[4]] || 'cooldown';
                 en.w = Number.isFinite(row[5]) ? row[5] : en.bodyW;
@@ -10050,7 +10406,10 @@ class GameCoop {
 
     // A jetpack or shield took something out. On a guest the host decides:
     // hide it now (with a tombstone) and ask the host to remove it.
+    // (A black hole, or nothing at all, as from a shock platform: nothing
+    // to destroy.)
     destroyHostile(obj) {
+        if (!obj || obj instanceof BlackHole) return;
         obj.markedForDeletion = true;
         if (this.isAuthority() || obj.nid === undefined) return;
         this.tombstones.set(obj.nid, this.state.time + NET_TOMBSTONE_FRAMES);
@@ -10058,10 +10417,10 @@ class GameCoop {
         window.network.send({ type: 'hit', nid: obj.nid });
     }
 
-    // Host: a guest's jetpack/shield kill (never the boss).
+    // Host: a guest's jetpack/shield kill (never the boss or a black hole).
     applyHitRequest(d, fromId) {
         if (!this.state.running || !Number.isInteger(d.nid)) return;
-        const target = this.enemies.find(e => e.nid === d.nid && !(e instanceof BossDrone))
+        const target = this.enemies.find(e => e.nid === d.nid && !(e instanceof BossDrone) && !(e instanceof BlackHole))
             || this.projectiles.find(q => q.nid === d.nid);
         if (target && this.guestNear(fromId, target)) target.markedForDeletion = true;
     }
@@ -12718,6 +13077,43 @@ class Game {
         }
     }
 
+    // Black holes pull this player (unless SHIELDED) and gems toward their
+    // centre, harder the closer they are. Every client pulls its own.
+    updateBlackHolePull(dt, envImmune) {
+        for (const e of this.enemies) {
+            if (!(e instanceof BlackHole) || e.markedForDeletion) continue;
+            const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+            const p = this.player;
+            if (!envImmune && !p.isDead) {
+                const dx = cx - (p.x + p.w / 2), dy = cy - (p.y + p.h / 2);
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d > 1 && d < BLACK_HOLE_RADIUS) {
+                    const f = BLACK_HOLE_PULL * (1 - d / BLACK_HOLE_RADIUS) * dt / d;
+                    p.vx += dx * f;
+                    p.vy += dy * f;
+                }
+            }
+            for (const g of this.powerups) {
+                if (!g.isGem) continue;
+                const dx = cx - (g.x + g.w / 2), dy = cy - (g.y + g.h / 2);
+                if (dx * dx + dy * dy >= BLACK_HOLE_RADIUS * BLACK_HOLE_RADIUS) continue;
+                const k = 1 - Math.pow(0.97, dt);
+                g.x += dx * k;
+                g.startY += dy * k;
+            }
+        }
+    }
+
+    // A shock platform that is live hits whoever stands on it (a platform
+    // type, so SHIELDED doesn't help; a shield or Jetpack is spent on it).
+    checkShock() {
+        const p = this.player, on = p.standOn;
+        if (p.isDead || !p.grounded || !on || on.type !== 'shock' || p.invuln > 0) return;
+        if (shockPhase(on) !== 'live') return;
+        this.particles.spawn(p.x + p.w / 2, p.y + p.h, '#7df9ff', 14, 'blast');
+        if (!this.absorbHit(null)) this.die(true);
+    }
+
     // The run's score in meters: the height climbed, nothing else (ADR-0006).
     runScore() {
         return Math.floor(this.state.score / 10);
@@ -12851,6 +13247,41 @@ class Game {
         this.particles.spawn(e.x + e.w / 2, e.y + e.h / 2, '#ff6b35', 15, "blast");
         sounds.play('reward');
         return true;
+    }
+
+    // Host (or solo): what the boss's last update asked for. Summoned drones
+    // appear beside it; a dive from boss 4 on crumbles the platform its
+    // target stands on, for everyone (bossCrumble, and the snapshot).
+    carryOutBossOrders(boss) {
+        if (boss.pendingSummon) {
+            // At most BOSS.SUMMON_CAP drones out at once, however long the fight.
+            const room = Math.max(0, BOSS.SUMMON_CAP - this.countEnemies(Drone));
+            for (let i = 0; i < Math.min(room, boss.pendingSummon); i++) {
+                const d = new Drone(boss.y + boss.h / 2, this.droneDifficulty(Math.floor(this.state.score / 10)));
+                d.x = boss.x + (i % 2 ? boss.w + 10 : -40);
+                this.enemies.push(d);
+            }
+            boss.pendingSummon = 0;
+        }
+        if (boss.crumbleTarget) {
+            const t = boss.crumbleTarget;
+            boss.crumbleTarget = null;
+            const under = t === this.player ? t.standOn
+                : this.platforms.find(p => Math.abs(p.y - (t.y + t.h)) < 6 && t.x + t.w > p.x && t.x < p.x + p.w);
+            if (under && under.h < 30 && Number.isInteger(under.wy)) {
+                boss.crumbleSeq = (boss.crumbleSeq || 0) + 1;
+                boss.crumbleWy = under.wy;
+                this.bossCrumble(under.wy);
+            }
+        }
+    }
+
+    // The boss breaks the platform at world y `wy` (on this screen).
+    bossCrumble(wy) {
+        const p = this.platforms.find(q => q.wy === wy);
+        if (!p || p.crumbleT > 0 || p.gone > 0) return;
+        p.crumbleT = CRUMBLE_FRAMES;
+        this.particles.spawn(p.x + p.w / 2, p.y + 4, '#ff3355', 12, 'blast');
     }
 
     knockBackFrom(boss) {
@@ -13205,28 +13636,51 @@ class Game {
     // seededRandom() is reserved for this: any other draw would desync them.
     spawnPlatform(wy) {
         const y = wy + this.state.score;
-        let rand = this.seededRandom();
-        let w = 100 + rand * 80;
-        let x = this.seededRandom() * (CONFIG.WIDTH - w);
         let scoreMeters = Math.max(0, Math.floor(-wy / 10));
-        let hazards = biomeAt(scoreMeters).hazards;
+        const biome = biomeAt(scoreMeters);
+        // Narrower the higher it is (platformWidthRange).
+        const [wMin, wMax] = platformWidthRange(scoreMeters);
+        let w = wMin + this.seededRandom() * (wMax - wMin);
+        let x = this.seededRandom() * (CONFIG.WIDTH - w);
+        // Reachability guard: within a plain jump's sideways reach of the
+        // platform below (edge to edge, either way round the wrap). If not,
+        // it's placed again inside that reach, with one more seeded draw.
+        // A shrinking platform below counts at its smallest (SHRINK_MIN_W,
+        // centred), since it may have shrunk by the time someone jumps.
+        const below = this.state.prevPlat;
+        if (below && below.w) {
+            const reach = jumpReachPx(below.wy - wy);
+            const bx = below.shrinking ? below.x + (below.w - SHRINK_MIN_W) / 2 : below.x;
+            const bw = below.shrinking ? SHRINK_MIN_W : below.w;
+            if (wrappedEdgeGap(bx, bw, x, w) > reach) {
+                const lo = Math.max(0, bx - w - reach), hi = Math.min(CONFIG.WIDTH - w, bx + bw + reach);
+                x = lo + this.seededRandom() * (hi - lo);
+            }
+        }
 
         // A spring, or a crumbling platform (never two of those in a row:
-        // generation runs in height order, so every client agrees).
+        // generation runs in height order, so every client agrees), or one
+        // of the upper biomes' types at the biome's dose.
         let type = null;
         if (scoreMeters >= SPRING_START_METERS && this.seededRandom() < SPRING_CHANCE) {
             type = 'spring';
         } else if (scoreMeters >= CRUMBLE_START_METERS && !this.state.lastCrumble
             && this.seededRandom() < CRUMBLE_CHANCE) {
             type = 'crumble';
+        } else {
+            for (const [name, chance] of PLATFORM_TYPE_ROLLS) {
+                const dose = hazardDose(biome, name);
+                if (dose && this.seededRandom() < chance * dose) { type = name; break; }
+            }
         }
         this.state.lastCrumble = type === 'crumble';
 
         let vx = 0;
-        if (scoreMeters >= MOVING_START_METERS && type !== 'crumble') {
+        if (scoreMeters >= MOVING_START_METERS && (!type || type === 'spring')) {
             // From MOVING_START_METERS they are few and slow, growing to
-            // the old share and speed by the height they used to start at.
-            const movingChance = Math.min(0.4, 0.06 + (scoreMeters - MOVING_START_METERS) / 2450 * 0.34);
+            // the old share and speed by 2,600m; the `moving` dose adds more.
+            const movingChance = Math.min(0.4, 0.06 + (scoreMeters - MOVING_START_METERS) / 2450 * 0.34)
+                + MOVING_DOSE_CHANCE * hazardDose(biome, 'moving');
             if (this.seededRandom() < movingChance) {
                 const pace = 0.55 + 0.45 * Math.min(1, scoreMeters / 1800);
                 vx = (this.seededRandom() > 0.5 ? 1 : -1) * (0.5 + this.seededRandom() * 1.5) * pace;
@@ -13236,6 +13690,9 @@ class Game {
 
         const plat = { x, y, w, h: 18, vx, wy };
         if (type) plat.type = type;
+        if (type === 'conveyor') plat.dir = this.seededRandom() < 0.5 ? -1 : 1;
+        if (type === 'blink') plat.blinkT = this.seededRandom() * BLINK_PERIOD;
+        if (type === 'shock') plat.shockT = this.seededRandom() * (SHOCK_IDLE + SHOCK_WARN + SHOCK_LIVE);
         this.platforms.push(plat);
 
         // Power-ups are common early and level off from POWERUP_PLATEAU_METERS.
@@ -13285,7 +13742,7 @@ class Game {
         // `wy` is its own (the platform's plus 1, 2...): co-op tells
         // pickups apart by it.
         const prev = this.state.prevPlat;
-        this.state.prevPlat = { cx: x + w / 2, wy, still: !vx };
+        this.state.prevPlat = { x, w, cx: x + w / 2, wy, still: !vx, shrinking: type === 'shrinking' };
         if (scoreMeters >= GEM_TRAIL_START_METERS && this.seededRandom() < GEM_TRAIL_CHANCE) {
             const count = 3 + Math.floor(this.seededRandom() * 3);
             const cx = x + w / 2;
@@ -13324,8 +13781,13 @@ class Game {
     fillPlatforms() {
         while (this.state.nextPlatWY + this.state.score > -PLATFORM_LOOKAHEAD) {
             this.spawnPlatform(this.state.nextPlatWY);
-            this.state.nextPlatWY -= CONFIG.PLATFORM_BASE_GAP;
+            this.state.nextPlatWY -= platformGapAt(Math.max(0, Math.floor(-this.state.nextPlatWY / 10)));
         }
+    }
+
+    // How fast drones fly at this height: faster higher up and after each boss.
+    droneDifficulty(meters) {
+        return 1 + meters / 2000 + (this.state.runLoops || 0);
     }
 
     // How many drones may be out at once at this height.
@@ -14226,11 +14688,11 @@ class Game {
         if (this.tick('achieve', dt, 15)) this.checkAchievements();
 
         const scoreMeters = Math.floor(this.state.score / 10);
-        const hazards = this.renderer.currentBiome.hazards;
+        const biome = this.renderer.currentBiome;
         const perks = this.player.skin.ability || {};
-        // SHIELDED perk: the biome's environmental forces (ice, gravity
-        // pulses, control glitches) pass the player by. Physical obstacles —
-        // meteors, lasers, moving platforms — still count.
+        // SHIELDED perk: the biome's forces (ice, black-hole pull) pass the
+        // player by. Meteors, laser beams, a black hole's centre and every
+        // platform type still count (ADR-0008).
         const envImmune = !!perks.biomeImmune;
 
         if (this.renderer.currentBiome.name !== this.lastBiomeName) {
@@ -14247,7 +14709,7 @@ class Game {
         const authority = this.isAuthority();
         if (authority && !this.state.bossActive && scoreMeters >= this.state.nextBossAt) {
             this.state.bossActive = true;
-            this.enemies.push(new BossDrone(-120, bossHpFor(this.state.runLoops)));
+            this.enemies.push(new BossDrone(-120, bossHpFor(this.state.runLoops), (this.state.runLoops || 0) + 1));
         }
 
         // Spawn Enemies (only if Boss isn't active). The spawn clock keeps
@@ -14255,7 +14717,7 @@ class Game {
         const droneEvery = Math.max(CONFIG.DRONE_MIN_SPAWN_RATE, Math.floor(CONFIG.DRONE_SPAWN_RATE - scoreMeters / 50));
         if (authority && !this.state.bossActive && scoreMeters > DRONE_START_METERS && this.tick('drone', dt, droneEvery)
             && this.countEnemies(Drone) < this.droneCap(scoreMeters)) {
-            const difficulty = 1 + (scoreMeters / 2000) + (this.state.runLoops || 0);
+            const difficulty = this.droneDifficulty(scoreMeters);
 
             // Spawned relative to the camera's player (the lowest living one
             // in co-op), so everyone sees them arrive.
@@ -14267,23 +14729,22 @@ class Game {
             }
         }
 
-        if (authority && !this.state.bossActive && hazards.includes('laser') && this.tick('laser', dt, 240)
+        const laserDose = hazardDose(biome, 'laser');
+        if (authority && !this.state.bossActive && laserDose && this.tick('laser', dt, LASER_EVERY / laserDose)
             && this.countEnemies(LaserDrone) < CONFIG.LASER_CAP) {
             this.enemies.push(new LaserDrone(this.bossFocus().y - 500));
         }
-
-        // Glitch hazard: briefly invert left/right for this frame's input read only
-        // (swap-and-restore around the call, no permanent state mutation).
-        const glitching = !envImmune && hazards.includes('glitch') && (this.state.time % 480) < 24;
-        if (glitching) {
-            const tmp = this.input.keys.left;
-            this.input.keys.left = this.input.keys.right;
-            this.input.keys.right = tmp;
+        // Black holes drift in from above (host-run; guests mirror them).
+        const holeDose = hazardDose(biome, 'blackHole');
+        if (authority && !this.state.bossActive && holeDose && this.tick('blackHole', dt, BLACK_HOLE_EVERY / holeDose)
+            && this.countEnemies(BlackHole) < BLACK_HOLE_CAP) {
+            this.enemies.push(new BlackHole(Math.random() * (CONFIG.WIDTH - 120) + 60, this.bossFocus().y - 700));
         }
 
         this.player.prevBottom = this.player.y + this.player.h;
-        // Ice hazard: platforms are slippery (see Player.update()).
-        this.player.icy = !envImmune && hazards.includes('ice');
+        // Ice hazard: platforms are slippery, by the biome's dose (see
+        // Player.update()).
+        this.player.icy = envImmune ? 0 : hazardDose(biome, 'ice');
         // A dead co-op player's body is gone until they respawn: no physics,
         // no landing on platforms, no pickups.
         let event = this.player.isDead ? null : this.player.update(dt, this.input, this.platforms, this.visiblePickups());
@@ -14291,19 +14752,15 @@ class Game {
             this.onLanded(this.player.justLanded);
             this.player.justLanded = 0;
         }
+        this.checkShock();
+        if (!this.state.running || this.state.dying) return;
         // Ice spray at the feet of a sliding Pixel (drawing only).
-        if (this.player.icy && !this.player.isDead && this.player.grounded && Math.abs(this.player.vx) > 1.5
+        if (this.player.icy > 0 && !this.player.isDead && this.player.grounded && Math.abs(this.player.vx) > 1.5
             && this.player.standOn && this.player.standOn.h < 30 && this.tick('iceSpray', dt, 5)) {
             this.particles.dust(this.player.x + 13, this.player.y + 26, '#dff6ff', 2);
         }
         this.player.animate(dt);
         if (this.state.multiplayer && this.player.isDead && this.spectatingPlayer) this.pullForSpectated(this.spectatingPlayer, dt);
-
-        if (glitching) {
-            const tmp = this.input.keys.left;
-            this.input.keys.left = this.input.keys.right;
-            this.input.keys.right = tmp;
-        }
 
         // Co-op ceiling at the top of the 800-tall frame, so the leader can't
         // leave the party behind. drawTeamLimit() shows it; bumping it flashes.
@@ -14318,17 +14775,19 @@ class Game {
             }
         }
 
-        // Environmental Hazards (cumulative per-biome, see BIOMES[].hazards)
-        if (hazards.includes('gravityPulse') && !envImmune) {
-            let pulse = Math.sin(this.state.time * 0.05) * 0.3;
-            this.player.vy += pulse * dt;
+        // Meteors: spawned METEOR_WARN steps above the top edge, where a red
+        // marker shows them coming (drawMeteorMarkers).
+        const meteorDose = hazardDose(biome, 'meteor');
+        if (authority && meteorDose && this.tick('meteor', dt, METEOR_EVERY / meteorDose)) {
+            const vy = METEOR_VY[0] + Math.random() * (METEOR_VY[1] - METEOR_VY[0]);
+            const vx = (Math.random() * 2 - 1) * METEOR_VX;
+            const x = 20 + Math.random() * (CONFIG.WIDTH - 54);
+            // Above the tallest possible view, so the marker always shows
+            // first (drawMeteorMarkers starts METEOR_WARN steps before it
+            // enters the view, whatever its height).
+            this.projectiles.push(new Meteor(x - vx * METEOR_WARN, -VIEW_MAX_EXTRA - 14 - vy * METEOR_WARN, vx, vy));
         }
-        if (authority && hazards.includes('meteor') && this.tick('meteor', dt, 90)) {
-            let startX = Math.random() * CONFIG.WIDTH;
-            let vx = (Math.random() - 0.5) * 4;
-            let vy = 4 + Math.random() * 5;
-            this.projectiles.push(new Meteor(startX, this.bossFocus().y - 800, vx, vy));
-        }
+        this.updateBlackHolePull(dt, envImmune);
 
         // Platform Update
         this.platforms.forEach(p => {
@@ -14338,6 +14797,12 @@ class Game {
                 if (p.x + p.w > CONFIG.WIDTH) { p.x = CONFIG.WIDTH - p.w; p.vx *= -1; }
             }
             if (p.sprung) p.sprung = Math.max(0, p.sprung - dt);
+            // Each screen runs its own blink and shock clocks.
+            if (p.blinkT !== undefined) {
+                p.blinkT = (p.blinkT + dt) % BLINK_PERIOD;
+                p.blinkOff = p.blinkT >= BLINK_GONE_AT && p.blinkT < BLINK_BACK_AT;
+            }
+            if (p.shockT !== undefined) p.shockT = (p.shockT + dt) % (SHOCK_IDLE + SHOCK_WARN + SHOCK_LIVE);
             // A crumbling platform breaks a moment after it's landed on,
             // and reforms later.
             if (p.crumbleT > 0) {
@@ -14410,6 +14875,7 @@ class Game {
                 e.update(enemyDt, this.nearestPlayer(e), this.projectiles);
             } else if (e instanceof BossDrone) {
                 e.update(enemyDt, this.bossFocus(), this.projectiles, this.state.multiplayer ? () => this.nextDiveTarget() : undefined);
+                this.carryOutBossOrders(e);
             } else {
                 e.update(enemyDt);
             }
@@ -14427,9 +14893,21 @@ class Game {
                 continue;
             }
             if (e.hidden || this.player.invuln > 0 || this.player.isDead) continue;
+            // The boss's laser sweep (every client checks its own Pixel).
+            const beam = e instanceof BossDrone ? e.beamRect() : null;
+            if (beam && rectsIntersect(this.player, beam)) {
+                if (!this.absorbHit(null)) this.die(true);
+                continue;
+            }
             if (rectsIntersect(this.player, e)) {
                 if (e instanceof BossDrone) {
                     this.resolveBossContact(e);
+                    continue;
+                }
+                // A black hole's centre: a shield or Jetpack is spent on it,
+                // but nothing destroys it.
+                if (e instanceof BlackHole) {
+                    if (!this.absorbHit(e)) this.die(true);
                     continue;
                 }
                 if (this.smashHit(e) || this.absorbHit(e)) continue;
@@ -14586,6 +15064,8 @@ class Game {
                 ctx.globalAlpha = p.gone < 30 ? 0.15 + 0.6 * (1 - p.gone / 30) : 0.15;
             } else if (p.crumbleT > 0) {
                 y += Math.sin(this.state.time * 2.3) * 1.5; // about to go
+            } else if (p.blinkT !== undefined) {
+                ctx.globalAlpha = blinkAlpha(p);
             }
             drawPlatform(ctx, p, y, biome, biomeIndex, this.sceneClock);
             if (p.type) drawPlatformType(ctx, p, y, this.sceneClock);
@@ -14599,6 +15079,7 @@ class Game {
 
         this.enemies.forEach(e => this.drawFadingIn(e));
         this.projectiles.forEach(p => this.drawFadingIn(p));
+        this.drawMeteorMarkers(ctx);
 
         if (this.state.running && this.settings.showGhost) this.drawGhost();
         if (this.state.running) this.drawBestLine();
@@ -14633,6 +15114,29 @@ class Game {
         this.particles.draw(this.renderer.ctx);
         this.drawFx(ctx);
         if (shaking) ctx.restore();
+    }
+
+    // A red marker at the top of the view over each meteor still above it,
+    // brighter as it gets close (it spawns METEOR_WARN steps out).
+    drawMeteorMarkers(ctx) {
+        const top = this.renderer.viewTop || 0;
+        for (const m of this.projectiles) {
+            if (!(m instanceof Meteor) || m.y + m.h >= top) continue;
+            const steps = (top - (m.y + m.h)) / Math.max(0.5, m.vy);
+            if (steps > METEOR_WARN + 10) continue;
+            const x = m.x + m.w / 2 + m.vx * steps;
+            const a = Math.max(0.25, 1 - steps / METEOR_WARN);
+            ctx.globalAlpha = Math.floor(this.state.time / 6) % 2 ? a : a * 0.6;
+            ctx.fillStyle = '#ff2a2a';
+            ctx.beginPath();
+            ctx.moveTo(x - 9, top + 2);
+            ctx.lineTo(x + 9, top + 2);
+            ctx.lineTo(x, top + 14);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillRect(x - 12, top, 24, 2);
+            ctx.globalAlpha = 1;
+        }
     }
 
     // Spawns aimed just off the top of the 800-tall frame (meteors, the boss,

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.36.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.37.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -410,6 +410,14 @@ body {
     /* Persistent across every screen (menu/shop/gameplay), so it must sit
        above #menus-wrapper (20) and #shop-menu-layer (25). */
     z-index: 40;
+}
+
+/* Counter digits in Chakra Petch: Orbitron's zero is slashed, which reads
+   badly at this size. */
+#gem-display .count,
+#life-display .count {
+    font-family: var(--font-text);
+    font-weight: 700;
 }
 
 #gem-display .count + .ico,
@@ -2562,6 +2570,170 @@ body.reduce-motion #skin-preview-box {
     color: var(--pixel);
 }
 
+/* STYLE tab: a section per cosmetic slot, a card per cosmetic. */
+#shop-panel-style {
+    width: var(--panel-w);
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 4px 0 12px;
+}
+
+.style-slot {
+    margin-bottom: 14px;
+}
+
+.style-slot-name {
+    margin: 0 0 6px 2px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-align: left;
+}
+
+.style-items {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.style-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 6px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.style-item--on {
+    border-color: var(--teal);
+    box-shadow: inset 0 0 0 1px var(--teal);
+}
+
+.style-item--short {
+    opacity: 0.55;
+}
+
+.style-swatch {
+    display: flex;
+    gap: 3px;
+    height: 14px;
+}
+
+.style-swatch span {
+    width: 10px;
+    height: 10px;
+    margin-top: 2px;
+    border-radius: 2px;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.style-swatch--dot span,
+.style-swatch--ring span {
+    border-radius: 50%;
+}
+
+.style-name {
+    font-family: var(--font-text);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.style-action {
+    color: var(--gem);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.style-item--on .style-action,
+.style-item--owned .style-action {
+    color: var(--teal);
+}
+
+.style-note {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 12px;
+}
+
+/* The first Pixel to buy, as a goal under a new player's Pixel. */
+.first-goal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+}
+
+.first-goal-text {
+    color: #fff;
+    font-family: var(--font-text);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.first-goal-bar {
+    width: 150px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.first-goal-bar span {
+    display: block;
+    height: 100%;
+    background: var(--gem);
+}
+
+/* The Streak: a line under the menu scores, and a pay line on the run card. */
+.menu-streak {
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.menu-streak .streak-next {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.run-card-streak {
+    margin: 10px 0 2px;
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.run-card-streak .streak-reward {
+    color: var(--gem);
+}
+
+/* An achievement's reward, hard right of its row. */
+.achievement-reward {
+    flex: none;
+    margin-left: auto;
+    color: var(--gem);
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
 /* ---------- Records ---------- */
 /* Personal leaderboard: your three best climbs. */
 #fame-list {
@@ -3136,7 +3308,7 @@ body.reduce-motion *::after {
     position: sticky;
     bottom: 0;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
     padding: 6px;
     border: 1px solid var(--line);
@@ -3153,6 +3325,13 @@ body.reduce-motion *::after {
     font: 900 14px var(--font-display);
     letter-spacing: 1.5px;
     cursor: pointer;
+}
+/* Four tabs on a phone: a little tighter. */
+@media (max-width: 420px) {
+    .shop-tab {
+        font-size: 12px;
+        letter-spacing: 0.5px;
+    }
 }
 .shop-tab.active {
     background: linear-gradient(#6affe4, #00d6b0);
@@ -3682,6 +3861,7 @@ body.reduce-motion *::after {
                             <div id="skin-name">Unit 734</div>
                             <div id="skin-status">UNLOCKED</div>
                             <div id="skin-ability"></div>
+                            <div id="first-goal" class="first-goal" hidden></div>
                         </div>
                     </div>
 
@@ -3690,6 +3870,7 @@ body.reduce-motion *::after {
                             <span id="menu-highscore">BEST HEIGHT: 0m</span>
                             <span id="menu-lastscore" hidden>LAST RUN: 0m</span>
                         </div>
+                        <div id="menu-streak" class="menu-streak" hidden></div>
                         <button id="start-prompt" class="btn btn--primary btn--big">PLAY</button>
                         <button id="to-mp-btn" class="btn"><svg class="ico" aria-hidden="true"><use href="#i-coop"/></svg> CO-OP</button>
                         <div class="menu-actions">
@@ -3728,6 +3909,9 @@ body.reduce-motion *::after {
                     <!-- PIXELS: one Pixel at a time (SINGLE), or a LIST (drawn by renderShopPixels) -->
                     <div id="shop-panel-pixels" class="shop-panel" role="tabpanel" aria-labelledby="shop-tab-pixels"></div>
 
+                    <!-- STYLE: cosmetics, one of each slot (js/cosmetics.js) -->
+                    <div id="shop-panel-style" class="shop-panel" role="tabpanel" aria-labelledby="shop-tab-style" hidden></div>
+
                     <!-- BOOSTERS: help for a run, from the shop -->
                     <div id="shop-panel-boosters" class="shop-panel" role="tabpanel" aria-labelledby="shop-tab-boosters" hidden>
                         <div class="booster-slots">
@@ -3748,6 +3932,7 @@ body.reduce-motion *::after {
                 <div id="shop-tabs" class="shop-tabs" role="tablist" aria-label="Shop">
                     <button id="shop-tab-rent" class="shop-tab" data-tab="rent" role="tab" type="button">RENT</button>
                     <button id="shop-tab-pixels" class="shop-tab" data-tab="pixels" role="tab" type="button">PIXELS</button>
+                    <button id="shop-tab-style" class="shop-tab" data-tab="style" role="tab" type="button">STYLE</button>
                     <button id="shop-tab-boosters" class="shop-tab" data-tab="boosters" role="tab" type="button">BOOSTERS</button>
                 </div>
             </div>
@@ -3849,6 +4034,7 @@ body.reduce-motion *::after {
                 <div id="run-card-distance" class="run-card-distance">0m</div>
                 <div id="run-card-best" class="run-card-best" hidden>★ NEW BEST ★</div>
                 <div id="run-card-stats" class="run-card-stats"></div>
+                <div id="run-card-streak" class="run-card-streak" hidden></div>
                 <div id="run-card-lb" class="run-card-lb" hidden>
                     <div id="run-card-lb-title" class="run-card-lb-title"></div>
                     <div id="run-card-lb-row" class="run-card-lb-row">
@@ -3887,6 +4073,8 @@ body.reduce-motion *::after {
                 <div id="settings-title" class="overlay-title">SETTINGS</div>
                 <label class="setting-row" for="set-volume"><span>SOUND</span>
                     <input type="range" id="set-volume" min="0" max="100" step="5"></label>
+                <label class="setting-row" for="set-music"><span>MUSIC</span>
+                    <input type="range" id="set-music" min="0" max="100" step="5"></label>
                 <label class="setting-row" for="set-muted"><span>MUTE</span>
                     <input type="checkbox" id="set-muted"></label>
                 <label class="setting-row" for="set-ghost"><span>SHOW GHOST</span>
@@ -3897,6 +4085,10 @@ body.reduce-motion *::after {
                     <input type="checkbox" id="set-tips"></label>
                 <label class="setting-row" id="set-touch-row" for="set-touch"><span>TOUCH BUTTONS</span>
                     <input type="checkbox" id="set-touch"></label>
+                <label class="setting-row" id="set-vibrate-row" for="set-vibrate"><span>VIBRATION</span>
+                    <input type="checkbox" id="set-vibrate"></label>
+                <label class="setting-row" id="set-stats-row" for="set-stats"><span>SEND ANONYMOUS STATS</span>
+                    <input type="checkbox" id="set-stats"></label>
                 <div class="setting-row settings-version"><span>VERSION</span><strong id="set-version"></strong></div>
                 <button id="settings-close-btn" class="btn btn--primary overlay-btn">DONE</button>
             </div>
@@ -3938,7 +4130,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.36.0';
+    const EMBEDDED = '1.37.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4136,8 +4328,8 @@ const GEM_BOOST_MS = 15 * 60 * 1000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.36.0';
-const NET_PROTOCOL = 13;
+const GAME_VERSION = '1.37.0';
+const NET_PROTOCOL = 14;
 
 // Game logic runs in fixed steps of STEP_MS (ADR-0007); a frame runs at most
 // MAX_STEPS_PER_FRAME of them and drops the rest of a longer stall. A step
@@ -4538,11 +4730,62 @@ function biomeIndexAt(meters) {
     return BIOMES.indexOf(biomeAt(meters));
 }
 
+// Cosmetics: one of each slot equipped (on any Pixel), bought with gems.
+// Trail: sprites left behind a moving Pixel. Landing: a burst on touching
+// down. Death: how the shatter looks (the slow motion and what got you stay).
+// Boss kill: the finisher's burst where the boss went down. Each is drawn
+// from sprites painted once (js/cosmetics.js) in `colors`, shaped `shape`.
+// Ids go over the wire in co-op (the sync's `cos`). Saved as
+// lp_owned_cosmetics (ids) and lp_cosmetics ({ trail, land, death, boss }).
+const COSMETIC_SLOTS = ['trail', 'land', 'death', 'boss'];
+const COSMETIC_SLOT_NAMES = { trail: 'TRAIL', land: 'LANDING', death: 'DEATH', boss: 'BOSS KILL' };
+const COSMETICS = [
+    { id: 'trail_spark', slot: 'trail', name: 'Sparks', cost: 500, shape: 'dot', colors: ['#ffe600', '#ffffff'] },
+    { id: 'trail_comet', slot: 'trail', name: 'Comet Tail', cost: 3000, shape: 'dot', colors: ['#7df9ff', '#2b6cff', '#ffffff'] },
+    { id: 'trail_rainbow', slot: 'trail', name: 'Rainbow', cost: 12000, shape: 'square', colors: ['#ff3355', '#ff9900', '#ffe600', '#33ff66', '#33aaff', '#b366ff'] },
+    { id: 'land_ring', slot: 'land', name: 'Shock Ring', cost: 800, shape: 'ring', colors: ['#00ffcc'] },
+    { id: 'land_stars', slot: 'land', name: 'Star Burst', cost: 4000, shape: 'star', colors: ['#ffe600', '#ffffff'] },
+    { id: 'land_quake', slot: 'land', name: 'Quake', cost: 10000, shape: 'square', colors: ['#ff7a00', '#ffcc66'] },
+    { id: 'death_confetti', slot: 'death', name: 'Confetti', cost: 1500, shape: 'square', colors: ['#ff3355', '#ffe600', '#33ff66', '#33aaff'] },
+    { id: 'death_ghost', slot: 'death', name: 'Ghost Out', cost: 6000, shape: 'dot', colors: ['#e0ccff', '#ffffff'] },
+    { id: 'death_supernova', slot: 'death', name: 'Supernova', cost: 20000, shape: 'star', colors: ['#ffffff', '#ffd23d', '#ff5522'] },
+    { id: 'boss_fireworks', slot: 'boss', name: 'Fireworks', cost: 2000, shape: 'star', colors: ['#ff3355', '#ffe600', '#33aaff'] },
+    { id: 'boss_gemrain', slot: 'boss', name: 'Gem Shower', cost: 8000, shape: 'gem', colors: ['#00ffff', '#b266ff', '#ff66cc'] },
+    { id: 'boss_shockwave', slot: 'boss', name: 'Shockwave', cost: 15000, shape: 'ring', colors: ['#ffffff', '#ff0055'] }
+];
+const cosmeticById = (id) => COSMETICS.find(c => c.id === id) || null;
+
+// The Streak: a run of at least STREAK_MIN_METERS (any mode) on a new local
+// day continues it; missing a day starts again at day 1. Day n pays
+// STREAK_REWARDS[n - 1] gems, and every day after the table's end pays its
+// last value. (A launch table, meant to be cut once the game has players.)
+// Saved as lp_streak { day: YYYYMMDD of the last counted day, count }.
+// Anonymous stats and error reports (the score Worker's /stats and /error,
+// no player id; Settings > SEND ANONYMOUS STATS). At most ERROR_REPORTS_MAX
+// error reports a session, each message once. Frame rates are sent as the
+// nearest of FPS_BUCKETS.
+const ERROR_REPORTS_MAX = 5;
+const FPS_BUCKETS = [15, 30, 45, 60, 75, 90, 120, 144, 165, 240];
+const STREAK_MIN_METERS = 100;
+// Vibration (where the device has it, and the Settings switch is on): a hit
+// a shield or Jetpack took, a spent heart, and a run-ending death (ms, or an
+// on/off pattern).
+const VIBRATE_HIT = 30;
+const VIBRATE_HEART = [40, 40, 40];
+const VIBRATE_DEATH = 120;
+const STREAK_REWARDS = [10, 200, 500, 1000, 2000, 5000];
+const streakRewardFor = (count) => STREAK_REWARDS[Math.min(Math.max(1, count), STREAK_REWARDS.length) - 1];
+// The local calendar day before a YYYYMMDD day, as YYYYMMDD.
+function dayBefore(day) {
+    const d = new Date(Math.floor(day / 10000), Math.floor(day / 100) % 100 - 1, day % 100 - 1);
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
 // Shop consumables. Every run starts with one free heart plus the hearts
 // bought for it (saved as lp_hearts, "bought for the next run"); leftovers are
 // gone when the run ends. Each heart is spent automatically on a death that
 // would otherwise end the run (see Game.useSpareLife()).
-const HEART_COST = 100;
+const HEART_COST = 150;
 // A spent life (or revive) springs up a red rescue net for a second that
 // bounces the player back in.
 const RESCUE_NET_FRAMES = 60;
@@ -4642,7 +4885,7 @@ const SKINS = [
     { id: 'rocket', name: "Rocket", tier: 'legendary', color: "#ff3300", eye: "#ffffff", cost: 65000, ability: { rocket: true, powerDurationMult: 2, speedMult: 0.85 } },
     { id: 'bulwark', name: "Bulwark", tier: 'legendary', color: "#4a5568", eye: "#ffcc00", cost: 80000, ability: { heartCap: 5, smash: true, jumpMult: 1.2 } },
     // The one Mythic Pixel, the top of the shop.
-    { id: 'overclock', name: "Overclock", tier: 'mythic', color: "#ff2222", eye: "#ffe600", cost: 100000, ability: { speedMult: 1.3, jumpMult: 1.3, powerDurationMult: 2, gemMagnetRadius: 150 } },
+    { id: 'overclock', name: "Overclock", tier: 'mythic', color: "#ff2222", eye: "#ffe600", cost: 120000, ability: { speedMult: 1.3, jumpMult: 1.3, powerDurationMult: 2, gemMagnetRadius: 150 } },
 
 
     // Rentals (js/hourly.js): one of these is on offer each hour, equipped
@@ -4697,7 +4940,7 @@ function pixelTier(pixel) {
 // A Rental's gem price, the way to rent it without an ad
 // (CrazyGames asks for one), set by its tier. Deliberately steeper than an
 // ad, and always under 5,000.
-const HOURLY_PIXEL_GEM_COSTS = { uncommon: 400, rare: 400, epic: 1500, legendary: 4500 };
+const HOURLY_PIXEL_GEM_COSTS = { uncommon: 500, rare: 500, epic: 2000, legendary: 6000 };
 function hourlyPixelCost(pixel) {
     return HOURLY_PIXEL_GEM_COSTS[pixelTier(pixel)];
 }
@@ -4787,22 +5030,63 @@ const POWERS = {
 // The six feats. `desc` is the exact wording; `progress(state)` (0..1) feeds
 // the bar where progress is measurable (distance, gems held) and is left out
 // for one-shot feats.
+// Achievements: each pays `reward` gems once (GameMeta.payAchievementRewards;
+// the six from before 1.37.0 are paid once to players who already have
+// them). condition(state, player, game) is checked four times a second in a
+// run and after it; progress(state, game) fills the bar in Records.
+const runMetersOf = (state) => state.score / 10 - (state.startMeters || 0);
+const biomeAchievement = (id, name, reward) => {
+    const b = BIOMES.find(x => x.name === name);
+    return { id, name: 'Reach ' + name, desc: 'Reach ' + name + ' (' + b.threshold.toLocaleString('en-US') + 'm)', reward,
+        condition: (state) => state.bestHeight >= b.threshold, progress: (state) => state.bestHeight / b.threshold };
+};
+const countAchievement = (id, name, desc, reward, target, value) => ({ id, name, desc, reward,
+    condition: (state, player, game) => value(state, game) >= target, progress: (state, game) => value(state, game) / target });
+const statOf = key => (state, game) => (game && game.stats && game.stats[key]) || 0;
+const ownedOf = (state, game) => (game && game.ownedSkins ? game.ownedSkins.length : 0);
+const streakOf = (state, game) => (game && game.streakToday ? game.streakToday().count : 0);
 const ACHIEVEMENTS = [
-    { id: '1km', name: 'Kilometer Club', desc: 'Reach 1,000m in one run',
-      condition: (state, player) => state.score - (state.startMeters || 0) * 10 >= 10000,
+    { id: '1km', name: 'Kilometer Club', desc: 'Reach 1,000m in one run', reward: 100,
+      condition: (state) => runMetersOf(state) >= 1000,
       progress: (state) => state.bestHeight / 1000 },
-    { id: '5km', name: 'Stratosphere', desc: 'Reach 5,000m in one run',
-      condition: (state, player) => state.score - (state.startMeters || 0) * 10 >= 50000,
+    { id: '5km', name: 'Stratosphere', desc: 'Reach 5,000m in one run', reward: 1000,
+      condition: (state) => runMetersOf(state) >= 5000,
       progress: (state) => state.bestHeight / 5000 },
-    { id: 'magnet', name: 'Attractive', desc: 'Pick up a MAGNET power-up',
+    { id: 'magnet', name: 'Attractive', desc: 'Pick up a MAGNET power-up', reward: 100,
       condition: (state, player) => player.activePower && player.activePower.name === "MAGNET" },
-    { id: 'pacifist', name: 'Pacifist Pilot', desc: 'Reach 5,000m without collecting a power-up',
-      condition: (state, player) => state.score - (state.startMeters || 0) * 10 >= 50000 && state.powersCollected === 0 },
-    { id: 'boss', name: 'Titan Slayer', desc: 'Beat a boss',
-      condition: (state, player) => state.loops >= 1 },
-    { id: 'rich', name: 'Data Hoarder', desc: 'Hold 100 gems',
-      condition: (state, player) => state.gems >= 100,
-      progress: (state) => state.gems / 100 }
+    { id: 'pacifist', name: 'No Power-Ups Needed', desc: 'Reach 5,000m without collecting a power-up', reward: 2500,
+      condition: (state) => runMetersOf(state) >= 5000 && state.powersCollected === 0 },
+    { id: 'boss', name: 'Titan Slayer', desc: 'Beat a boss', reward: 300,
+      condition: (state) => state.loops >= 1 },
+    { id: 'rich', name: 'Data Hoarder', desc: 'Hold 10,000 gems', reward: 1000,
+      condition: (state) => state.gems >= 10000,
+      progress: (state) => state.gems / 10000 },
+    { id: '10km', name: 'Ten Thousand', desc: 'Reach 10,000m in one run', reward: 3000,
+      condition: (state) => runMetersOf(state) >= 10000,
+      progress: (state) => state.bestHeight / 10000 },
+    biomeAchievement('b_ionosphere', 'Ionosphere', 100),
+    biomeAchievement('b_loworbit', 'Low Orbit', 200),
+    biomeAchievement('b_deepspace', 'Deep Space', 400),
+    biomeAchievement('b_rift', 'The Rift', 700),
+    biomeAchievement('b_neongrid', 'Neon Grid', 1000),
+    biomeAchievement('b_static', 'Static Field', 1500),
+    biomeAchievement('b_void', 'The Void', 2500),
+    countAchievement('boss5', 'Boss Hunter', 'Beat 5 bosses', 1000, 5, state => state.loops || 0),
+    countAchievement('boss25', 'Boss Breaker', 'Beat 25 bosses', 3000, 25, state => state.loops || 0),
+    countAchievement('boss100', 'Titan Legend', 'Beat 100 bosses', 5000, 100, state => state.loops || 0),
+    countAchievement('own1', 'First Buy', 'Own a Pixel you bought', 100, 1, ownedOf),
+    countAchievement('own5', 'Collector', 'Own 5 bought Pixels', 1000, 5, ownedOf),
+    countAchievement('own10', 'Full Hangar', 'Own 10 bought Pixels', 5000, 10, ownedOf),
+    countAchievement('runs10', 'Getting Started', 'Finish 10 runs', 100, 10, statOf('runs')),
+    countAchievement('runs100', 'Regular', 'Finish 100 runs', 1000, 100, statOf('runs')),
+    countAchievement('runs500', 'Devoted', 'Finish 500 runs', 3000, 500, statOf('runs')),
+    countAchievement('climb100k', 'Long Haul', 'Climb 100,000m in total', 2000, 100000, statOf('meters')),
+    countAchievement('streak3', 'Three in a Row', 'Keep a 3-day Streak', 300, 3, streakOf),
+    countAchievement('streak7', 'Week Strong', 'Keep a 7-day Streak', 1500, 7, streakOf),
+    countAchievement('streak30', 'Habit', 'Keep a 30-day Streak', 5000, 30, streakOf),
+    countAchievement('coop1', 'Party Time', 'Finish a co-op run', 200, 1, statOf('coopRuns')),
+    countAchievement('coop10', 'Squad', 'Finish 10 co-op runs', 1000, 10, statOf('coopRuns')),
+    countAchievement('coopboss', 'Team Takedown', 'Beat a boss in co-op', 500, 1, statOf('coopBosses'))
 ];
 
 </script>
@@ -5625,6 +5909,173 @@ class SoundManager {
 
 // Create global instance
 const sounds = new SoundManager();
+
+</script>
+<script>/* ---- js/music.js ---- */
+// Music (roadmap 3.4): a synthesized chiptune loop per biome (Web Audio, no
+// files), cross-fading when the scenery does. Its own volume (the MUSIC
+// slider, settings.music); quieter while paused, silent during an ad or when
+// muted. It shares the sound effects' AudioContext (sounds.ctx), so it starts
+// once a gesture has unlocked audio.
+//
+// A song is 16 sixteenth-note steps: a bass line (8 steps, one every other
+// sixteenth) and a lead (16 steps, null for a rest), as scale degrees above
+// `root` (a MIDI note) in `scale`.
+
+const MUSIC_SONGS = [
+    // Atmosphere: bright and easy
+    { bpm: 112, root: 57, scale: [0, 2, 4, 7, 9], bassWave: 'triangle', leadWave: 'square',
+      bass: [0, 0, 3, 3, 4, 4, 2, 2], lead: [5, null, 7, null, 6, 5, null, 3, 4, null, 5, null, 3, null, 2, null] },
+    // Ionosphere: glassy
+    { bpm: 118, root: 60, scale: [0, 2, 4, 7, 9], bassWave: 'triangle', leadWave: 'triangle',
+      bass: [0, 0, 2, 2, 3, 3, 4, 4], lead: [7, 9, null, 7, 5, null, 4, 5, 7, null, 9, 10, null, 9, 7, null] },
+    // Low Orbit: driving
+    { bpm: 124, root: 55, scale: [0, 2, 3, 5, 7, 8, 10], bassWave: 'square', leadWave: 'square',
+      bass: [0, 0, 0, 5, 3, 3, 4, 4], lead: [7, null, 7, 8, 7, null, 5, null, 4, null, 5, 7, null, 4, null, null] },
+    // Deep Space: sparse and wide
+    { bpm: 100, root: 50, scale: [0, 3, 5, 7, 10], bassWave: 'triangle', leadWave: 'sine',
+      bass: [0, 0, 0, 0, 3, 3, 2, 2], lead: [10, null, null, 8, null, null, 7, null, 5, null, null, 7, null, null, 8, null] },
+    // The Rift: uneasy
+    { bpm: 128, root: 52, scale: [0, 1, 4, 5, 7, 8, 10], bassWave: 'sawtooth', leadWave: 'square',
+      bass: [0, 0, 1, 1, 0, 0, 5, 4], lead: [7, 8, null, 7, 4, null, 5, 4, 2, null, 1, null, 2, 4, null, null] },
+    // Neon Grid: synthwave
+    { bpm: 132, root: 57, scale: [0, 2, 3, 5, 7, 8, 10], bassWave: 'sawtooth', leadWave: 'square',
+      bass: [0, 7, 0, 7, 5, 12, 4, 11], lead: [9, null, 9, 11, 12, null, 11, 9, 7, null, 7, 9, 11, null, 9, null] },
+    // Static Field: jittery
+    { bpm: 140, root: 53, scale: [0, 1, 3, 6, 7, 10], bassWave: 'square', leadWave: 'square',
+      bass: [0, 0, 3, 0, 2, 0, 4, 3], lead: [6, 7, 6, null, 9, null, 7, 6, 3, null, 4, 6, null, 7, null, 9] },
+    // The Void: dark and fast
+    { bpm: 146, root: 45, scale: [0, 1, 3, 5, 6, 8, 10], bassWave: 'sawtooth', leadWave: 'sawtooth',
+      bass: [0, 0, 0, 1, 0, 0, 6, 5], lead: [7, null, 8, 7, null, 5, 4, null, 3, null, 4, 5, null, 8, 7, null] }
+];
+const MUSIC_FADE_S = 2;         // cross-fade between biomes
+const MUSIC_PAUSED = 0.35;      // share of the volume while paused
+const MUSIC_LOOKAHEAD_S = 0.15; // notes are booked this far ahead
+const MUSIC_TICK_MS = 50;
+
+class MusicPlayer {
+    constructor(soundManager) {
+        this.sounds = soundManager;
+        this.out = null;        // master gain into the destination
+        this.voices = [];       // [{ song, gain, step, next }] (two while cross-fading)
+        this.song = -1;         // biome index playing (or fading in)
+        this.volume = 0.4;
+        this.paused = false;
+        this.silent = false;
+        this.playing = false;
+        this.timer = null;
+    }
+
+    get ctx() { return this.sounds && this.sounds.ctx; }
+
+    // MIDI note to Hz.
+    static hz(note) { return 440 * Math.pow(2, (note - 69) / 12); }
+
+    setVolume(v) { this.volume = Math.max(0, Math.min(1, v)); this.applyLevel(); }
+    setPaused(p) { if (this.paused !== !!p) { this.paused = !!p; this.applyLevel(); } }
+    setSilent(s) { if (this.silent !== !!s) { this.silent = !!s; this.applyLevel(); } }
+
+    level() {
+        if (!this.playing || this.silent) return 0;
+        return this.volume * (this.paused ? MUSIC_PAUSED : 1) * 0.5;
+    }
+
+    applyLevel() {
+        const ctx = this.ctx;
+        if (!this.out || !ctx) return;
+        this.out.gain.setTargetAtTime(this.level(), ctx.currentTime, 0.08);
+    }
+
+    // Play biome `index`'s song (cross-fading from the one playing), or stop
+    // when `index` is null. Cheap to call every frame: only changes act.
+    play(index) {
+        const ctx = this.ctx;
+        if (index === null || index === undefined) {
+            if (this.playing) { this.playing = false; this.applyLevel(); }
+            return;
+        }
+        if (!ctx) return; // no gesture yet
+        if (!this.out) {
+            this.out = ctx.createGain();
+            this.out.gain.value = 0;
+            this.out.connect(ctx.destination);
+        }
+        if (!this.playing) { this.playing = true; this.applyLevel(); }
+        if (!this.timer) this.timer = setInterval(() => this.schedule(), MUSIC_TICK_MS);
+        if (index === this.song || !MUSIC_SONGS[index]) return;
+        this.song = index;
+        const now = ctx.currentTime;
+        for (const v of this.voices) {
+            v.gain.gain.setTargetAtTime(0, now, MUSIC_FADE_S / 4);
+            v.ending = now + MUSIC_FADE_S;
+        }
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        gain.gain.setTargetAtTime(1, now, MUSIC_FADE_S / 4);
+        gain.connect(this.out);
+        this.voices.push({ song: MUSIC_SONGS[index], gain, step: 0, next: now + 0.05, ending: Infinity });
+    }
+
+    // Books every note due in the next MUSIC_LOOKAHEAD_S (setInterval, not
+    // the draw path).
+    schedule() {
+        const ctx = this.ctx;
+        if (!ctx || !this.out) return;
+        const until = ctx.currentTime + MUSIC_LOOKAHEAD_S;
+        this.voices = this.voices.filter(v => {
+            if (v.ending <= ctx.currentTime) { v.gain.disconnect(); return false; }
+            return true;
+        });
+        if (this.level() === 0) {
+            // Silent: keep time without booking notes.
+            for (const v of this.voices) while (v.next < until) this.advance(v);
+            return;
+        }
+        for (const v of this.voices) {
+            while (v.next < until) {
+                this.playStep(v, v.next);
+                this.advance(v);
+            }
+        }
+    }
+
+    advance(v) {
+        v.next += 60 / v.song.bpm / 4;
+        v.step = (v.step + 1) % 16;
+    }
+
+    playStep(v, at) {
+        const s = v.song, len = 60 / s.bpm / 4;
+        if (v.step % 2 === 0) {
+            const deg = s.bass[v.step / 2];
+            if (deg !== null && deg !== undefined) this.note(v.gain, s.bassWave, this.pitch(s, deg) - 12, at, len * 1.8, 0.22);
+        }
+        const lead = s.lead[v.step];
+        if (lead !== null && lead !== undefined) this.note(v.gain, s.leadWave, this.pitch(s, lead) + 12, at, len * 0.9, 0.09);
+    }
+
+    // Scale degree (may run past the scale into higher octaves) as a MIDI note.
+    pitch(s, deg) {
+        const n = s.scale.length;
+        return s.root + 12 * Math.floor(deg / n) + s.scale[((deg % n) + n) % n];
+    }
+
+    note(dest, wave, midi, at, dur, vol) {
+        const ctx = this.ctx;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = wave;
+        osc.frequency.value = MusicPlayer.hz(midi);
+        g.gain.setValueAtTime(vol, at);
+        g.gain.exponentialRampToValueAtTime(0.001, at + dur);
+        osc.connect(g);
+        g.connect(dest);
+        osc.start(at);
+        osc.stop(at + dur + 0.02);
+    }
+}
+
+const music = new MusicPlayer(sounds);
 
 </script>
 <script>/* ---- js/background.js ---- */
@@ -6636,6 +7087,12 @@ const INPUT_KEYS = {
 const INPUT_TEXT_SELECTOR = 'textarea, select, [contenteditable=""], [contenteditable="true"], ' +
     'input:not([type]), input[type=text], input[type=search], input[type=email], input[type=number], input[type=password], input[type=url], input[type=tel]';
 
+// Gamepad (standard mapping): the left stick past GAMEPAD_DEADZONE or the
+// D-pad moves, A jumps (and selects on the menus), B goes back, Start pauses.
+// On the menus the D-pad moves the focus.
+const GAMEPAD_DEADZONE = 0.4;
+const GAMEPAD_BUTTONS = { a: 0, b: 1, start: 9, up: 12, down: 13, left: 14, right: 15 };
+
 // Touches on these never steer the player: they're the menus, overlays and
 // buttons, which need their normal taps (and the synthetic clicks those make).
 const INPUT_UI_SELECTOR = 'button, input, a, #menus-wrapper, #revive-overlay, .overlay, .ui-control';
@@ -6651,6 +7108,12 @@ class InputHandler {
 
         this.heldCodes = new Map();    // movement keys currently held: keyId() -> role
         this.pointers = new Map();     // live touch pointerId -> 'left' | 'right' | 'jump'
+        this.pad = { left: false, right: false, up: false, down: false, jump: false, back: false, start: false }; // the gamepad, as last polled
+        this.padEvents = { a: false, b: false, start: false, prev: false, next: false }; // presses since the last poll (reused)
+        // Browsers only list gamepads after one is used; until then polling
+        // (which makes a new list each call) is skipped.
+        this.padSeen = false;
+        window.addEventListener('gamepadconnected', () => { this.padSeen = true; });
 
         window.addEventListener('keydown', (e) => this.onKeyDown(e));
         window.addEventListener('keyup', (e) => this.onKeyUp(e));
@@ -6758,6 +7221,9 @@ class InputHandler {
             if (zone === 'right') right = true;
             if (zone === 'jump') jump = true;
         }
+        if (this.pad.left) left = true;
+        if (this.pad.right) right = true;
+        if (this.pad.jump) jump = true;
         this.keys.left = left;
         this.keys.right = right;
         this.keys.jump = jump;
@@ -6845,6 +7311,43 @@ class InputHandler {
 
     update(dt) {
         if (this.keys.buffer > 0) this.keys.buffer -= dt;
+    }
+
+    // Reads the first standard gamepad (once a frame, from Game.loop). Held
+    // directions and A feed the same keys as the keyboard; a fresh A press is
+    // a jump. Returns which buttons were just pressed ({ a, start }), for the
+    // menus and pausing; the object is reused, so read it at once.
+    pollGamepad() {
+        const ev = this.padEvents;
+        ev.a = ev.b = ev.start = ev.prev = ev.next = false;
+        if (!this.padSeen || typeof navigator === 'undefined' || !navigator.getGamepads) return ev;
+        const pads = navigator.getGamepads();
+        let gp = null;
+        if (pads) for (let i = 0; i < pads.length; i++) if (pads[i] && pads[i].connected) { gp = pads[i]; break; }
+        const x = gp && gp.axes ? gp.axes[0] || 0 : 0;
+        const y = gp && gp.axes ? gp.axes[1] || 0 : 0;
+        const left = x < -GAMEPAD_DEADZONE || InputHandler.padPressed(gp, GAMEPAD_BUTTONS.left);
+        const right = x > GAMEPAD_DEADZONE || InputHandler.padPressed(gp, GAMEPAD_BUTTONS.right);
+        const up = y < -GAMEPAD_DEADZONE || InputHandler.padPressed(gp, GAMEPAD_BUTTONS.up);
+        const down = y > GAMEPAD_DEADZONE || InputHandler.padPressed(gp, GAMEPAD_BUTTONS.down);
+        const jump = InputHandler.padPressed(gp, GAMEPAD_BUTTONS.a);
+        const back = InputHandler.padPressed(gp, GAMEPAD_BUTTONS.b);
+        const start = InputHandler.padPressed(gp, GAMEPAD_BUTTONS.start);
+        const p = this.pad;
+        ev.a = jump && !p.jump;
+        ev.b = back && !p.back;
+        ev.start = start && !p.start;
+        ev.prev = (left && !p.left) || (up && !p.up);
+        ev.next = (right && !p.right) || (down && !p.down);
+        if (ev.a && this.isActive()) this.keys.buffer = 6;
+        const changed = left !== p.left || right !== p.right || jump !== p.jump;
+        p.left = left; p.right = right; p.up = up; p.down = down; p.jump = jump; p.back = back; p.start = start;
+        if (changed) this.syncDirections();
+        return ev;
+    }
+
+    static padPressed(gp, k) {
+        return !!(gp && gp.buttons && gp.buttons[k] && gp.buttons[k].pressed);
     }
 
     resetInput() {
@@ -10014,7 +10517,12 @@ class GameCoop {
             // Share of the power-up's time left (0-1), for the spectate HUD.
             pf: power ? (num(d.pf, 0, 1) || 0) : 0,
             // Hearts banked (decides whether hearts show in their view).
-            hl: Number.isInteger(d.hl) ? Math.max(0, Math.min(heartCapFor(SKINS[skinIndex]), d.hl)) : 0
+            hl: Number.isInteger(d.hl) ? Math.max(0, Math.min(heartCapFor(SKINS[skinIndex]), d.hl)) : 0,
+            // Equipped cosmetics, one per slot: known ids in their own slot only.
+            cos: COSMETIC_SLOTS.map((slot, i) => {
+                const c = Array.isArray(d.cos) ? cosmeticById(d.cos[i]) : null;
+                return c && c.slot === slot ? c.id : null;
+            })
         };
     }
 
@@ -10153,6 +10661,11 @@ class GameCoop {
                 rp.y = data.y + this.state.score;
                 rp.snapNext = false;
             }
+            // A teammate who was falling and has stopped just landed: their
+            // landing effect (from the sync, so it's a beat late, but theirs).
+            if (this.cosmeticFor(rp, 'land') && rp.vy > 2 && data.vy === 0 && !rp.isDead) this.landFx(rp, this.cosmeticFor(rp, 'land'));
+            rp.cos = data.cos || null;
+            if (!rp.trailTick) rp.trailTick = 'cosTrail:' + data.pid;
             rp.vx = data.vx;
             rp.vy = data.vy;
             rp.lastSeenT = this.state.time;
@@ -10187,7 +10700,14 @@ class GameCoop {
         } else if (data.type === 'emp') {
             if (this.state.isHost) this.applyEmpRequest(fromId);
         } else if (data.type === 'boss_down') {
-            if (!this.state.isHost && this.state.running && this.state.multiplayer) this.onBossDefeated();
+            if (!this.state.isHost && this.state.running && this.state.multiplayer) {
+                this.onBossDefeated();
+                // The finisher's boss-kill effect (a known boss-kill id only).
+                const fx = cosmeticById(data.fx);
+                if (fx && fx.slot === 'boss' && Number.isFinite(data.x) && Number.isFinite(data.wy)) {
+                    this.bossFx(Math.max(0, Math.min(CONFIG.WIDTH, data.x)), data.wy + this.state.score, fx.id);
+                }
+            }
         }
     }
 
@@ -10439,7 +10959,7 @@ class GameCoop {
     applyStompRequest(d, fromId) {
         if (!this.state.running || !Number.isInteger(d.nid)) return;
         const boss = this.enemies.find(e => e instanceof BossDrone && e.nid === d.nid);
-        if (boss && this.guestNear(fromId, boss)) boss.takeDamage(this.particles);
+        if (boss && this.guestNear(fromId, boss) && boss.takeDamage(this.particles)) this.bossFinisher = fromId;
     }
 
     // Host: a guest's EMP went off. Only from a guest whose equipped Pixel
@@ -10656,6 +11176,8 @@ function boosterCards(platform, adsAvailable, boostActive) {
 }
 
 const SHOP_VIEWS = ['single', 'list'];
+// The shop's tabs, in their order along the bar.
+const SHOP_TABS = ['rent', 'pixels', 'style', 'boosters'];
 
 // GameShop is never instantiated: app.js copies these methods onto
 // Game.prototype, so `this` is always the Game.
@@ -10678,13 +11200,14 @@ class GameShop {
         this.ui.recordsCount.innerText = `${earned}/${ACHIEVEMENTS.length}`;
         this.ui.recordsList.innerHTML = ACHIEVEMENTS.map(a => {
             const got = this.achievements.includes(a.id);
-            const frac = (!got && a.progress) ? Math.max(0, Math.min(1, a.progress(this.state))) : null;
+            const frac = (!got && a.progress) ? Math.max(0, Math.min(1, a.progress(this.state, this) || 0)) : null;
             const bar = frac === null ? '' :
                 `<span class="achievement-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(frac * 100)}"><span style="width:${Math.floor(frac * 100)}%"></span></span>`;
             return `<div class="achievement-row${got ? ' earned' : ''}">
                 <span class="achievement-icon">${icon('medal')}</span>
                 <div><span class="achievement-name">${this.escapeHtml(a.name)}</span>
                 <span class="achievement-desc">${this.escapeHtml(a.desc || '')}</span>${bar}</div>
+                <span class="achievement-reward">${counted(fmtNum(a.reward || 0), 'gem')}</span>
             </div>`;
         }).join('');
         this.applyAchievementsOpen();
@@ -10783,6 +11306,7 @@ class GameShop {
         if (this.ui.gemDisplay) this.ui.gemDisplay.innerHTML = counted(fmtNum(this.state.gems), 'gem');
         this.updateShopBadge();
         if (this.ui.skinAbility) this.ui.skinAbility.innerHTML = this.tierLine(s) + this.renderPerkTags(s.ability);
+        this.updateFirstGoal();
         if (!this.state.running) this.updateHeartUI(); // the heart cap goes with the Pixel
         this.renderShop();
     }
@@ -10841,10 +11365,10 @@ class GameShop {
     }
 
     setShopTab(tab) {
-        this.shopTab = ['rent', 'pixels', 'boosters'].includes(tab) ? tab : 'pixels';
+        this.shopTab = SHOP_TABS.includes(tab) ? tab : 'pixels';
         this.shopLastTab = this.shopTab;
         const ui = this.ui;
-        [['rent', ui.shopPanelRent, ui.shopTabRent], ['pixels', ui.shopPanelPixels, ui.shopTabPixels], ['boosters', ui.shopPanelBoosters, ui.shopTabBoosters]]
+        [['rent', ui.shopPanelRent, ui.shopTabRent], ['pixels', ui.shopPanelPixels, ui.shopTabPixels], ['style', ui.shopPanelStyle, ui.shopTabStyle], ['boosters', ui.shopPanelBoosters, ui.shopTabBoosters]]
             .forEach(([name, panel, btn]) => {
                 const on = name === this.shopTab;
                 if (panel) panel.hidden = !on;
@@ -10859,14 +11383,14 @@ class GameShop {
 
     // ← / → (and Home / End) on the tab bar: select and focus the next tab.
     onShopTabsKey(e) {
-        const order = ['rent', 'pixels', 'boosters'];
+        const order = SHOP_TABS;
         const k = order.indexOf(this.shopTab);
         const next = { ArrowLeft: k - 1, ArrowRight: k + 1, Home: 0, End: order.length - 1 }[e.key];
         if (next === undefined) return;
         e.preventDefault();
         if (e.stopPropagation) e.stopPropagation();
         this.setShopTab(order[(next + order.length) % order.length]);
-        const btn = { rent: this.ui.shopTabRent, pixels: this.ui.shopTabPixels, boosters: this.ui.shopTabBoosters }[this.shopTab];
+        const btn = { rent: this.ui.shopTabRent, pixels: this.ui.shopTabPixels, style: this.ui.shopTabStyle, boosters: this.ui.shopTabBoosters }[this.shopTab];
         if (btn && btn.focus) btn.focus();
     }
 
@@ -10888,6 +11412,7 @@ class GameShop {
         this.renderShopPixels();
         this.updateHourlyUI();
         this.updateBoosterCards();
+        if (this.shopTab === 'style') this.renderShopStyle();
     }
 
     // The Pixel the SINGLE view is on: the one picked, else (picking it now)
@@ -11117,7 +11642,9 @@ class GameShop {
         const hearts = this.ui.lifeDisplay;
         if (hearts) {
             // Between runs, only the bought hearts that fit this Pixel count.
-            const shown = this.state.running ? this.state.hearts : this.state.hearts - extra;
+            // Between runs the pill shows what the next run starts with: the
+            // free heart plus the bought ones that fit this Pixel.
+            const shown = this.state.running ? this.state.hearts : 1 + this.state.hearts - extra;
             // Pop only when the count itself changes (a heart spent, picked up
             // or bought, or a Pixel that holds fewer), never on a redraw.
             // (Comparing innerHTML popped every time: the browser serializes
@@ -11301,14 +11828,16 @@ class GameShop {
         }).join('');
     }
 
+    // Earns any achievement whose condition now holds, and pays its gems.
     checkAchievements() {
         ACHIEVEMENTS.forEach(g => {
-            if (!this.achievements.includes(g.id) && g.condition(this.state, this.player)) {
+            if (!this.achievements.includes(g.id) && g.condition(this.state, this.player, this)) {
                 this.achievements.push(g.id);
                 saveItem('lp_achievements', JSON.stringify(this.achievements));
-                this.showAchievement(g.name);
+                this.showAchievement(g.name + (g.reward ? ' +' + fmtNum(g.reward) : ''));
             }
         });
+        this.payAchievementRewards();
     }
 
     showAchievement(name) {
@@ -11909,6 +12438,432 @@ class GameLeaderboard {
 }
 
 </script>
+<script>/* ---- js/meta.js ---- */
+// The meta game around runs: the daily Streak, achievement rewards,
+// vibration, the first-Pixel goal, and anonymous stats and error reports.
+//
+// Saves: lp_streak ({ day, count }, see STREAK_REWARDS) and
+// lp_achievements_paid (ids of achievements whose gems have been paid; the
+// six from before 1.37.0 are paid once to players who already had them).
+
+const isStreak = v => !!v && Number.isInteger(v.day) && v.day >= 19000101 && v.day <= 99991231 &&
+    Number.isInteger(v.count) && v.count >= 1;
+
+// GameMeta is never instantiated: app.js copies these methods onto
+// Game.prototype, so `this` is always the Game.
+class GameMeta {
+    // Read from storage once, then kept in memory (achievements check it
+    // four times a second during a run).
+    loadStreak() {
+        if (this.streakRec === undefined) this.streakRec = loadJSON('lp_streak', null, isStreak);
+        return this.streakRec;
+    }
+
+    // The Streak as it stands today: its count if it is still alive (counted
+    // today or yesterday), else 0; and whether today is already counted.
+    streakToday(today = this.getDailySeed()) {
+        const s = this.loadStreak();
+        if (!s) return { count: 0, done: false };
+        if (s.day === today) return { count: s.count, done: true };
+        if (s.day === dayBefore(today)) return { count: s.count, done: false };
+        return { count: 0, done: false };
+    }
+
+    // After any run: one of STREAK_MIN_METERS or more on a day not yet
+    // counted moves the Streak on (or starts it again) and pays its gems.
+    // Returns { count, reward } when it paid, else null.
+    advanceStreak(runMeters, today = this.getDailySeed()) {
+        if (!(runMeters >= STREAK_MIN_METERS)) return null;
+        const now = this.streakToday(today);
+        if (now.done) return null;
+        const count = now.count + 1;
+        const reward = streakRewardFor(count);
+        this.streakRec = { day: today, count };
+        saveItem('lp_streak', JSON.stringify(this.streakRec));
+        this.addGems(reward, false);
+        this.updateStreakUI();
+        return { count, reward };
+    }
+
+    // The menu line: the Streak's day and what the next counted day pays.
+    updateStreakUI() {
+        const el = this.ui.menuStreak;
+        if (!el) return;
+        const now = this.streakToday();
+        const next = now.count + 1;
+        const reward = counted(fmtNum(streakRewardFor(next)), 'gem');
+        el.innerHTML = now.done
+            ? `STREAK DAY ${now.count} <span class="streak-next">TOMORROW: DAY ${next} +${reward}</span>`
+            : now.count
+                ? `STREAK DAY ${now.count} <span class="streak-next">CLIMB ${STREAK_MIN_METERS}m TODAY: +${reward}</span>`
+                : `START A STREAK <span class="streak-next">CLIMB ${STREAK_MIN_METERS}m: +${reward}</span>`;
+        el.hidden = false;
+    }
+
+    // Vibrates where the device can, if the player hasn't switched it off.
+    vibrate(pattern) {
+        if (!this.settings || !this.settings.vibrate) return;
+        if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+        try { navigator.vibrate(pattern); } catch (e) { /* not allowed here */ }
+    }
+
+    // A player who hasn't bought a Pixel yet sees the cheapest one as a goal
+    // under their Pixel on the menu: "75 gems → Nebula Drifter" and a bar.
+    updateFirstGoal() {
+        const box = this.ui.firstGoal;
+        if (!box) return;
+        const first = this.gemShopSkins()[0];
+        const show = !this.ownedSkins.length && !!first;
+        box.hidden = !show;
+        if (!show) return;
+        const frac = Math.max(0, Math.min(1, this.state.gems / first.s.cost));
+        setHTML(box, `<span class="first-goal-text">${counted(fmtNum(first.s.cost), 'gem')} &rarr; ${this.escapeHtml(first.s.name)}</span>` +
+            `<span class="first-goal-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(frac * 100)}"><span style="width:${Math.floor(frac * 100)}%"></span></span>`);
+    }
+
+    // ------------------------------------------------- stats and errors
+    // Anonymous stats go to the score Worker; never from a file:// page (the
+    // Worker refuses its `null` origin) or without fetch.
+    statsAllowed() {
+        if (!SCORES_URL || typeof fetch !== 'function') return false;
+        return !(typeof location !== 'undefined' && location.protocol === 'file:');
+    }
+
+    statsOn() {
+        return !!(this.settings && this.settings.stats) && this.statsAllowed();
+    }
+
+    // One fire-and-forget POST (text/plain: no preflight). Never throws.
+    sendStat(path, body) {
+        if (!this.statsOn()) return false;
+        try {
+            const p = fetch(SCORES_URL.replace(/\/$/, '') + path, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body), keepalive: true });
+            if (p && p.catch) p.catch(() => {});
+        } catch (e) { /* offline or blocked: nothing to do */ }
+        return true;
+    }
+
+    // After every run: how far, which Pixel, which build, how long, and the
+    // frame rate it ran at. No player id.
+    sendRunStats(runMeters) {
+        const secs = Math.round(this.runSeconds());
+        const fps = this.runFrameMs > 0 ? this.runFrames * 1000 / this.runFrameMs : 0;
+        let bucket = FPS_BUCKETS[0];
+        for (const b of FPS_BUCKETS) if (Math.abs(b - fps) < Math.abs(bucket - fps)) bucket = b;
+        return this.sendStat('/stats', {
+            m: Math.max(0, Math.floor(runMeters)), px: this.player.skin.id, t: PLATFORM,
+            s: secs, fps: fps ? bucket : 0, v: GAME_VERSION, mp: this.state.multiplayer ? 1 : 0
+        });
+    }
+
+    // Page errors, at most ERROR_REPORTS_MAX a session and each message once.
+    installErrorReports() {
+        this.errorsSent = new Set();
+        if (typeof window === 'undefined' || !window.addEventListener) return;
+        window.addEventListener('error', (e) => this.reportError(e && e.message, e && e.filename, e && e.lineno));
+        window.addEventListener('unhandledrejection', (e) => {
+            const r = e && e.reason;
+            this.reportError(r && r.message ? r.message : String(r), r && r.fileName, r && r.lineNumber);
+        });
+    }
+
+    reportError(message, file, line) {
+        if (!this.errorsSent || this.errorsSent.size >= ERROR_REPORTS_MAX) return false;
+        const msg = String(message || 'error').slice(0, 300);
+        if (this.errorsSent.has(msg)) return false;
+        this.errorsSent.add(msg);
+        // Only the file's path, never a query string or another site's host.
+        let f = '';
+        try { f = file ? new URL(file, 'https://x.invalid/').pathname.slice(0, 200) : ''; } catch (e) { f = ''; }
+        return this.sendStat('/error', { msg, f, l: Number.isInteger(line) ? line : 0, v: GAME_VERSION, t: PLATFORM });
+    }
+
+    // --------------------------------------------------------- achievements
+    // Pays every earned achievement not yet paid (each pays its gems once).
+    // Returns the gems paid.
+    // (The paid list is read from storage once, then kept in memory.) The
+    // gems don't count toward the run's own gem total on the run card.
+    payAchievementRewards() {
+        if (!this.achievementsPaid) this.achievementsPaid = loadJSON('lp_achievements_paid', [], isStringArray);
+        const paid = this.achievementsPaid;
+        if (paid.length >= this.achievements.length) return 0;
+        let total = 0;
+        for (const a of ACHIEVEMENTS) {
+            if (!this.achievements.includes(a.id) || paid.includes(a.id)) continue;
+            paid.push(a.id);
+            total += a.reward || 0;
+        }
+        if (total) {
+            saveItem('lp_achievements_paid', JSON.stringify(paid));
+            this.addGems(total, false);
+        }
+        return total;
+    }
+}
+
+</script>
+<script>/* ---- js/cosmetics.js ---- */
+// Cosmetics (roadmap 3.3): a trail, a landing burst, a death effect and a
+// boss-kill effect, one of each equipped on any Pixel, bought with gems on
+// the shop's STYLE tab (COSMETICS in js/config.js).
+//
+// Effects are stamped from sprites painted once (cosmeticSprites) into a
+// fixed pool of COSMETIC_FX_POOL slots, so a frame makes nothing new. In
+// co-op the equipped ids ride on the player sync (`cos`), so teammates see
+// each other's; the boss-kill effect is the finisher's (`boss_down.fx`).
+//
+// Saves: lp_owned_cosmetics (ids) and lp_cosmetics ({ trail, land, death, boss }).
+
+const COSMETIC_FX_POOL = 220;
+const COSMETIC_SPRITE = 32; // px each sprite is painted at
+
+// One sprite: `shape` in `color`, with its glow, on a small canvas.
+function paintCosmeticSprite(shape, color) {
+    const c = document.createElement('canvas');
+    c.width = c.height = COSMETIC_SPRITE;
+    const ctx = c.getContext('2d');
+    if (!ctx || !ctx.arc) return c;
+    const m = COSMETIC_SPRITE / 2;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = color;
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    if (shape === 'ring') {
+        ctx.lineWidth = 3;
+        ctx.arc(m, m, m - 6, 0, Math.PI * 2);
+        ctx.stroke();
+    } else if (shape === 'star') {
+        for (let i = 0; i < 10; i++) {
+            const r = i % 2 ? 4 : 11, a = -Math.PI / 2 + i * Math.PI / 5;
+            const x = m + Math.cos(a) * r, y = m + Math.sin(a) * r;
+            if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+    } else if (shape === 'square') {
+        ctx.fillRect(m - 5, m - 5, 10, 10);
+    } else if (shape === 'gem') {
+        ctx.moveTo(m, m - 9);
+        ctx.lineTo(m + 8, m - 2);
+        ctx.lineTo(m, m + 10);
+        ctx.lineTo(m - 8, m - 2);
+        ctx.closePath();
+        ctx.fill();
+    } else {
+        ctx.arc(m, m, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    return c;
+}
+
+const isCosmeticChoice = v => !!v && typeof v === 'object' && !Array.isArray(v);
+
+// GameCosmetics is never instantiated: app.js copies these methods onto
+// Game.prototype, so `this` is always the Game.
+class GameCosmetics {
+    // Owned and equipped, from the saves (unknown ids dropped; an equipped
+    // one must be owned and in its slot).
+    loadCosmetics() {
+        this.ownedCosmetics = loadJSON('lp_owned_cosmetics', [], isStringArray).filter(id => cosmeticById(id));
+        const saved = loadJSON('lp_cosmetics', {}, isCosmeticChoice);
+        this.cosmetics = {};
+        for (const slot of COSMETIC_SLOTS) {
+            const c = cosmeticById(saved[slot]);
+            this.cosmetics[slot] = c && c.slot === slot && this.ownedCosmetics.includes(c.id) ? c.id : null;
+        }
+        this.cosFx = [];
+        for (let i = 0; i < COSMETIC_FX_POOL; i++) this.cosFx.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 1, size: 10, grow: 0, gravity: 0, sprite: null });
+        this.cosFxNext = 0;
+        this.cosmeticSprites = new Map();
+        for (const c of COSMETICS) this.cosmeticSprites.set(c.id, c.colors.map(col => paintCosmeticSprite(c.shape, col)));
+    }
+
+    saveCosmetics() {
+        saveItem('lp_owned_cosmetics', JSON.stringify(this.ownedCosmetics));
+        saveItem('lp_cosmetics', JSON.stringify(this.cosmetics));
+    }
+
+    // The cosmetic id `p` (this player or a teammate) has in `slot`, or null.
+    cosmeticFor(p, slot) {
+        if (p === this.player) return this.cosmetics[slot] || null;
+        return (p && p.cos && p.cos[COSMETIC_SLOTS.indexOf(slot)]) || null;
+    }
+
+    // The four equipped ids, in COSMETIC_SLOTS order (null for none): the sync's `cos`.
+    cosmeticIds() {
+        return COSMETIC_SLOTS.map(slot => this.cosmetics[slot]);
+    }
+
+    // Buys one with gems (and equips it). Returns whether it was bought.
+    buyCosmetic(id) {
+        const c = cosmeticById(id);
+        if (!c || this.ownedCosmetics.includes(id) || this.state.gems < c.cost) return false;
+        this.state.gems -= c.cost;
+        saveItem('lp_gems', this.state.gems);
+        this.ownedCosmetics.push(id);
+        this.cosmetics[c.slot] = id;
+        this.saveCosmetics();
+        if (this.ui.gemDisplay) this.ui.gemDisplay.innerHTML = counted(fmtNum(this.state.gems), 'gem');
+        sounds.play('reward');
+        this.checkAchievements();
+        return true;
+    }
+
+    // Equips an owned one, or takes it off if it is on.
+    toggleCosmetic(id) {
+        const c = cosmeticById(id);
+        if (!c || !this.ownedCosmetics.includes(id)) return;
+        this.cosmetics[c.slot] = this.cosmetics[c.slot] === id ? null : id;
+        this.saveCosmetics();
+    }
+
+    // ----------------------------------------------------------------- fx
+    emitCosFx(sprite, x, y, vx, vy, life, size, grow, gravity) {
+        const f = this.cosFx[this.cosFxNext];
+        this.cosFxNext = (this.cosFxNext + 1) % this.cosFx.length;
+        f.on = true; f.sprite = sprite;
+        f.x = x; f.y = y; f.vx = vx; f.vy = vy;
+        f.life = f.max = life; f.size = size; f.grow = grow; f.gravity = gravity;
+    }
+
+    updateCosFx(dt) {
+        for (const f of this.cosFx) {
+            if (!f.on) continue;
+            f.life -= dt;
+            if (f.life <= 0) { f.on = false; continue; }
+            f.vy += f.gravity * dt;
+            f.x += f.vx * dt;
+            f.y += f.vy * dt;
+            f.size += f.grow * dt;
+        }
+    }
+
+    drawCosFx(ctx) {
+        for (const f of this.cosFx) {
+            if (!f.on || !f.sprite) continue;
+            const s = Math.max(1, f.size);
+            ctx.globalAlpha = Math.max(0, Math.min(1, f.life / f.max * 1.4));
+            ctx.drawImage(f.sprite, f.x - s / 2, f.y - s / 2, s, s);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    shiftCosFx(diff) {
+        for (const f of this.cosFx) if (f.on) f.y += diff;
+    }
+
+    // A sprite of cosmetic `id`, cycling through its colours.
+    cosSprite(id, k) {
+        const list = this.cosmeticSprites.get(id);
+        return list ? list[k % list.length] : null;
+    }
+
+    // Trail: a few sprites behind a Pixel on the move (every other step,
+    // on the timer `tickName`: one per Pixel).
+    trailFx(p, id, tickName, dt) {
+        if (!id || !this.tick(tickName, dt, 2)) return;
+        if (Math.abs(p.vx) + Math.abs(p.vy) < 3) return;
+        const k = Math.floor(this.state.time);
+        this.emitCosFx(this.cosSprite(id, k), p.x + p.w / 2, p.y + p.h / 2,
+            (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, 22, 12, -0.35, 0);
+    }
+
+    // Landing: by the cosmetic's shape, a ring, a star burst or a quake.
+    landFx(p, id) {
+        const c = cosmeticById(id);
+        if (!c) return;
+        const x = p.x + p.w / 2, y = p.y + p.h;
+        if (c.shape === 'ring') {
+            this.emitCosFx(this.cosSprite(id, 0), x, y, 0, 0, 18, 10, 5, 0);
+        } else if (c.shape === 'star') {
+            for (let i = 0; i < 8; i++) {
+                const a = Math.PI + i * Math.PI / 7;
+                this.emitCosFx(this.cosSprite(id, i), x, y, Math.cos(a) * 3, Math.sin(a) * 3, 24, 14, -0.3, 0.1);
+            }
+        } else {
+            for (let i = 0; i < 10; i++) {
+                const side = i % 2 ? 1 : -1;
+                this.emitCosFx(this.cosSprite(id, i), x + side * (6 + i * 4), y, side * (1 + i * 0.3), -1.5 - Math.random() * 2, 26, 10, -0.2, 0.25);
+            }
+        }
+    }
+
+    // Death: a burst in the cosmetic's sprites on top of the usual shatter
+    // (which keeps its slow motion and what got you).
+    deathFx(p, id) {
+        if (!cosmeticById(id)) return;
+        const x = p.x + p.w / 2, y = Math.min(p.y, CONFIG.HEIGHT - p.h) + p.h / 2;
+        for (let i = 0; i < 24; i++) {
+            const a = i * Math.PI * 2 / 24, v = 2 + (i % 3);
+            this.emitCosFx(this.cosSprite(id, i), x, y, Math.cos(a) * v, Math.sin(a) * v - 1, 60, 14, -0.12, 0.08);
+        }
+    }
+
+    // Boss kill: the finisher's effect where the boss went down.
+    bossFx(x, y, id) {
+        const c = cosmeticById(id);
+        if (!c) return;
+        if (c.shape === 'ring') {
+            for (let i = 0; i < 3; i++) this.emitCosFx(this.cosSprite(id, i), x, y, 0, 0, 30 + i * 10, 20, 7 + i * 2, 0);
+        } else if (c.shape === 'gem') {
+            for (let i = 0; i < 30; i++) {
+                this.emitCosFx(this.cosSprite(id, i), x + (Math.random() - 0.5) * 300, y - 80 - Math.random() * 120,
+                    (Math.random() - 0.5) * 1.5, Math.random() * 2, 80, 16, 0, 0.12);
+            }
+        } else {
+            for (let b = 0; b < 3; b++) {
+                const bx = x + (b - 1) * 90, by = y - b * 30;
+                for (let i = 0; i < 14; i++) {
+                    const a = i * Math.PI * 2 / 14;
+                    this.emitCosFx(this.cosSprite(id, i + b), bx, by, Math.cos(a) * 3.5, Math.sin(a) * 3.5, 45, 14, -0.15, 0.05);
+                }
+            }
+        }
+    }
+
+    // ---------------------------------------------------------- shop tab
+    // STYLE: the four slots, each with its cosmetics: buy, equip, take off.
+    renderShopStyle() {
+        const panel = this.ui.shopPanelStyle;
+        if (!panel) return;
+        panel.innerHTML = COSMETIC_SLOTS.map(slot => {
+            const items = COSMETICS.filter(c => c.slot === slot).map(c => {
+                const owned = this.ownedCosmetics.includes(c.id);
+                const on = this.cosmetics[slot] === c.id;
+                const swatch = c.colors.map(col => `<span style="background:${col}"></span>`).join('');
+                const action = on ? 'EQUIPPED' : owned ? 'EQUIP' : counted(fmtNum(c.cost), 'gem');
+                const cls = on ? ' style-item--on' : owned ? ' style-item--owned' : (this.state.gems < c.cost ? ' style-item--short' : '');
+                return `<button class="style-item${cls}" type="button" data-cosmetic="${c.id}">
+                    <span class="style-swatch style-swatch--${c.shape}">${swatch}</span>
+                    <span class="style-name">${this.escapeHtml(c.name)}</span>
+                    <span class="style-action">${action}</span>
+                </button>`;
+            }).join('');
+            return `<div class="style-slot"><div class="style-slot-name">${COSMETIC_SLOT_NAMES[slot]}</div><div class="style-items">${items}</div></div>`;
+        }).join('') + '<p class="style-note">One of each on any Pixel. Your party sees them in co-op.</p>';
+        panel.querySelectorAll('[data-cosmetic]').forEach(btn => {
+            btn.onclick = () => this.onStyleItem(btn.dataset.cosmetic);
+        });
+    }
+
+    onStyleItem(id) {
+        const c = cosmeticById(id);
+        if (!c) return;
+        if (this.ownedCosmetics.includes(id)) {
+            this.toggleCosmetic(id);
+        } else if (this.state.gems >= c.cost) {
+            this.buyCosmetic(id);
+            this.notify(c.name.toUpperCase() + ' EQUIPPED', 'success');
+        } else {
+            this.notify('NOT ENOUGH GEMS', 'warning');
+            return;
+        }
+        this.renderShopStyle();
+    }
+}
+
+</script>
 <script>/* ---- app.js ---- */
 // Reads a JSON save. A missing, corrupt or wrong-shaped value falls back
 // instead of throwing, so one bad localStorage entry can't stop the game from
@@ -12066,7 +13021,7 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
 }
 
 // Lifetime totals shown on the Records screen (lp_stats).
-const STAT_DEFAULTS = { runs: 0, meters: 0, gems: 0, powerups: 0, livesLost: 0, seconds: 0 };
+const STAT_DEFAULTS = { runs: 0, meters: 0, gems: 0, powerups: 0, livesLost: 0, seconds: 0, coopRuns: 0, coopBosses: 0 };
 
 class Game {
     constructor() {
@@ -12090,6 +13045,7 @@ class Game {
         this.migrateSkinSaves();
         // Owned gem-shop Pixels, by SKINS id.
         this.ownedSkins = loadJSON('lp_owned_skins', [], isStringArray);
+        this.loadCosmetics();
         this.hourlyRecord = this.loadHourlyUnlock();
 
         this.state = {
@@ -12156,6 +13112,9 @@ class Game {
             achievement: document.getElementById("achievement-pop"),
             menuScore: document.getElementById("menu-highscore"),
             menuLast: document.getElementById("menu-lastscore"),
+            menuStreak: document.getElementById("menu-streak"),
+            firstGoal: document.getElementById("first-goal"),
+            runCardStreak: document.getElementById("run-card-streak"),
             skinName: document.getElementById("skin-name"),
             skinStatus: document.getElementById("skin-status"),
             preview: document.getElementById("skin-preview-box"),
@@ -12178,9 +13137,11 @@ class Game {
             shopTabs: document.getElementById("shop-tabs"),
             shopTabRent: document.getElementById("shop-tab-rent"),
             shopTabPixels: document.getElementById("shop-tab-pixels"),
+            shopTabStyle: document.getElementById("shop-tab-style"),
             shopTabBoosters: document.getElementById("shop-tab-boosters"),
             shopPanelRent: document.getElementById("shop-panel-rent"),
             shopPanelPixels: document.getElementById("shop-panel-pixels"),
+            shopPanelStyle: document.getElementById("shop-panel-style"),
             shopPanelBoosters: document.getElementById("shop-panel-boosters"),
             rentStage: document.getElementById("rent-stage"),
             rentPreview: document.getElementById("rent-preview"),
@@ -12269,6 +13230,11 @@ class Game {
             setTouch: document.getElementById("set-touch"),
             setTouchRow: document.getElementById("set-touch-row"),
             setTips: document.getElementById("set-tips"),
+            setMusic: document.getElementById("set-music"),
+            setVibrate: document.getElementById("set-vibrate"),
+            setVibrateRow: document.getElementById("set-vibrate-row"),
+            setStats: document.getElementById("set-stats"),
+            setStatsRow: document.getElementById("set-stats-row"),
             setVersion: document.getElementById("set-version"),
             challengeHud: document.getElementById("challenge-hud"),
             runShareBtn: document.getElementById("run-share-btn"),
@@ -12368,6 +13334,13 @@ class Game {
         // counts as advertising another platform.
         if (PLATFORM !== 'web' && this.ui.runShareBtn) this.ui.runShareBtn.hidden = true;
         this.startFromPortal();
+        this.installErrorReports();
+
+        // Achievements earned before they paid gems pay once now; the menu
+        // shows the Streak.
+        const backPay = this.payAchievementRewards();
+        if (backPay) this.notify('ACHIEVEMENT REWARDS +' + fmtNum(backPay) + ' GEMS', 'reward');
+        this.updateStreakUI();
 
         // Rewarded ads: silence the game and drop held keys while one plays,
         // and keep the ad buttons (and the booster countdown) current.
@@ -12405,7 +13378,7 @@ class Game {
         onTap(this.ui.skinPrevBtn, () => this.stepOwnedSkin(-1));
         onTap(this.ui.skinNextBtn, () => this.stepOwnedSkin(1));
         onTap(this.ui.boosterGemsBtn, () => this.watchGemBoost());
-        [this.ui.shopTabRent, this.ui.shopTabPixels, this.ui.shopTabBoosters]
+        [this.ui.shopTabRent, this.ui.shopTabPixels, this.ui.shopTabStyle, this.ui.shopTabBoosters]
             .forEach(b => onTap(b, () => this.setShopTab(b.dataset.tab)));
         if (this.ui.shopPanelPixels) this.ui.shopPanelPixels.onclick = (e) => this.onShopPixelsClick(e);
         if (this.ui.shopTabs) this.ui.shopTabs.onkeydown = (e) => this.onShopTabsKey(e);
@@ -12512,6 +13485,9 @@ class Game {
         setting(this.ui.setMotion, 'reducedMotion', el => el.checked);
         setting(this.ui.setTouch, 'touchControls', el => el.checked);
         setting(this.ui.setTips, 'showTips', el => el.checked);
+        setting(this.ui.setMusic, 'music', el => Number(el.value) / 100);
+        setting(this.ui.setVibrate, 'vibrate', el => el.checked);
+        setting(this.ui.setStats, 'stats', el => el.checked);
         on(this.ui.runShareBtn, () => this.shareRun());
         on(this.ui.runBoostBtn, () => this.watchGemBoost());
         on(this.ui.gemBoost, () => this.watchGemBoost());
@@ -12606,6 +13582,11 @@ class Game {
         const saved = loadJSON('lp_settings', {}, isPlainObject);
         return {
             volume: Number.isFinite(saved.volume) ? Math.max(0, Math.min(1, saved.volume)) : 0.8,
+            // Music starts at half the effects' volume.
+            music: Number.isFinite(saved.music) ? Math.max(0, Math.min(1, saved.music))
+                : (Number.isFinite(saved.volume) ? Math.max(0, Math.min(1, saved.volume)) : 0.8) / 2,
+            vibrate: saved.vibrate !== false,
+            stats: saved.stats !== false,
             muted: saved.muted === true,
             showGhost: saved.showGhost !== false,
             reducedMotion: typeof saved.reducedMotion === 'boolean' ? saved.reducedMotion : prefersReduced,
@@ -12621,6 +13602,8 @@ class Game {
     applySettings() {
         sounds.setVolume(this.settings.volume);
         sounds.setMuted(this.settings.muted || portal.muteAudio || this.ads.playing);
+        music.setVolume(this.settings.music);
+        music.setSilent(this.settings.muted || portal.muteAudio || this.ads.playing);
         if (document.body && document.body.classList) document.body.classList.toggle('reduce-motion', this.settings.reducedMotion);
         this.particles.scale = this.settings.reducedMotion ? 0.35 : 1;
         this.updateTouchControls();
@@ -12634,6 +13617,12 @@ class Game {
         this.ui.setMotion.checked = s.reducedMotion;
         if (this.ui.setTouch) this.ui.setTouch.checked = s.touchControls;
         if (this.ui.setTips) this.ui.setTips.checked = s.showTips;
+        if (this.ui.setMusic) this.ui.setMusic.value = Math.round(s.music * 100);
+        if (this.ui.setVibrate) this.ui.setVibrate.checked = s.vibrate;
+        if (this.ui.setStats) this.ui.setStats.checked = s.stats;
+        // Vibration only where the device can; stats never from a file:// copy.
+        if (this.ui.setVibrateRow) this.ui.setVibrateRow.hidden = !(typeof navigator !== 'undefined' && navigator.vibrate);
+        if (this.ui.setStatsRow) this.ui.setStatsRow.hidden = !this.statsAllowed();
         this.updateTouchSettingRow();
         if (this.ui.setVersion) this.ui.setVersion.textContent = GAME_VERSION;
         if (typeof SaveBackupUI !== 'undefined') SaveBackupUI.reset();
@@ -12676,6 +13665,7 @@ class Game {
         st.powerups += this.state.powersCollected || 0;
         st.livesLost += this.state.runDeaths || 0;
         st.seconds += this.runSeconds();
+        if (this.state.multiplayer) st.coopRuns += 1;
         saveItem('lp_stats', JSON.stringify(st));
     }
 
@@ -12695,6 +13685,12 @@ class Game {
         this.ui.runCardDistance.innerText = fmtNum(finalScore) + "m";
         this.ui.runCardBest.hidden = !s.isNewBest;
         this.ui.runCardStats.innerHTML = this.statTilesHTML(stats);
+        // The Streak paid for this run (GameMeta.advanceStreak).
+        const streak = this.streakPaid;
+        if (this.ui.runCardStreak) {
+            this.ui.runCardStreak.hidden = !streak;
+            if (streak) this.ui.runCardStreak.innerHTML = 'STREAK DAY ' + streak.count + ' <span class="streak-reward">+' + counted(fmtNum(streak.reward), 'gem') + '</span>';
+        }
         this.updateRunCardActions();
         this.ui.runCard.hidden = false;
         this.runCardOpen = true;
@@ -13190,6 +14186,7 @@ class Game {
                 }
             } else {
                 shake = boss.takeDamage(this.particles);
+                if (shake) this.bossFinisher = null; // this player (see bossFinisherFx)
             }
             p.springLaunch();
             sounds.play('spring');
@@ -13230,6 +14227,7 @@ class Game {
         p.activePower = null;
         p.powerTimer = 0;
         p.invuln = ABSORB_INVULN_FRAMES;
+        this.vibrate(VIBRATE_HIT);
         this.destroyHostile(obj);
         this.addShake(7);
         this.particles.spawn(p.x, p.y, power.color, 20, "blast");
@@ -13276,6 +14274,12 @@ class Game {
         }
     }
 
+    // The boss-kill cosmetic of whoever landed the last hit: this player, or
+    // (host) the guest whose stomp it was.
+    bossFinisherFx() {
+        return this.cosmeticFor(this.bossFinisher ? this.remotePlayers.get(this.bossFinisher) : this.player, 'boss');
+    }
+
     // The boss breaks the platform at world y `wy` (on this screen).
     bossCrumble(wy) {
         const p = this.platforms.find(q => q.wy === wy);
@@ -13297,6 +14301,10 @@ class Game {
         this.state.runLoops = (this.state.runLoops || 0) + 1;
         this.state.loops = (this.state.loops || 0) + 1;
         saveItem('lp_loops', this.state.loops);
+        if (this.state.multiplayer) {
+            this.stats.coopBosses += 1;
+            saveItem('lp_stats', JSON.stringify(this.stats));
+        }
         const bounty = bossBountyFor(this.player.skin.ability, this.gemBoostLeft() > 0);
         this.addGems(bounty);
         this.setHearts(this.heartCap());
@@ -13307,9 +14315,11 @@ class Game {
     }
 
     // Banks gems and pops the counter.
-    addGems(n) {
+    // `inRun` false: a reward (Streak, achievement) that isn't part of the
+    // run's own gem total on the run card.
+    addGems(n, inRun = true) {
         this.state.gems += n;
-        if (this.state.running) this.state.runGems = (this.state.runGems || 0) + n;
+        if (this.state.running && inRun) this.state.runGems = (this.state.runGems || 0) + n;
         saveItem('lp_gems', this.state.gems);
         if (this.ui.gemDisplay) {
             this.ui.gemDisplay.innerHTML = counted(fmtNum(this.state.gems), 'gem');
@@ -13389,6 +14399,9 @@ class Game {
 
         this.lastTime = performance.now();
         this.stepAcc = 0;
+        // Frames drawn and time taken this run (the frame rate in its stats).
+        this.runFrames = 0;
+        this.runFrameMs = 0;
         // A new run has no previous step: the camera mustn't blend from the
         // last run's height, and nothing saved before now is blended (stepNo
         // moves on, so no entity's _ps matches until the next step).
@@ -13555,6 +14568,7 @@ class Game {
         this.particles.dust(p.x + 13, p.y + 26, this.renderer.currentBiome.platform, impact > 9 ? 8 : 5);
         if (p.standOn && p.standOn.h < 30) p.standOn.dip = Math.min(4, impact * 0.3);
         sounds.play('land');
+        this.landFx(p, this.cosmeticFor(p, 'land'));
     }
 
     drawFx(ctx) {
@@ -14050,6 +15064,7 @@ class Game {
         this.floaters.forEach(f => f.y += diff);
         this.rings.forEach(r => r.y += diff);
         this.afterimages.forEach(a => a.y += diff);
+        this.shiftCosFx(diff);
 
         this.platforms = this.platforms.filter(p => p.y < CONFIG.HEIGHT + 100);
         this.powerups = this.powerups.filter(p => p.y < CONFIG.HEIGHT + 100);
@@ -14465,6 +15480,7 @@ class Game {
         if (this.useSpareLife()) return;
 
         sounds.play('death');
+        this.vibrate(VIBRATE_DEATH);
         this.shatterPixel(this.player);
         this.addShake(12);
 
@@ -14485,6 +15501,7 @@ class Game {
         const y = Math.min(p.y, CONFIG.HEIGHT - p.h);
         this.particles.shatter(p.x, y, p.color, p.skin.eye, fell);
         this.particles.spawn(p.x + 13, y + 13, p.color, 16, "blast");
+        this.deathFx(p, this.cosmeticFor(p, 'death'));
     }
 
     // The slow-motion beat between a run-ending death and the run card: only
@@ -14492,6 +15509,7 @@ class Game {
     updateDying(dt) {
         const slow = dt * DEATH_SLOWMO;
         this.particles.update(slow);
+        this.updateCosFx(slow);
         this.updateFx(dt);
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             this.projectiles[i].update(slow);
@@ -14563,6 +15581,7 @@ class Game {
             // from this screen and the next one up. (With room to bank one
             // they were showing already, and stay.)
             if (wasFull) this.state.heartBlockWY = -this.state.score - CONFIG.HEIGHT;
+            this.vibrate(VIBRATE_HEART);
             this.rescuePlayer("#ff3366", "HEART SPENT — " + this.state.hearts + " LEFT");
             return true;
         }
@@ -14600,7 +15619,13 @@ class Game {
         this.saveBest();
         let finalScore = this.runScore();
         this.closePauseUI();
-        this.recordRunStats(Math.max(0, Math.floor(this.state.score / 10) - (this.state.startMeters || 0)));
+        const runMeters = Math.max(0, Math.floor(this.state.score / 10) - (this.state.startMeters || 0));
+        this.recordRunStats(runMeters);
+        // Any run of STREAK_MIN_METERS on a new day moves the Streak on;
+        // run totals can earn achievements too.
+        this.streakPaid = this.advanceStreak(runMeters);
+        this.checkAchievements();
+        this.sendRunStats(runMeters);
 
         // Don't leave a half-retracted net hanging over the menu.
         this.safetyNet = this.makeSafetyNetState();
@@ -14760,6 +15785,7 @@ class Game {
             this.particles.dust(this.player.x + 13, this.player.y + 26, '#dff6ff', 2);
         }
         this.player.animate(dt);
+        if (!this.player.isDead) this.trailFx(this.player, this.cosmeticFor(this.player, 'trail'), 'cosTrail', dt);
         if (this.state.multiplayer && this.player.isDead && this.spectatingPlayer) this.pullForSpectated(this.spectatingPlayer, dt);
 
         // Co-op ceiling at the top of the 800-tall frame, so the leader can't
@@ -14863,7 +15889,11 @@ class Game {
         let enemyDt = dt;
         if (this.partyTimeWarp()) enemyDt *= 0.3;
 
-        if (this.state.multiplayer) this.remotePlayers.forEach(rp => { this.followRemote(rp, dt); rp.animate(dt); });
+        if (this.state.multiplayer) this.remotePlayers.forEach(rp => {
+            this.followRemote(rp, dt);
+            rp.animate(dt);
+            if (!rp.isDead) this.trailFx(rp, this.cosmeticFor(rp, 'trail'), rp.trailTick, dt);
+        });
 
         // Enemy Update
         for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -14884,7 +15914,10 @@ class Game {
                 if (e instanceof BossDrone) {
                     if (authority) {
                         this.onBossDefeated();
-                        if (this.state.multiplayer) window.network.send({ type: 'boss_down' });
+                        // The finisher's boss-kill effect, for everyone.
+                        const fx = this.bossFinisherFx();
+                        this.bossFx(e.x + e.w / 2, e.y + e.h / 2, fx);
+                        if (this.state.multiplayer) window.network.send({ type: 'boss_down', fx, x: Math.round(e.x + e.w / 2), wy: Math.round(e.y + e.h / 2 - this.state.score) });
                     } else {
                         this.state.bossActive = false;
                     }
@@ -14937,6 +15970,7 @@ class Game {
 
         this.particles.update(dt);
         this.updateFx(dt);
+        this.updateCosFx(dt);
         this.updateSafetyNet(dt);
         if (this.state.multiplayer) {
             if (authority) this.broadcastEnemies(dt);
@@ -14957,7 +15991,8 @@ class Game {
                 skinIndex: this.viewParams.skinIndex,
                 activePowerId: this.player.activePower ? this.player.activePower.id : null,
                 pf: Math.round(this.powerFraction(perks) * 100) / 100,
-                hl: this.state.hearts
+                hl: this.state.hearts,
+                cos: this.cosmeticIds()
             });
         }
 
@@ -15112,6 +16147,7 @@ class Game {
 
         this.drawTeamLimit(); // over everything in the sky above it
         this.particles.draw(this.renderer.ctx);
+        this.drawCosFx(ctx);
         this.drawFx(ctx);
         if (shaking) ctx.restore();
     }
@@ -15167,6 +16203,49 @@ class Game {
             (this.player.activePower ? ' power' : '') +
             ' scenes' + this.renderer.background.scenes.size +
             ' enemies' + this.enemies.length + ' particles' + this.particles.particles.length;
+    }
+
+    // Gamepad presses outside the moves themselves. Start pauses (or
+    // resumes) a run. On the menus, the pause screen and the run card: the
+    // D-pad (or stick) moves the focus through the buttons on show, A presses
+    // the focused one (or PLAY / PLAY AGAIN with nothing focused), and B goes
+    // back (Settings' DONE, the page's BACK, or resuming a paused run).
+    handleGamepad(ev) {
+        if (ev.start && this.state.running) this.togglePause();
+        if (this.state.running && !this.pauseMenuOpen) return;
+        if (ev.prev || ev.next) this.moveMenuFocus(ev.next ? 1 : -1);
+        if (ev.b) this.gamepadBack();
+        if (!ev.a) return;
+        const el = typeof document !== 'undefined' ? document.activeElement : null;
+        if (el && (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'INPUT') && el.click) el.click();
+        else if (this.runCardOpen) this.runCardPlayAgain();
+        else if (!this.state.running && this.activeMenuPanel === 'sp') this.requestSoloStart();
+    }
+
+    // The buttons a gamepad can reach right now: the topmost open overlay's,
+    // else the visible menu's (in page order).
+    gamepadTargets() {
+        if (typeof document === 'undefined' || !document.querySelectorAll) return [];
+        const overlay = [this.ui.settingsOverlay, this.ui.runCard, this.ui.pauseOverlay].find(o => o && !o.hidden);
+        const root = overlay || (this.state.running ? null : this.ui.menusWrapper);
+        if (!root || !root.querySelectorAll) return [];
+        return Array.from(root.querySelectorAll('button, input, a[href]'))
+            .filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
+    }
+
+    moveMenuFocus(dir) {
+        const list = this.gamepadTargets();
+        if (!list.length) return;
+        const at = list.indexOf(document.activeElement);
+        const next = list[at < 0 ? (dir > 0 ? 0 : list.length - 1) : (at + dir + list.length) % list.length];
+        if (next && next.focus) next.focus();
+    }
+
+    gamepadBack() {
+        if (this.settingsOpen) { this.closeSettings(); return; }
+        if (this.pauseMenuOpen) { this.resumeGame(); return; }
+        const back = this.gamepadTargets().find(el => el.classList && el.classList.contains('back-btn'));
+        if (back && back.click) back.click();
     }
 
     // ------------------------------------------------- fixed steps (ADR-0007)
@@ -15256,10 +16335,15 @@ class Game {
         const deltaTime = timestamp - this.lastTime;
         this.lastTime = timestamp;
 
+        this.handleGamepad(this.input.pollGamepad());
         const t0 = this.meter.on ? performance.now() : 0;
         // performance.now() (reset on revive) and the rAF timestamp can
         // disagree by a hair; advance() clamps at 0 and caps long frames.
         this.drawBlended(this.advance(deltaTime));
+        if (this.state.running && !this.state.paused) { this.runFrames++; this.runFrameMs += deltaTime; }
+        // The biome's music during a run (quieter while paused), none on the menu.
+        music.play(this.state.running ? BIOMES.indexOf(this.renderer.currentBiome) : null);
+        music.setPaused(this.state.paused || this.pauseMenuOpen);
         this.meter.frame(deltaTime, this.meter.on ? performance.now() - t0 : 0, this.frameNote);
         // The portal wants to know when someone is actually playing: not in
         // a menu, the pause menu or the run-over screens.
@@ -15302,7 +16386,7 @@ function blendedY(o, y) {
 // (loaded before this file). They're written as classes so they
 // run in strict mode like the rest of Game, and copied onto it here exactly
 // as if they were written in the class above.
-for (const part of [GameCoop, GameShop, GameShare, GameHourly, GameLeaderboard]) {
+for (const part of [GameCoop, GameShop, GameShare, GameHourly, GameLeaderboard, GameMeta, GameCosmetics]) {
     for (const name of Object.getOwnPropertyNames(part.prototype)) {
         if (name === 'constructor') continue;
         if (Object.prototype.hasOwnProperty.call(Game.prototype, name)) throw new Error('Game.' + name + ' is defined twice');

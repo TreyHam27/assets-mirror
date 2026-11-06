@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.39.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.40.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -584,7 +584,7 @@ body {
     transform-origin: left center;
 }
 
-/* POWER UP HUD: the power's name over its timer, on a glass pill. */
+/* POWER UP HUD: a row per running power, its name beside its timer, on a glass pill. */
 #power-hud {
     position: absolute;
     top: calc(var(--hud-top) + 80px + var(--safe-top));
@@ -592,9 +592,9 @@ body {
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 6px;
-    padding: 7px 14px 9px;
+    padding: 8px 14px;
     border: 1px solid var(--line);
     border-radius: 12px;
     background: rgba(6, 10, 18, 0.8);
@@ -604,24 +604,32 @@ body {
     z-index: 10;
 }
 
-#power-text {
-    font-size: 13px;
+.power-row {
+    display: grid;
+    grid-template-columns: 1fr 96px;
+    align-items: center;
+    gap: 10px;
+}
+
+.power-text {
+    font-size: 12px;
     font-weight: 900;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     line-height: 1;
     white-space: nowrap;
+    text-align: right;
     color: #fff;
 }
 
-#power-bar-bg {
-    width: 180px;
+.power-bar-bg {
+    width: 96px;
     height: 6px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-pill);
     overflow: hidden;
 }
 
-#power-bar-fill {
+.power-bar-fill {
     height: 100%;
     width: 100%;
     border-radius: inherit;
@@ -1515,6 +1523,32 @@ body.reduce-motion #skin-preview-box {
 
     .nav-btn {
         padding: 8px 10px;
+    }
+}
+
+/* Short screens (a 360x640 phone, a 1280x720 laptop): a smaller Pixel and
+   tighter gaps, so the whole home screen fits without scrolling. */
+@media (max-height: 740px) {
+    .page-title--brand {
+        margin-bottom: 10px;
+    }
+
+    .home {
+        gap: 10px;
+    }
+
+    #skin-container {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .skin-stand {
+        height: 78px;
+    }
+
+    #skin-preview-box {
+        width: 54px;
+        height: 54px;
     }
 }
 
@@ -3442,7 +3476,11 @@ body.reduce-motion *::after {
     position: sticky;
     bottom: 0;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    /* Padding and border inside its width (it was 14px wider than the
+       page, and the shop scrolled sideways on phones); minmax(0, ...) so a
+       long tab name can't widen it either. */
+    box-sizing: border-box;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
     padding: 6px;
     border: 1px solid var(--line);
@@ -3452,6 +3490,7 @@ body.reduce-motion *::after {
 }
 .shop-tab {
     min-height: 52px;
+    padding: 0 2px;
     border: 0;
     border-radius: 11px;
     background: none;
@@ -3461,10 +3500,16 @@ body.reduce-motion *::after {
     cursor: pointer;
 }
 /* Four tabs on a phone: a little tighter. */
-@media (max-width: 420px) {
+@media (max-width: 460px) {
     .shop-tab {
         font-size: 12px;
         letter-spacing: 0.5px;
+    }
+}
+@media (max-width: 350px) {
+    .shop-tab {
+        font-size: 10px;
+        letter-spacing: 0;
     }
 }
 .shop-tab.active {
@@ -3563,6 +3608,19 @@ body.reduce-motion *::after {
     /* Long perk lines wrap on a phone: keep room for two of them. */
     .shop-stage .stage-center .stage-perks {
         min-height: calc((var(--perk-rows, 4) + 2) * 1.75em);
+    }
+}
+/* Short phones: a smaller Pixel and less room kept for long perk lists,
+   so its button clears the tabs. */
+@media (max-height: 700px) {
+    .stage-pixel {
+        width: 96px;
+        height: 96px;
+        margin: 4px auto 10px;
+    }
+
+    .shop-stage .stage-center .stage-perks {
+        min-height: calc(var(--perk-rows, 4) * 1.75em);
     }
 }
 .stage-perks {
@@ -3742,7 +3800,8 @@ body.reduce-motion *::after {
 /* BOOSTERS */
 .booster-slots {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    /* Side by side where two fit their buttons; stacked on phones. */
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
     gap: 14px;
 }
 .booster-slot {
@@ -3918,12 +3977,8 @@ body.reduce-motion *::after {
             <div id="gem-display"></div>
             <div id="life-display" class="empty" title="Hearts"></div>
 
-            <div id="power-hud">
-                <div id="power-text">DOUBLE JUMP</div>
-                <div id="power-bar-bg">
-                    <div id="power-bar-fill"></div>
-                </div>
-            </div>
+            <!-- Running power-ups: a row each, made by Game.powerRows() (js/menus.js). -->
+            <div id="power-hud"></div>
 
             <!-- FREEPLAY: between runs, out of hearts (js/freeplay.js) -->
             <div id="fp-banner" class="fp-banner" hidden role="status" aria-live="polite">
@@ -4076,6 +4131,13 @@ body.reduce-motion *::after {
                                     <span class="btn-label">BUY HEART</span>
                                     <span class="btn-cost"></span>
                                 </button>
+                            </div>
+                            <div id="booster-hour" class="booster-slot booster-slot--gem">
+                                <svg class="ico booster-ico ico-gem" aria-hidden="true"><use href="#i-gem"/></svg>
+                                <div class="booster-n">2X</div>
+                                <div class="booster-label">GEMS FOR 1 HOUR</div>
+                                <p class="booster-desc">Every gem counts double for an hour of real time, menus included. Once a day. Adds to the 15-minute booster.</p>
+                                <button id="booster-hour-btn" class="btn btn--gem" type="button"></button>
                             </div>
                         </div>
                     </div>
@@ -4291,7 +4353,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.39.0';
+    const EMBEDDED = '1.40.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4484,13 +4546,18 @@ const REVIVE_OFFER_COOLDOWN_MS = 3 * 60 * 1000;
 // The 2x gems booster: gem pickups count double for this long (real time,
 // menus included), saved as lp_gem_boost_until.
 const GEM_BOOST_MS = 15 * 60 * 1000;
+// The bought booster: 2x gems for GEM_HOUR_MS for GEM_HOUR_COST gems, once
+// per local day (lp_gem_hour_day). It shares the ad booster's clock: gems
+// stay 2x and the two times add up.
+const GEM_HOUR_MS = 60 * 60 * 1000;
+const GEM_HOUR_COST = 4000;
 
 // Build identity. GAME_VERSION tags asset URLs (index.html ?v=...) so a
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.39.0';
-const NET_PROTOCOL = 16;
+const GAME_VERSION = '1.40.0';
+const NET_PROTOCOL = 17;
 
 // Game logic runs in fixed steps of STEP_MS (ADR-0007); a frame runs at most
 // MAX_STEPS_PER_FRAME of them and drops the rest of a longer stall. A step
@@ -4610,7 +4677,7 @@ const CONFIG = {
 
 // Level generation version: bump when spawnPlatform() would build a different
 // layout from the same seed (saved ghosts from other versions are dropped).
-const PLATFORM_GEN_VERSION = 8;
+const PLATFORM_GEN_VERSION = 9;
 // Platform types, rolled per platform from its height (see spawnPlatform):
 //  - springs launch whoever lands on them (CONFIG.SPRING_FORCE);
 //  - crumbling platforms break CRUMBLE_FRAMES after being landed on and
@@ -4665,7 +4732,9 @@ const PLATFORM_W_TOP = [70, 130];
 // steps, warning LASER_WARN steps before the beam. Black holes: one every
 // BLACK_HOLE_EVERY steps (at most BLACK_HOLE_CAP out), drifting; within
 // BLACK_HOLE_RADIUS they pull the Pixel (up to BLACK_HOLE_PULL px/step^2) and
-// gems, and touching the centre is a hit. A half dose spawns half as often.
+// gems, and touching the centre is a hit. Beyond it, a Pixel in the air is
+// still pulled from anywhere on screen (BLACK_HOLE_FAR_PULL at the radius,
+// weaker in proportion to the distance). A half dose spawns half as often.
 const METEOR_EVERY = 120;
 const METEOR_VY = [2.5, 5];
 const METEOR_VX = 1;
@@ -4676,6 +4745,7 @@ const BLACK_HOLE_EVERY = 600;
 const BLACK_HOLE_CAP = 1;
 const BLACK_HOLE_RADIUS = 140;
 const BLACK_HOLE_PULL = 0.35;
+const BLACK_HOLE_FAR_PULL = 0.05;
 // Ice (the `ice` hazard, see BIOMES): standing on a platform, the Pixel keeps
 // ICE_FRICTION of its sideways speed each frame (CONFIG.FRICTION otherwise)
 // and steers with ICE_GRIP of its usual push. The two are picked together so
@@ -4702,7 +4772,7 @@ function nextMilestone(meters) {
 // beyond (see powerUpChanceAt); hearts are rarer, and only exist for a player
 // below their Pixel's heart cap (see Game.visiblePickups()); otherwise 40% of
 // platforms carry a gem, worth its biome's `gem.value` (see BIOMES).
-const POWERUP_CHANCE_START = 0.12;
+const POWERUP_CHANCE_START = 0.04;
 const POWERUP_CHANCE_END = 0.01;
 const POWERUP_PLATEAU_METERS = 15000;
 function powerUpChanceAt(meters) {
@@ -4804,19 +4874,20 @@ const bossBountyFor = (perks, gemBoostActive) =>
 // less often at a half dose). Platform types: moving, conveyor, blink, shock
 // and shrinking (rolled that much more or less often by spawnPlatform, so
 // changing them changes level generation: bump PLATFORM_GEN_VERSION and
-// NET_PROTOCOL). The SHIELDED perk covers only ice and black-hole pull.
+// NET_PROTOCOL). The SHIELDED perk covers every one of them except lasers
+// (they are drones) and a black hole's centre (touching it is still a hit).
 // `note` is the line under the biome's name when you enter it (what's new).
 // `gem` is what a gem found in that biome is worth, and its colour: higher
 // biomes pay more, from 5 at the start up to 100 in The Void.
 const BIOMES = [
     { threshold: 0, name: "Atmosphere", bg: "#050505", grid: "#1a1a1a", platform: "#00ffcc", hazards: {}, gem: { value: 5, color: "#00ffff" } },
-    { threshold: 500, name: "Ionosphere", note: "Platforms are icy", bg: "#0a001a", grid: "#330066", platform: "#ff00ff", hazards: { ice: 1 }, gem: { value: 10, color: "#33ff66" } },
-    { threshold: 1500, name: "Low Orbit", note: "More platforms on the move", bg: "#000a1a", grid: "#003366", platform: "#00ccff", hazards: { moving: 1 }, gem: { value: 15, color: "#3399ff" } },
-    { threshold: 2500, name: "Deep Space", note: "Meteors fall: watch the red markers", bg: "#0a0a0a", grid: "#222", platform: "#ffd700", hazards: { meteor: 1, moving: 0.5 }, gem: { value: 25, color: "#b266ff" } },
-    { threshold: 4000, name: "The Rift", note: "Black holes and conveyor belts", bg: "#1a0022", grid: "#4d0066", platform: "#cc00ff", hazards: { blackHole: 1, conveyor: 1, meteor: 0.5 }, gem: { value: 35, color: "#ff66cc" } },
-    { threshold: 5500, name: "Neon Grid", note: "Laser drones and blinking platforms", bg: "#001010", grid: "#00ffaa", platform: "#00ff99", hazards: { laser: 1, blink: 1, blackHole: 0.5 }, gem: { value: 50, color: "#ff9900" } },
-    { threshold: 7500, name: "Static Field", note: "Shock and shrinking platforms", bg: "#0a0a0a", grid: "#555555", platform: "#ffffff", hazards: { shock: 1, shrinking: 1, laser: 0.5 }, gem: { value: 75, color: "#ff3344" } },
-    { threshold: 10000, name: "The Void", note: "Everything at once, and the ice is back", bg: "#000000", grid: "#220022", platform: "#ff0055",
+    { threshold: 600, name: "Ionosphere", note: "Platforms are icy", bg: "#0a001a", grid: "#330066", platform: "#ff00ff", hazards: { ice: 1 }, gem: { value: 10, color: "#33ff66" } },
+    { threshold: 1800, name: "Low Orbit", note: "More platforms on the move", bg: "#000a1a", grid: "#003366", platform: "#00ccff", hazards: { moving: 1 }, gem: { value: 15, color: "#3399ff" } },
+    { threshold: 3200, name: "Deep Space", note: "Meteors fall: watch the red markers", bg: "#0a0a0a", grid: "#222", platform: "#ffd700", hazards: { meteor: 1, moving: 0.5 }, gem: { value: 25, color: "#b266ff" } },
+    { threshold: 5000, name: "The Rift", note: "Black holes and conveyor belts", bg: "#1a0022", grid: "#4d0066", platform: "#cc00ff", hazards: { blackHole: 1, conveyor: 1, meteor: 0.5 }, gem: { value: 35, color: "#ff66cc" } },
+    { threshold: 7200, name: "Neon Grid", note: "Laser drones and blinking platforms", bg: "#001010", grid: "#00ffaa", platform: "#00ff99", hazards: { laser: 1, blink: 1, blackHole: 0.5 }, gem: { value: 50, color: "#ff9900" } },
+    { threshold: 10000, name: "Static Field", note: "Shock and shrinking platforms", bg: "#0a0a0a", grid: "#555555", platform: "#ffffff", hazards: { shock: 1, shrinking: 1, laser: 0.5 }, gem: { value: 75, color: "#ff3344" } },
+    { threshold: 13500, name: "The Void", note: "Everything at once, and the ice is back", bg: "#000000", grid: "#220022", platform: "#ff0055",
       hazards: { ice: 0.5, moving: 1, meteor: 1, blackHole: 1, conveyor: 1, laser: 1, blink: 1, shock: 1, shrinking: 1 }, gem: { value: 100, color: "#ffffff" } }
 ];
 
@@ -4953,6 +5024,9 @@ const RESCUE_NET_FRAMES = 60;
 const RESCUE_NET_COLOR = '#ff3366';
 // Hit immunity after a jetpack or HARD SHIELD absorbs a drone or bullet.
 const ABSORB_INVULN_FRAMES = 30;
+// After a spent heart or a revive (ad or co-op): this many steps (4s) in
+// which nothing hurts the Pixel but falling off the screen. It blinks.
+const REVIVE_INVULN_STEPS = 240;
 // The default heart cap; heartCapFor() has the Pixel-specific one.
 const MAX_HEARTS = 3;
 const HEART_CAP_ROCKET = 2;
@@ -5228,7 +5302,7 @@ const PERKS = [
     { key: 'gemMult', label: 'GEMS x2', color: '#33e0ff', active: v => !!v && v !== 1,
       describe: v => 'Gem pickups are worth ' + v + 'x' },
     { key: 'biomeImmune', label: 'SHIELDED', color: '#3399ff', active: v => !!v,
-      describe: () => 'Immune to ice and black-hole pull' }
+      describe: () => 'Immune to biome hazards' }
 ];
 
 // The perks a Pixel actually grants, in PERKS order, each with its value.
@@ -5257,6 +5331,8 @@ const POWERS = {
     SHIELD: { id: 6, name: "HARD SHIELD", color: "#00ffaa", time: 600 },
     TIME_WARP: { id: 7, name: "TIME WARP", color: "#ffffff", time: 500 }
 };
+// The powers in POWERS order (ids go over the wire).
+const POWER_LIST = Object.values(POWERS);
 
 // The six feats. `desc` is the exact wording; `progress(state)` (0..1) feeds
 // the bar where progress is measurable (distance, gems held) and is left out
@@ -5284,7 +5360,7 @@ const ACHIEVEMENTS = [
       condition: (state) => runMetersOf(state) >= 5000,
       progress: (state) => state.bestHeight / 5000 },
     { id: 'magnet', name: 'Attractive', desc: 'Pick up a MAGNET power-up', reward: 100,
-      condition: (state, player) => player.activePower && player.activePower.name === "MAGNET" },
+      condition: (state, player) => player.hasPower(POWERS.MAGNET) },
     { id: 'pacifist', name: 'No Power-Ups Needed', desc: 'Reach 5,000m without collecting a power-up', reward: 2500,
       condition: (state) => runMetersOf(state) >= 5000 && state.powersCollected === 0 },
     { id: 'boss', name: 'Titan Slayer', desc: 'Beat a boss', reward: 300,
@@ -8481,9 +8557,16 @@ class Player extends Entity {
         this.grounded = false;
         this.coyote = 0;
         this.doubleReady = false;
-        this.activePower = null;
-        this.powerTimer = 0;
+        // The power-ups running now, each with its own timer: POWERS entry ->
+        // steps left. (A teammate's copy holds the share of time left, 0..1,
+        // from their sync.) `lastPower` is the newest, which the glow shows.
+        this.powers = new Map();
+        this.lastPower = null;
         this.invuln = 0; // frames of hit immunity (after a jetpack or shield absorbs a hit, or a boss bump)
+        // Steps of revive invincibility left (REVIVE_INVULN_STEPS after a
+        // spent heart or a revive): nothing but a fall hurts, and it blinks.
+        this.reviveT = 0;
+        this.flashClock = 0;
         // Drawing only (see animate()): the squash spring, the blink clock,
         // and the landing the Game turns into dust and a thud.
         this.squash = 0;
@@ -8517,6 +8600,7 @@ class Player extends Entity {
         }
         if (Math.abs(this.squash) < 0.002 && Math.abs(this.squashV) < 0.002) this.squash = this.squashV = 0;
         if (this.blink > 0) this.blink -= dt;
+        this.flashClock = (this.flashClock + dt) % 8;
         this.blinkIn -= dt;
         if (this.blinkIn <= 0) {
             this.blink = 7;
@@ -8591,15 +8675,13 @@ class Player extends Entity {
 
     update(dt, input, platforms, powerups) {
         if (this.invuln > 0) this.invuln -= dt;
+        if (this.reviveT > 0) this.reviveT = Math.max(0, this.reviveT - dt);
 
-        // Powerup Timer
-        if (this.activePower) {
-            this.powerTimer -= dt;
-            if (this.powerTimer <= 0) {
-                this.activePower = null;
-                this.doubleReady = false;
-            }
-        }
+        // Power-up timers, each its own.
+        if (this.powers.size) this.powers.forEach((t, p) => {
+            if (t - dt <= 0) this.endPower(p);
+            else this.powers.set(p, t - dt);
+        });
 
         // Skin Abilities
         const ability = this.ability || { jumpMult: 1, speedMult: 1, gravityMult: 1 };
@@ -8639,7 +8721,7 @@ class Player extends Entity {
         }
 
         // Gravity & Jetpack
-        const jetpack = this.activePower === POWERS.ROCKET;
+        const jetpack = this.powers.has(POWERS.ROCKET);
         if (jetpack) {
             this.vy = -16;
             this.y += this.vy * dt;
@@ -8665,11 +8747,12 @@ class Player extends Entity {
         }
 
         // Powerup Collisions
+        const magnet = this.powers.has(POWERS.MAGNET);
         for (let i = powerups.length - 1; i >= 0; i--) {
             let p = powerups[i];
 
             // Magnet Logic (temporary MAGNET power-up pulls any pickup)
-            if (this.activePower === POWERS.MAGNET) this.pullPickup(p, 200, dt);
+            if (magnet) this.pullPickup(p, 200, dt);
 
             // Always-on gem pull from an equipped Pixel's permanent ability
             // (separate from, and stacks with, the temporary MAGNET power-up)
@@ -8683,9 +8766,9 @@ class Player extends Entity {
                     p.markedForDeletion = true;
                     return { event: "heart", x: p.x, y: p.y };
                 } else {
-                    this.activatePower();
+                    const power = this.activatePower();
                     p.markedForDeletion = true;
-                    return { event: "powerup", x: p.x, y: p.y };
+                    return { event: "powerup", x: p.x, y: p.y, power };
                 }
             }
         }
@@ -8712,7 +8795,7 @@ class Player extends Entity {
 
         // Jump
         if (input.keys.buffer > 0) {
-            let jumpPwr = ((this.activePower === POWERS.SUPER) ? CONFIG.SUPER_JUMP_FORCE : CONFIG.JUMP_FORCE) * (ability.jumpMult || 1);
+            let jumpPwr = (this.powers.has(POWERS.SUPER) ? CONFIG.SUPER_JUMP_FORCE : CONFIG.JUMP_FORCE) * (ability.jumpMult || 1);
 
             if (this.coyote > 0) {
                 this.vy = jumpPwr;
@@ -8733,7 +8816,7 @@ class Player extends Entity {
                 input.keys.buffer = 0;
                 this.bump(0.16);
                 return "jump";
-            } else if ((this.activePower === POWERS.DOUBLE || ability.airJump) && this.doubleReady) {
+            } else if ((this.powers.has(POWERS.DOUBLE) || ability.airJump) && this.doubleReady) {
                 this.vy = CONFIG.JUMP_FORCE * (ability.jumpMult || 1);
                 this.doubleReady = false;
                 input.keys.buffer = 0;
@@ -8750,7 +8833,9 @@ class Player extends Entity {
                 // Platforms scrolled below the screen are kept around briefly
                 // before being culled; don't let an invisible one catch a fall.
                 if (p.y >= CONFIG.HEIGHT - 3) continue;
-                if (p.gone > 0 || p.blinkOff) continue; // crumbled away, or blinked out
+                // Crumbled away, or blinked out (SHIELDED Pixels never see a
+                // platform blink).
+                if (p.gone > 0 || (p.blinkOff && !ability.biomeImmune)) continue;
                 // Also the part of us that has wrapped round to the left edge.
                 const overlaps = (x) => x + this.w > p.x && x < p.x + p.w;
                 if (overlaps(this.x) || overlaps(this.x - CONFIG.WIDTH)) {
@@ -8774,7 +8859,7 @@ class Player extends Entity {
                             this.bump(-Math.min(0.28, 0.06 + this.vy * 0.015));
                             // Shrinking: a quarter narrower each landing,
                             // about its middle.
-                            if (p.type === 'shrinking') {
+                            if (p.type === 'shrinking' && !ability.biomeImmune) {
                                 const nw = Math.max(SHRINK_MIN_W, p.w * (1 - SHRINK_FACTOR));
                                 p.x += (p.w - nw) / 2;
                                 p.w = nw;
@@ -8788,7 +8873,7 @@ class Player extends Entity {
                         if (p.vx) {
                             this.x += p.vx * dt; // Stick to moving platform
                         }
-                        if (p.type === 'conveyor') this.x += CONVEYOR_PUSH * p.dir * dt;
+                        if (p.type === 'conveyor' && !ability.biomeImmune) this.x += CONVEYOR_PUSH * p.dir * dt;
                     }
                 }
             }
@@ -8809,33 +8894,78 @@ class Player extends Entity {
         if (p.startY !== undefined) p.startY += dy * k;
     }
 
+    // A picked-up power-up box: a power not running yet, which then runs
+    // alongside any others on its own full timer. Returns it, or null when
+    // every power it could be is running already.
     activatePower() {
         const ability = this.ability || {};
-        // A power the Pixel already has for good (AIR JUMP, MAGNET) would be
-        // a dud, so it's left out of the draw. So is the one running now: a
-        // pickup during a power always rolls a different one, on a full timer.
-        const covered = skinPerks(ability).map(({ perk }) => POWERS[perk.covers]).filter(Boolean);
         if (ability.rocket) {
             // ROCKET: every power-up is a JETPACK.
+            if (this.powers.has(POWERS.ROCKET)) return null;
             this.grantPower(POWERS.ROCKET);
-            return;
+            return POWERS.ROCKET;
         }
-        const types = Object.values(POWERS).filter(p => !covered.includes(p) && p !== this.activePower);
-        this.grantPower(types[Math.floor(Math.random() * types.length)]);
+        // A power the Pixel already has for good (AIR JUMP, MAGNET) would be
+        // a dud, so it's left out of the draw. So is every one running now:
+        // a second copy can't refill its timer.
+        const covered = skinPerks(ability).map(({ perk }) => POWERS[perk.covers]).filter(Boolean);
+        const types = Object.values(POWERS).filter(p => !covered.includes(p) && !this.powers.has(p));
+        if (!types.length) return null;
+        const p = types[Math.floor(Math.random() * types.length)];
+        this.grantPower(p);
+        return p;
     }
 
-    // Starts a specific power (replacing any running one) for its full,
-    // perk-stretched duration.
+    // Starts a specific power for its full, perk-stretched duration (any
+    // others keep running).
     grantPower(p) {
-        const ability = this.ability || {};
-        this.activePower = p;
-        this.powerTimer = p.time * (ability.powerDurationMult || 1);
+        this.powers.set(p, this.powerFullTime(p));
+        this.lastPower = p;
         if (p === POWERS.DOUBLE) this.doubleReady = true;
     }
 
+    // A power's whole (perk-stretched) duration, in steps.
+    powerFullTime(p) {
+        return p.time * ((this.ability || {}).powerDurationMult || 1);
+    }
+
+    hasPower(p) {
+        return this.powers.has(p);
+    }
+
+    // Steps left on a running power (0 if it isn't running).
+    powerTimeLeft(p) {
+        return this.powers.get(p) || 0;
+    }
+
+    // Ends one power (run out, or spent absorbing a hit).
+    endPower(p) {
+        if (!this.powers.delete(p)) return;
+        if (p === POWERS.DOUBLE) this.doubleReady = false;
+        if (this.lastPower === p) {
+            this.lastPower = null;
+            this.powers.forEach((t, q) => { this.lastPower = q; });
+        }
+    }
+
+    clearPowers() {
+        this.powers.clear();
+        this.lastPower = null;
+    }
+
+    // Can't be hurt right now: a short grace after a hit or bump, or revive
+    // invincibility.
+    hitProof() {
+        return this.invuln > 0 || this.reviveT > 0;
+    }
+
     draw(ctx) {
-        const glow = this.activePower ? this.activePower.color : this.color;
-        const blur = this.activePower ? 20 : 10;
+        const glow = this.lastPower ? this.lastPower.color : this.color;
+        const blur = this.lastPower ? 20 : 10;
+        // Revive invincibility: the Pixel blinks.
+        const flash = this.reviveT > 0 && this.flashClock >= 4;
+        const alpha = ctx.globalAlpha;
+        if (flash) ctx.globalAlpha = alpha * 0.3;
         const look = this.vx > 0.5 ? 4 : (this.vx < -0.5 ? -4 : 0);
         const pose = this.pose();
         // Standing on a platform that is still dipping from the landing.
@@ -8846,6 +8976,7 @@ class Player extends Entity {
         if (this.x > CONFIG.WIDTH - this.w) {
             drawPixel(ctx, this.x - CONFIG.WIDTH, y, this.skin, look, glow, blur, pose);
         }
+        if (flash) ctx.globalAlpha = alpha;
     }
 }
 
@@ -9334,6 +9465,33 @@ class BossDrone extends Entity {
 
     get raging() { return this.hp <= this.maxHp / 2; }
 
+    // How far the hover bob lifts or drops it now (drawing and hitbox).
+    bobY() {
+        const hovering = this.state === 'hover' || this.state === 'enter';
+        return hovering ? Math.sin(this.t * 0.12) * 6 : 0;
+    }
+
+    // The drawn shape (see draw()) as its parts, where it is in its bob:
+    // the hull's two overlapping rects (so its chamfered corners are left
+    // out), the arms and the rotor pods. Returns the top edge of the
+    // highest part `r` touches (a stomp lands there), or null if it touches
+    // none.
+    contactTop(r) {
+        const x = this.x, y = this.y + this.bobY(), w = this.w, h = this.h;
+        let top = null;
+        const part = (px, py, pw, ph) => {
+            if (r.x > px + pw || r.x + r.w < px || r.y > py + ph || r.y + r.h < py) return;
+            if (top === null || py < top) top = py;
+        };
+        part(x + 6, y, w - 12, h);          // hull
+        part(x, y + 6, w, h - 12);
+        part(x - 10, y + 20, 10, 6);        // arms
+        part(x + w, y + 20, 10, 6);
+        part(x - 26, y + 14, 16, 20);       // rotor pods
+        part(x + w + 10, y + 14, 16, 20);
+        return top;
+    }
+
     // Exposed (or still climbing away): side contact knocks you back
     // instead of killing you.
     isExposed() { return this.state === 'exposed' || this.state === 'recover'; }
@@ -9540,7 +9698,7 @@ class BossDrone extends Entity {
 
         const hovering = this.state === 'hover' || this.state === 'enter';
         const x = Math.round(this.x);
-        const y = Math.round(this.y + (hovering ? Math.sin(this.t * 0.12) * 6 : 0));
+        const y = Math.round(this.y + this.bobY());
         const w = this.w, h = this.h;
         const flashing = this.invuln > 0 && Math.floor(this.t / 3) % 2 === 0;
         const volleyDue = this.shootTimer < 20 && hovering;
@@ -10967,6 +11125,14 @@ class GameCoop {
         return rp;
     }
 
+    // The local player's running powers for a sync: [id, share of time
+    // left] each, in the order they started.
+    powerSyncList() {
+        const list = [];
+        this.player.powers.forEach((t, p) => list.push([p.id, Math.round(this.powerFraction(p) * 100) / 100]));
+        return list;
+    }
+
     // Remote input is untrusted: keep only known fields, as finite numbers
     // in sane ranges. Returns null for a packet that's unusable.
     sanitizeSync(d) {
@@ -10975,15 +11141,22 @@ class GameCoop {
         const y = num(d.y, -1e8, 1e5);
         if (x === null || y === null) return null;
         const skinIndex = Number.isInteger(d.skinIndex) && SKINS[d.skinIndex] ? d.skinIndex : 0;
-        const power = Object.values(POWERS).find(p => p.id === d.activePowerId);
+        // Running powers, [id, share of time left (0-1)] each: known ids,
+        // each once.
+        const pw = [];
+        if (Array.isArray(d.pw)) for (const row of d.pw.slice(0, POWER_LIST.length)) {
+            const id = Array.isArray(row) ? row[0] : null;
+            if (!POWER_LIST.some(p => p.id === id) || pw.some(r => r[0] === id)) continue;
+            pw.push([id, num(row[1], 0, 1) || 0]);
+        }
         return {
             type: 'sync', x, y,
             vx: num(d.vx, -50, 50) || 0,
             vy: num(d.vy, -50, 50) || 0,
             skinIndex,
-            activePowerId: power ? power.id : null,
-            // Share of the power-up's time left (0-1), for the spectate HUD.
-            pf: power ? (num(d.pf, 0, 1) || 0) : 0,
+            pw,
+            // Revive invincibility (they blink).
+            iv: d.iv === 1 ? 1 : 0,
             // Hearts banked (decides whether hearts show in their view).
             // (Their cap counts a 5 HEARTS run perk.)
             hl: Number.isInteger(d.hl) ? Math.max(0, Math.min(heartCapFor({ ability: withRunPerks(SKINS[skinIndex].ability, Array.isArray(d.rp) && d.rp.includes('heartCap') ? { heartCap: RUN_PERKS.heartCap } : null) }), d.hl)) : 0,
@@ -11143,8 +11316,14 @@ class GameCoop {
             rp.vx = data.vx;
             rp.vy = data.vy;
             rp.lastSeenT = this.state.time;
-            rp.activePower = data.activePowerId ? Object.values(POWERS).find(p => p.id === data.activePowerId) : null;
-            rp.powerFrac = data.pf || 0;
+            // Their running powers, each holding its share of time left.
+            rp.powers.clear();
+            rp.lastPower = null;
+            for (const [id, frac] of data.pw || []) {
+                const power = POWER_LIST.find(p => p.id === id);
+                if (power) { rp.powers.set(power, frac); rp.lastPower = power; }
+            }
+            rp.reviveT = data.iv ? 1 : 0;
             rp.hearts = data.hl || 0;
         } else if (data.type === 'pick') {
             this.applyRemotePick(data);
@@ -11229,7 +11408,7 @@ class GameCoop {
 
     // TIME WARP slows every enemy for the whole party while anyone has it.
     partyTimeWarp() {
-        const warped = p => p && !p.isDead && p.activePower === POWERS.TIME_WARP;
+        const warped = p => p && !p.isDead && p.hasPower(POWERS.TIME_WARP);
         if (warped(this.player)) return true;
         if (!this.state.multiplayer) return false;
         for (const rp of this.remotePlayers.values()) if (warped(rp)) return true;
@@ -11490,7 +11669,7 @@ class GameCoop {
     // their MAGNET (or a gem-magnet Pixel) just as on their own screen.
     pullForSpectated(rp, dt) {
         const ability = rp.ability || {};
-        const magnet = rp.activePower === POWERS.MAGNET;
+        const magnet = rp.hasPower(POWERS.MAGNET);
         if (!magnet && !ability.gemMagnetRadius) return;
         this.spectatePickups(rp).forEach(p => {
             if (magnet) rp.pullPickup(p, 200, dt);
@@ -11506,7 +11685,7 @@ class GameCoop {
         if (!this.player.isDead || this.spectatingPlayer !== rp) return;
         const p = this.powerups.find(q => q.wy === d.wy);
         if (!p) return;
-        const color = p.isGem ? BIOMES[p.tier || 0].gem.color : p.isHeart ? "#ff3366" : (rp.activePower ? rp.activePower.color : "#ffffff");
+        const color = p.isGem ? BIOMES[p.tier || 0].gem.color : p.isHeart ? "#ff3366" : (rp.lastPower ? rp.lastPower.color : "#ffffff");
         this.particles.spawn(p.x + p.w / 2, p.y + p.h / 2, color, p.isGem ? 10 : 20);
     }
 
@@ -11623,7 +11802,7 @@ class GameCoop {
             this.player.y = CONFIG.HEIGHT - 200;
         }
         this.player.launch(0);
-        this.player.grantPower(POWERS.SHIELD);
+        this.player.reviveT = REVIVE_INVULN_STEPS;
 
         if (window.network) window.network.send({ type: 'revive', pid: window.network.myId });
         this.showAlert("LIFE RESTORED", 'success');
@@ -12021,17 +12200,26 @@ class GameShop {
         else this.shopAct(d.shopAct, parseInt(d.index, 10), el);
     }
 
-    // BOOSTERS: the 2X GEMS card (an ad offer, or the time left).
+    // BOOSTERS: the 2X GEMS cards: the ad offer (or the time left) and the
+    // hour bought with gems.
     updateBoosterCards() {
+        const left = this.gemBoostLeft();
+        const hourBtn = this.ui.boosterHourBtn;
+        if (hourBtn) {
+            const bought = this.gemHourBoughtToday();
+            hourBtn.disabled = bought;
+            setHTML(hourBtn, !bought ? counted(fmtNum(GEM_HOUR_COST), 'gem') + ' BUY'
+                : left > 0 ? fmtClock(left) + ' LEFT' : 'BACK TOMORROW');
+        }
         const card = this.ui.boosterGems;
         if (!card) return;
-        const left = this.gemBoostLeft();
-        const cards = boosterCards(PLATFORM, this.canWatchGemBoost(), left > 0);
+        const canWatch = this.canWatchGemBoost();
+        const cards = boosterCards(PLATFORM, canWatch, left > 0);
         card.hidden = !cards.includes('gems');
         const btn = this.ui.boosterGemsBtn;
         if (!btn) return;
-        btn.disabled = left > 0;
-        setHTML(btn, left > 0 ? fmtClock(left) + ' LEFT' : icon('play') + ' WATCH AD');
+        btn.disabled = !canWatch;
+        setHTML(btn, canWatch ? icon('play') + ' WATCH AD' : left > 0 ? fmtClock(left) + ' LEFT' : icon('play') + ' WATCH AD');
     }
 
     // "Are you sure?" before gems are spent on a Pixel. BUY goes through
@@ -12163,15 +12351,55 @@ class GameShop {
     }
 
     // Buying a Pixel also equips it — that's why you bought it.
-    // ------------------------------------------- 2X GEMS booster (ads)
-    // Watching an ad makes gem pickups count double for GEM_BOOST_MS of real
-    // time. It's offered only between runs, never with a party (an ad there
-    // could hold everyone up), and only while no booster is running.
+    // ------------------------------------------- 2X GEMS boosters
+    // Gem pickups count double until gemBoostUntil (real time, menus
+    // included). Watching an ad adds GEM_BOOST_MS: offered only between
+    // runs, never with a party (an ad there could hold everyone up), and at
+    // most once per GEM_BOOST_MS (lp_gem_boost_ad_at). Buying the hour adds
+    // GEM_HOUR_MS, once per local day. Both add to the same clock.
 
     loadGemBoost() {
+        const now = Date.now();
         const until = parseInt(storageGet('lp_gem_boost_until')) || 0;
-        // A clock set back can't stretch it past one booster.
-        return Math.min(until, Date.now() + GEM_BOOST_MS);
+        // A clock set back can't stretch it past what could be bought: an
+        // ad, and two hours either side of midnight.
+        this.gemBoostUntil = Math.min(until, now + GEM_BOOST_MS + 2 * GEM_HOUR_MS);
+        const adAt = parseInt(storageGet('lp_gem_boost_ad_at'));
+        // Saves from before the bought hour: a running boost was an ad's.
+        this.gemBoostAdAt = Number.isFinite(adAt) ? Math.min(adAt, now)
+            : (this.gemBoostUntil > now ? this.gemBoostUntil - GEM_BOOST_MS : 0);
+        return this.gemBoostUntil;
+    }
+
+    // Adds `ms` of 2x gems onto whatever is left.
+    addGemBoost(ms) {
+        this.gemBoostUntil = Math.max(Date.now(), this.gemBoostUntil || 0) + ms;
+        saveItem('lp_gem_boost_until', this.gemBoostUntil);
+    }
+
+    gemHourBoughtToday() {
+        return storageGet('lp_gem_hour_day') === fmtDate(new Date());
+    }
+
+    buyGemHour() {
+        if (this.state.running || this.gemHourBoughtToday() || this.state.gems < GEM_HOUR_COST) {
+            this.shakeUI(this.ui.boosterHourBtn);
+            if (!this.state.running && !this.gemHourBoughtToday()) {
+                this.notify('NEED ' + fmtNum(GEM_HOUR_COST - this.state.gems) + ' MORE GEMS', 'warning');
+            }
+            return false;
+        }
+        this.state.gems -= GEM_HOUR_COST;
+        saveItem('lp_gems', this.state.gems);
+        saveItem('lp_gem_hour_day', fmtDate(new Date()));
+        this.addGemBoost(GEM_HOUR_MS);
+        if (this.ui.gemDisplay) this.ui.gemDisplay.innerHTML = counted(fmtNum(this.state.gems), 'gem');
+        this.notify("2X GEMS FOR 1 HOUR", 'reward');
+        sounds.play('reward');
+        this.renderGemShop();
+        this.updateSkinUI();
+        this.updateAdButtons();
+        return true;
     }
 
     gemBoostLeft(now = Date.now()) {
@@ -12187,14 +12415,15 @@ class GameShop {
     canWatchGemBoost() {
         const reviveUp = this.ads.reviveOverlay && this.ads.reviveOverlay.style.display === 'flex';
         return !this.state.running && !reviveUp && !this.inParty() && !this.installGated &&
-            this.gemBoostLeft() === 0 && this.ads.rewardedAvailable();
+            Date.now() - (this.gemBoostAdAt || 0) >= GEM_BOOST_MS && this.ads.rewardedAvailable();
     }
 
     watchGemBoost() {
         if (!this.canWatchGemBoost()) return;
         this.ads.showRewarded('gem_boost', () => {
-            this.gemBoostUntil = Date.now() + GEM_BOOST_MS;
-            saveItem('lp_gem_boost_until', this.gemBoostUntil);
+            this.gemBoostAdAt = Date.now();
+            saveItem('lp_gem_boost_ad_at', this.gemBoostAdAt);
+            this.addGemBoost(GEM_BOOST_MS);
             this.notify("2X GEMS FOR 15 MINUTES", 'reward');
             sounds.play('reward');
             this.updateAdButtons();
@@ -13667,33 +13896,74 @@ class GameMenus {
         }[c]));
     }
 
-    // The power-up bar: your own, or while you're down in co-op, the
-    // teammate you're spectating (a dead player's own power is frozen).
-    updatePowerHud(perks) {
-        let power = this.player.activePower;
-        let frac = this.powerFraction(perks);
-        let owner = '';
+    // The power-up bars, one row per running power (in the order they
+    // started): your own, or while you're down in co-op, the teammate you're
+    // spectating (a dead player's own powers are frozen).
+    updatePowerHud() {
+        const hud = this.powerHud || (this.powerHud = { any: false, rowFn: (v, p) => this.fillPowerRow(v, p) });
+        let owner = this.player;
+        hud.prefix = '';
         if (this.state.multiplayer && this.player.isDead) {
-            const rp = this.spectatingPlayer;
-            power = rp ? rp.activePower : null;
-            frac = rp ? rp.powerFrac || 0 : 0;
-            owner = rp ? (rp.name || 'PLAYER') + ': ' : '';
+            owner = this.spectatingPlayer || null;
+            hud.prefix = owner ? (owner.name || 'PLAYER') + ': ' : '';
         }
+        hud.owner = owner;
+        hud.row = 0;
+        if (owner) owner.powers.forEach(hud.rowFn);
+        const rows = this.powerRows();
+        for (let i = hud.row; i < rows.length; i++) this.setPowerRow(rows[i], null, null, 0);
         // Written only on a change: this runs every frame.
-        const hud = this.powerHud || (this.powerHud = {});
-        const label = power ? owner + power.name : null;
-        if (label !== hud.label) {
-            hud.label = label;
-            this.ui.power.style.opacity = power ? 1 : 0;
-            if (power) {
-                this.ui.powerText.innerText = label;
-                this.ui.powerText.style.color = power.color;
-                this.ui.powerFill.style.backgroundColor = power.color;
+        const any = hud.row > 0;
+        if (any !== hud.any) {
+            hud.any = any;
+            this.ui.power.style.opacity = any ? 1 : 0;
+        }
+    }
+
+    // One running power into the next HUD row. A teammate's copy holds the
+    // share of time left; the local player's holds steps.
+    fillPowerRow(v, power) {
+        const hud = this.powerHud, rows = this.powerRows();
+        if (hud.row >= rows.length) return;
+        const frac = hud.owner === this.player ? this.powerFraction(power) : v;
+        this.setPowerRow(rows[hud.row++], hud.prefix + power.name, power.color, frac);
+    }
+
+    // The HUD's rows, made once: a name over a timer bar for each power.
+    powerRows() {
+        if (this.ui.powerRows) return this.ui.powerRows;
+        this.ui.powerRows = POWER_LIST.map(() => {
+            const el = document.createElement('div');
+            el.className = 'power-row';
+            el.style.display = 'none';
+            const text = document.createElement('div');
+            text.className = 'power-text';
+            const bg = document.createElement('div');
+            bg.className = 'power-bar-bg';
+            const fill = document.createElement('div');
+            fill.className = 'power-bar-fill';
+            bg.appendChild(fill);
+            el.appendChild(text);
+            el.appendChild(bg);
+            this.ui.power.appendChild(el);
+            return { el, text, fill, label: null, width: -1 };
+        });
+        return this.ui.powerRows;
+    }
+
+    setPowerRow(row, label, color, frac) {
+        if (label !== row.label) {
+            row.label = label;
+            row.el.style.display = label ? '' : 'none';
+            if (label) {
+                row.text.innerText = label;
+                row.text.style.color = color;
+                row.fill.style.backgroundColor = color;
             }
         }
-        const width = power ? Math.round(frac * 200) / 2 : -1; // to half a percent
-        if (power && width !== hud.width) this.ui.powerFill.style.width = width + "%";
-        hud.width = width;
+        const width = label ? Math.round(frac * 200) / 2 : -1; // to half a percent
+        if (label && width !== row.width) row.fill.style.width = width + "%";
+        row.width = width;
     }
 
     // "Can't do that" feedback on the control that was pressed.
@@ -14231,7 +14501,7 @@ class GameRun {
     // A fall onto a deployed net (the SAFETY NET power, or a rescue net still
     // up) bounces instead of killing. Enemy hits aren't caught. True if caught.
     catchWithNet(forceDie) {
-        if (forceDie || !(this.player.activePower === POWERS.SAFETY || this.state.rescueNetT > 0)) return false;
+        if (forceDie || !(this.player.hasPower(POWERS.SAFETY) || this.state.rescueNetT > 0)) return false;
         this.player.y = CONFIG.HEIGHT - 60;
         this.player.vy = CONFIG.BOUNCE_FORCE;
         this.bounceSafetyNet();
@@ -14595,12 +14865,12 @@ class GameRun {
         return false;
     }
 
-    // Bounces the player back in on a red rescue net, behind a fresh HARD
-    // SHIELD, with a red notice (a life is gone).
+    // Bounces the player back in on a red rescue net, with revive
+    // invincibility and a red notice (a life is gone).
     rescuePlayer(color, text) {
         this.deployRescueNet();
         this.addShake(9);
-        this.player.grantPower(POWERS.SHIELD);
+        this.player.reviveT = REVIVE_INVULN_STEPS;
         sounds.play('heart_lost');
         this.particles.spawn(this.player.x + 13, this.player.y + 13, color, 30, "blast");
         this.showAlert(text, 'life');
@@ -14616,7 +14886,7 @@ class GameRun {
         this.stepAcc = 0;
 
         this.deployRescueNet();
-        this.player.grantPower(POWERS.SHIELD);
+        this.player.reviveT = REVIVE_INVULN_STEPS;
 
         this.showAlert("LIFE RESTORED", 'success');
     }
@@ -14824,7 +15094,7 @@ class GameEffects {
 
     updateSafetyNet(dt) {
         const net = this.safetyNet;
-        const power = this.player.activePower === POWERS.SAFETY;
+        const power = this.player.hasPower(POWERS.SAFETY);
         if (this.state.rescueNetT > 0) this.state.rescueNetT = Math.max(0, this.state.rescueNetT - dt);
         // The power's own (purple) net takes over from a red rescue net.
         if (power) net.rescue = false;
@@ -14835,7 +15105,7 @@ class GameEffects {
             : Math.max(0, net.deploy - 0.06 * dt);
         // Warn over the last ~2.5 seconds. A fixed window rather than a fraction
         // of the timer, since skin abilities can stretch the power's duration.
-        net.expiring = power && this.player.powerTimer < 150;
+        net.expiring = power && this.player.powerTimeLeft(POWERS.SAFETY) < 150;
 
         if (net.impact > 0) {
             net.phase += 0.5 * dt;
@@ -15336,7 +15606,7 @@ class GameEffects {
             (has(ui.biomeBanner, 'show') ? ' banner' : '') +
             (has(ui.alert, 'alert-visible') ? ' notice' : '') +
             (ui.achievement.style.display === 'block' ? ' badge' : '') +
-            (this.player.activePower ? ' power' : '') +
+            (this.player.powers.size ? ' power' : '') +
             ' scenes' + this.renderer.background.scenes.size +
             ' enemies' + this.enemies.length + ' particles' + this.particles.particles.length;
     }
@@ -15985,10 +16255,13 @@ function fmtDate(d) {
 }
 
 // 3725 -> "1h 2m", 95 -> "1m 35s".
-// A countdown as m:ss (ms rounded up, so it never shows 0:00 while running).
+// A countdown as m:ss, or h:mm:ss from an hour (ms rounded up, so it never
+// shows 0:00 while running).
 function fmtClock(ms) {
     const t = Math.max(0, Math.ceil(ms / 1000));
-    return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+    const ss = String(t % 60).padStart(2, '0');
+    if (t < 3600) return Math.floor(t / 60) + ':' + ss;
+    return Math.floor(t / 3600) + ':' + String(Math.floor(t / 60) % 60).padStart(2, '0') + ':' + ss;
 }
 
 function fmtDuration(totalSeconds) {
@@ -16146,8 +16419,6 @@ class Game {
             score: document.getElementById("score-display"),
             best: document.getElementById("best-display-hud"),
             power: document.getElementById("power-hud"),
-            powerFill: document.getElementById("power-bar-fill"),
-            powerText: document.getElementById("power-text"),
             alert: document.getElementById("system-alert"),
             alertIcon: document.getElementById("system-alert-icon"),
             alertText: document.getElementById("system-alert-text"),
@@ -16206,6 +16477,7 @@ class Game {
             rentEquipBtn: document.getElementById("rent-equip-btn"),
             boosterGems: document.getElementById("booster-gems"),
             boosterGemsBtn: document.getElementById("booster-gems-btn"),
+            boosterHourBtn: document.getElementById("booster-hour-btn"),
             skinAbility: document.getElementById("skin-ability"),
             shopOpenBtn: document.getElementById("shop-open-btn"),
             shopBackBtn: document.getElementById("shop-back-btn"),
@@ -16407,7 +16679,7 @@ class Game {
 
         // Rewarded ads: silence the game and drop held keys while one plays,
         // and keep the ad buttons (and the booster countdown) current.
-        this.gemBoostUntil = PLATFORM === 'portable' ? 0 : this.loadGemBoost();
+        this.loadGemBoost();
         this.ads.onAdStart = () => { this.input.resetInput(); this.applySettings(); };
         this.ads.onAdEnd = () => { this.applySettings(); this.resetFrameClock(); };
         this.ads.onChange = () => this.updateAdButtons();
@@ -16441,6 +16713,7 @@ class Game {
         onTap(this.ui.skinPrevBtn, () => this.stepOwnedSkin(-1));
         onTap(this.ui.skinNextBtn, () => this.stepOwnedSkin(1));
         onTap(this.ui.boosterGemsBtn, () => this.watchGemBoost());
+        onTap(this.ui.boosterHourBtn, () => this.buyGemHour());
         [this.ui.shopTabRent, this.ui.shopTabPixels, this.ui.shopTabStyle, this.ui.shopTabBoosters]
             .forEach(b => onTap(b, () => this.setShopTab(b.dataset.tab)));
         if (this.ui.shopPanelPixels) this.ui.shopPanelPixels.onclick = (e) => this.onShopPixelsClick(e);
@@ -16587,14 +16860,13 @@ class Game {
         });
     }
 
-    // Share of the local player's power-up time left (0-1). Measured
-    // against the stretched duration, or long-lasting power Pixels would
-    // start with an overflowing bar.
-    powerFraction(perks) {
-        const power = this.player.activePower;
-        if (!power) return 0;
-        const fullTime = power.time * (perks.powerDurationMult || 1);
-        return Math.max(0, Math.min(1, this.player.powerTimer / fullTime));
+    // Share of a running power's time left on the local player (0-1).
+    // Measured against the stretched duration, or long-lasting power Pixels
+    // would start with an overflowing bar.
+    powerFraction(power) {
+        const left = this.player.powerTimeLeft(power);
+        if (!left) return 0;
+        return Math.max(0, Math.min(1, left / this.player.powerFullTime(power)));
     }
 
     getDailySeed() {
@@ -16645,7 +16917,9 @@ class Game {
     }
 
     // Black holes pull this player (unless SHIELDED) and gems toward their
-    // centre, harder the closer they are. Every client pulls its own.
+    // centre, harder the closer they are. Within BLACK_HOLE_RADIUS the pull
+    // is strong and always on; beyond it, only a Pixel in the air is pulled,
+    // from anywhere on screen. Every client pulls its own.
     updateBlackHolePull(dt, envImmune) {
         for (const e of this.enemies) {
             if (!(e instanceof BlackHole) || e.markedForDeletion) continue;
@@ -16654,10 +16928,17 @@ class Game {
             if (!envImmune && !p.isDead) {
                 const dx = cx - (p.x + p.w / 2), dy = cy - (p.y + p.h / 2);
                 const d = Math.sqrt(dx * dx + dy * dy);
-                if (d > 1 && d < BLACK_HOLE_RADIUS) {
-                    const f = BLACK_HOLE_PULL * (1 - d / BLACK_HOLE_RADIUS) * dt / d;
-                    p.vx += dx * f;
-                    p.vy += dy * f;
+                if (d > 1) {
+                    const near = d < BLACK_HOLE_RADIUS;
+                    // Only a hole on (or just above) the screen reaches you.
+                    const onScreen = e.y + e.h > -CONFIG.HEIGHT / 4 && e.y < CONFIG.HEIGHT;
+                    let pull = near ? BLACK_HOLE_PULL * (1 - d / BLACK_HOLE_RADIUS) : 0;
+                    if (!p.grounded && onScreen) pull += BLACK_HOLE_FAR_PULL * BLACK_HOLE_RADIUS / Math.max(d, BLACK_HOLE_RADIUS);
+                    if (pull > 0) {
+                        const f = pull * dt / d;
+                        p.vx += dx * f;
+                        p.vy += dy * f;
+                    }
                 }
             }
             for (const g of this.powerups) {
@@ -16671,11 +16952,11 @@ class Game {
         }
     }
 
-    // A shock platform that is live hits whoever stands on it (a platform
-    // type, so SHIELDED doesn't help; a shield or Jetpack is spent on it).
-    checkShock() {
+    // A shock platform that is live hits whoever stands on it (a shield or
+    // Jetpack is spent on it). SHIELDED Pixels stand on it unharmed.
+    checkShock(envImmune) {
         const p = this.player, on = p.standOn;
-        if (p.isDead || !p.grounded || !on || on.type !== 'shock' || p.invuln > 0) return;
+        if (envImmune || p.isDead || !p.grounded || !on || on.type !== 'shock' || p.hitProof()) return;
         if (shockPhase(on) !== 'live') return;
         this.particles.spawn(p.x + p.w / 2, p.y + p.h, '#7df9ff', 14, 'blast');
         if (!this.absorbHit(null)) this.die(true);
@@ -16733,12 +17014,14 @@ class Game {
     // crash (the boss survives: it can't be rammed to death), and while it's
     // exposed at your level a side bump only knocks you back. Anything else
     // is fatal.
-    resolveBossContact(boss) {
+    // `top` is the top edge of the part of the boss touched (its hull or a
+    // rotor pod, see BossDrone.contactTop()); the hull's by default.
+    resolveBossContact(boss, top = boss.y + boss.bobY()) {
         const p = this.player;
         const feet = p.y + p.h;
-        const onTop = p.vy > 0 && (feet < boss.y + 40 || (p.prevBottom !== undefined && p.prevBottom <= boss.y + 12));
+        const onTop = p.vy > 0 && (feet < top + 40 || (p.prevBottom !== undefined && p.prevBottom <= top + 12));
         if (onTop) {
-            p.y = boss.y - p.h;
+            p.y = top - p.h;
             // Damaging or not, a stomp always throws you up like a spring.
             let shake = false;
             if (!this.isAuthority()) {
@@ -16762,10 +17045,12 @@ class Game {
         // A boss flashing from a hit only ever bounces you from above: it
         // can't bump or hurt anyone while it holds and starts to climb away.
         if (boss.invuln > 0 || boss.localInvuln > 0) return;
-        if (p.activePower === POWERS.ROCKET || p.activePower === POWERS.SHIELD) {
-            const color = p.activePower.color;
-            p.activePower = null;
-            p.powerTimer = 0;
+        // Revive invincibility: the boss passes harmlessly through.
+        if (p.reviveT > 0) return;
+        const guard = this.guardPower();
+        if (guard) {
+            const color = guard.color;
+            p.endPower(guard);
             p.invuln = 45;
             this.knockBackFrom(boss);
             this.particles.spawn(p.x, p.y, color, 20, "blast");
@@ -16788,10 +17073,9 @@ class Game {
     // from killing them a frame later. True if the hit was absorbed.
     absorbHit(obj) {
         const p = this.player;
-        const power = p.activePower;
-        if (power !== POWERS.ROCKET && power !== POWERS.SHIELD) return false;
-        p.activePower = null;
-        p.powerTimer = 0;
+        const power = this.guardPower();
+        if (!power) return false;
+        p.endPower(power);
         p.invuln = ABSORB_INVULN_FRAMES;
         this.vibrate(VIBRATE_HIT);
         this.destroyHostile(obj);
@@ -16799,6 +17083,16 @@ class Game {
         this.particles.spawn(p.x, p.y, power.color, 20, "blast");
         sounds.play('reward');
         return true;
+    }
+
+    // The running power that would take a hit: the HARD SHIELD first (a
+    // jetpack running alongside keeps flying), else the jetpack. Null if
+    // neither is running.
+    guardPower() {
+        const p = this.player;
+        if (p.hasPower(POWERS.SHIELD)) return POWERS.SHIELD;
+        if (p.hasPower(POWERS.ROCKET)) return POWERS.ROCKET;
+        return null;
     }
 
     // SMASH: a drone or bot that touches the Pixel dies instead of hurting it.
@@ -16961,9 +17255,10 @@ class Game {
         const scoreMeters = Math.floor(this.state.score / 10);
         const biome = this.renderer.currentBiome;
         const perks = this.player.ability || {};
-        // SHIELDED perk: the biome's forces (ice, black-hole pull) pass the
-        // player by. Meteors, laser beams, a black hole's centre and every
-        // platform type still count (ADR-0008).
+        // SHIELDED perk: every biome hazard and biome platform type passes
+        // the player by (ice, black-hole pull, meteors, conveyors, blinking,
+        // shrinking and shock platforms). Lasers (drones) and a black hole's
+        // centre still count (ADR-0008).
         const envImmune = !!perks.biomeImmune;
         const authority = this.isAuthority();
 
@@ -17052,7 +17347,7 @@ class Game {
             this.onLanded(this.player.justLanded);
             this.player.justLanded = 0;
         }
-        this.checkShock();
+        this.checkShock(envImmune);
         if (!this.state.running || this.state.dying) return STEP_STOP;
         // Ice spray at the feet of a sliding Pixel (drawing only).
         if (this.player.icy > 0 && !this.player.isDead && this.player.grounded && Math.abs(this.player.vx) > 1.5
@@ -17164,8 +17459,9 @@ class Game {
             this.collectHeart(event);
         } else if (event && event.event === "powerup") {
             this.state.powersCollected++;
-            this.particles.spawn(event.x + 12, event.y + 12, this.player.activePower.color, 20);
-            this.popPickup(event.x + 12, event.y + 12, this.player.activePower.color);
+            const color = event.power ? event.power.color : "#ffffff";
+            this.particles.spawn(event.x + 12, event.y + 12, color, 20);
+            this.popPickup(event.x + 12, event.y + 12, color);
             sounds.play('powerup');
         }
     }
@@ -17220,17 +17516,22 @@ class Game {
                 continue;
             }
             if (e.hidden || this.player.invuln > 0 || this.player.isDead) continue;
-            // The boss's laser sweep (every client checks its own Pixel).
-            const beam = e instanceof BossDrone ? e.beamRect() : null;
-            if (beam && rectsIntersect(this.player, beam)) {
-                if (!this.absorbHit(null)) this.die(true);
-                continue;
-            }
-            if (rectsIntersect(this.player, e)) {
-                if (e instanceof BossDrone) {
-                    this.resolveBossContact(e);
+            if (e instanceof BossDrone) {
+                // The boss's laser sweep (every client checks its own Pixel).
+                const beam = e.beamRect();
+                if (beam && !this.player.reviveT && rectsIntersect(this.player, beam)) {
+                    if (!this.absorbHit(null)) this.die(true);
                     continue;
                 }
+                // Its drawn shape: the hull and the rotor pods, where it is
+                // in its hover bob. (A stomp still lands under revive
+                // invincibility.)
+                const top = e.contactTop(this.player);
+                if (top !== null) this.resolveBossContact(e, top);
+                continue;
+            }
+            if (this.player.reviveT > 0) continue;
+            if (rectsIntersect(this.player, e)) {
                 // A black hole's centre: a shield or Jetpack is spent on it,
                 // but nothing destroys it.
                 if (e instanceof BlackHole) {
@@ -17258,7 +17559,9 @@ class Game {
                 this.projectiles.splice(i, 1);
                 continue;
             }
-            if (this.player.invuln > 0 || this.player.isDead) continue;
+            if (this.player.hitProof() || this.player.isDead) continue;
+            // SHIELDED: meteors (a biome hazard) pass through.
+            if (p instanceof Meteor && (this.player.ability || {}).biomeImmune) continue;
             if (rectsIntersect(this.player, p)) {
                 if (this.absorbHit(p)) continue;
                 this.die(true); // Projectiles are deadly
@@ -17291,8 +17594,9 @@ class Game {
                 vx: r(this.player.vx),
                 vy: r(this.player.vy),
                 skinIndex: this.viewParams.skinIndex,
-                activePowerId: this.player.activePower ? this.player.activePower.id : null,
-                pf: Math.round(this.powerFraction(perks) * 100) / 100,
+                // Running powers: [id, share of time left] each.
+                pw: this.powerSyncList(),
+                iv: this.player.reviveT > 0 ? 1 : 0,
                 hl: this.state.hearts,
                 cos: this.cosmeticIds(),
                 rp: this.player.runPerkKeys()
@@ -17367,7 +17671,7 @@ class Game {
             setText(this.ui.best, "BEST: " + fmtNum(this.state.bestHeight) + "m");
         }
 
-        this.updatePowerHud(perks);
+        this.updatePowerHud();
 
         if (this.state.multiplayer) {
             // Co-op: a pickup you took is only gone for you (see
@@ -17402,6 +17706,8 @@ class Game {
         if (this.state.running && this.settings.showTips) this.drawTips();
 
         const biome = this.renderer.currentBiome, biomeIndex = BIOMES.indexOf(biome);
+        // SHIELDED: platforms never blink out, so they're drawn solid.
+        const steady = !!(this.player.ability || {}).biomeImmune;
         this.platforms.forEach(p => {
             let y = p.y + (p.dip || 0);
             if (y > CONFIG.HEIGHT || y + p.h + 20 < this.renderer.viewTop) return;
@@ -17410,7 +17716,7 @@ class Game {
                 ctx.globalAlpha = p.gone < 30 ? 0.15 + 0.6 * (1 - p.gone / 30) : 0.15;
             } else if (p.crumbleT > 0) {
                 y += Math.sin(this.state.time * 2.3) * 1.5; // about to go
-            } else if (p.blinkT !== undefined) {
+            } else if (p.blinkT !== undefined && !steady) {
                 ctx.globalAlpha = blinkAlpha(p);
             }
             drawPlatform(ctx, p, y, biome, biomeIndex, this.sceneClock);

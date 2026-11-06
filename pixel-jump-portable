@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.41.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.42.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -2719,6 +2719,23 @@ body.reduce-motion #skin-preview-box {
     border-radius: 50%;
 }
 
+.style-swatch--strip span {
+    width: 6px;
+    height: 12px;
+    margin-top: 1px;
+}
+
+.style-swatch--streak span {
+    width: 14px;
+    height: 4px;
+    margin-top: 5px;
+    border-radius: 2px 5px 5px 2px;
+}
+
+.style-swatch--ghost span {
+    border-radius: 50% 50% 2px 2px;
+}
+
 .style-name {
     font-family: var(--font-text);
     font-size: 13px;
@@ -4484,7 +4501,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.41.0';
+    const EMBEDDED = '1.42.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4687,7 +4704,7 @@ const GEM_HOUR_COST = 4000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.41.0';
+const GAME_VERSION = '1.42.0';
 const NET_PROTOCOL = 17;
 
 // Game logic runs in fixed steps of STEP_MS (ADR-0007); a frame runs at most
@@ -5097,24 +5114,26 @@ function biomeIndexAt(meters) {
 // Trail: sprites left behind a moving Pixel. Landing: a burst on touching
 // down. Death: how the shatter looks (the slow motion and what got you stay).
 // Boss kill: the finisher's burst where the boss went down. Each is drawn
-// from sprites painted once (js/cosmetics.js) in `colors`, shaped `shape`.
+// from sprites painted once (js/cosmetics.js) in `colors`, shaped `shape`
+// (plus `extra` shapes some effects use); each trail, death and boss-kill is
+// its own animation, not a recolour.
 // Ids go over the wire in co-op (the sync's `cos`). Saved as
 // lp_owned_cosmetics (ids) and lp_cosmetics ({ trail, land, death, boss }).
 const COSMETIC_SLOTS = ['trail', 'land', 'death', 'boss'];
 const COSMETIC_SLOT_NAMES = { trail: 'TRAIL', land: 'LANDING', death: 'DEATH', boss: 'BOSS KILL' };
 const COSMETICS = [
-    { id: 'trail_spark', slot: 'trail', name: 'Sparks', cost: 500, shape: 'dot', colors: ['#ffe600', '#ffffff'] },
+    { id: 'trail_spark', slot: 'trail', name: 'Sparks', cost: 500, shape: 'streak', colors: ['#ffe600', '#ffffff', '#ff9900'] },
     { id: 'trail_comet', slot: 'trail', name: 'Comet Tail', cost: 3000, shape: 'dot', colors: ['#7df9ff', '#2b6cff', '#ffffff'] },
     { id: 'trail_rainbow', slot: 'trail', name: 'Rainbow', cost: 12000, shape: 'square', colors: ['#ff3355', '#ff9900', '#ffe600', '#33ff66', '#33aaff', '#b366ff'] },
     { id: 'land_ring', slot: 'land', name: 'Shock Ring', cost: 800, shape: 'ring', colors: ['#00ffcc'] },
     { id: 'land_stars', slot: 'land', name: 'Star Burst', cost: 4000, shape: 'star', colors: ['#ffe600', '#ffffff'] },
     { id: 'land_quake', slot: 'land', name: 'Quake', cost: 10000, shape: 'square', colors: ['#ff7a00', '#ffcc66'] },
-    { id: 'death_confetti', slot: 'death', name: 'Confetti', cost: 1500, shape: 'square', colors: ['#ff3355', '#ffe600', '#33ff66', '#33aaff'] },
-    { id: 'death_ghost', slot: 'death', name: 'Ghost Out', cost: 6000, shape: 'dot', colors: ['#e0ccff', '#ffffff'] },
-    { id: 'death_supernova', slot: 'death', name: 'Supernova', cost: 20000, shape: 'star', colors: ['#ffffff', '#ffd23d', '#ff5522'] },
-    { id: 'boss_fireworks', slot: 'boss', name: 'Fireworks', cost: 2000, shape: 'star', colors: ['#ff3355', '#ffe600', '#33aaff'] },
+    { id: 'death_confetti', slot: 'death', name: 'Confetti', cost: 1500, shape: 'strip', colors: ['#ff3355', '#ffe600', '#33ff66', '#33aaff'] },
+    { id: 'death_ghost', slot: 'death', name: 'Ghost Out', cost: 6000, shape: 'ghost', extra: ['dot'], colors: ['#e0ccff', '#ffffff'] },
+    { id: 'death_supernova', slot: 'death', name: 'Supernova', cost: 20000, shape: 'star', extra: ['flash', 'ring'], colors: ['#ffffff', '#ffd23d', '#ff5522'] },
+    { id: 'boss_fireworks', slot: 'boss', name: 'Fireworks', cost: 2000, shape: 'star', extra: ['dot'], colors: ['#ff3355', '#ffe600', '#33aaff'] },
     { id: 'boss_gemrain', slot: 'boss', name: 'Gem Shower', cost: 8000, shape: 'gem', colors: ['#00ffff', '#b266ff', '#ff66cc'] },
-    { id: 'boss_shockwave', slot: 'boss', name: 'Shockwave', cost: 15000, shape: 'ring', colors: ['#ffffff', '#ff0055'] }
+    { id: 'boss_shockwave', slot: 'boss', name: 'Shockwave', cost: 15000, shape: 'ring', extra: ['flash', 'streak'], colors: ['#ffffff', '#ff0055'] }
 ];
 const cosmeticById = (id) => COSMETICS.find(c => c.id === id) || null;
 
@@ -13665,44 +13684,85 @@ class GameMeta {
 //
 // Saves: lp_owned_cosmetics (ids) and lp_cosmetics ({ trail, land, death, boss }).
 
-const COSMETIC_FX_POOL = 220;
-const COSMETIC_SPRITE = 32; // px each sprite is painted at
+const COSMETIC_FX_POOL = 360;
+const COSMETIC_SPRITE = 32; // px each ordinary sprite is painted at
+const COSMETIC_BIG_SPRITE = 96; // rings and flashes, which grow large
 
-// One sprite: `shape` in `color`, with its glow, on a small canvas.
+// "#rrggbb" as an rgba() string.
+function cosmeticRgba(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+
+// One sprite: `shape` in `color`, with its glow, on a small canvas. Streaks
+// point right (head on the right) so they can be turned along their motion.
 function paintCosmeticSprite(shape, color) {
+    const big = shape === 'ring' || shape === 'flash';
+    const size = big ? COSMETIC_BIG_SPRITE : COSMETIC_SPRITE;
     const c = document.createElement('canvas');
-    c.width = c.height = COSMETIC_SPRITE;
+    c.width = c.height = size;
     const ctx = c.getContext('2d');
     if (!ctx || !ctx.arc) return c;
-    const m = COSMETIC_SPRITE / 2;
-    ctx.shadowBlur = 8;
+    const m = size / 2;
+    ctx.shadowBlur = big ? 0 : 8;
     ctx.shadowColor = color;
     ctx.fillStyle = color;
     ctx.strokeStyle = color;
     ctx.beginPath();
     if (shape === 'ring') {
-        ctx.lineWidth = 3;
-        ctx.arc(m, m, m - 6, 0, Math.PI * 2);
+        ctx.lineWidth = 8;
+        ctx.arc(m, m, m - 8, 0, Math.PI * 2);
         ctx.stroke();
+    } else if (shape === 'flash') {
+        const g = ctx.createRadialGradient(m, m, 0, m, m, m);
+        g.addColorStop(0, cosmeticRgba(color, 1));
+        g.addColorStop(0.35, cosmeticRgba(color, 0.55));
+        g.addColorStop(1, cosmeticRgba(color, 0));
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
     } else if (shape === 'star') {
         for (let i = 0; i < 10; i++) {
-            const r = i % 2 ? 4 : 11, a = -Math.PI / 2 + i * Math.PI / 5;
+            const r = i % 2 ? 5 : 13, a = -Math.PI / 2 + i * Math.PI / 5;
             const x = m + Math.cos(a) * r, y = m + Math.sin(a) * r;
             if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
         }
         ctx.closePath();
         ctx.fill();
     } else if (shape === 'square') {
-        ctx.fillRect(m - 5, m - 5, 10, 10);
+        ctx.fillRect(m - 8, m - 8, 16, 16);
+    } else if (shape === 'strip') {
+        ctx.fillRect(m - 5, m - 10, 10, 20);
+    } else if (shape === 'streak') {
+        ctx.moveTo(1, m);
+        ctx.lineTo(24, m - 6);
+        ctx.arc(24, m, 6, -Math.PI / 2, Math.PI / 2);
+        ctx.closePath();
+        ctx.fill();
+    } else if (shape === 'ghost') {
+        ctx.arc(m, 13, 10, Math.PI, 0);
+        ctx.lineTo(m + 10, 28);
+        ctx.lineTo(m + 5, 24);
+        ctx.lineTo(m, 28);
+        ctx.lineTo(m - 5, 24);
+        ctx.lineTo(m - 10, 28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(m - 4, 13, 2.2, 0, Math.PI * 2);
+        ctx.arc(m + 4, 13, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
     } else if (shape === 'gem') {
-        ctx.moveTo(m, m - 9);
-        ctx.lineTo(m + 8, m - 2);
-        ctx.lineTo(m, m + 10);
-        ctx.lineTo(m - 8, m - 2);
+        ctx.moveTo(m, m - 12);
+        ctx.lineTo(m + 10, m - 3);
+        ctx.lineTo(m, m + 13);
+        ctx.lineTo(m - 10, m - 3);
         ctx.closePath();
         ctx.fill();
     } else {
-        ctx.arc(m, m, 5, 0, Math.PI * 2);
+        ctx.arc(m, m, 9, 0, Math.PI * 2);
         ctx.fill();
     }
     return c;
@@ -13724,10 +13784,17 @@ class GameCosmetics {
             this.cosmetics[slot] = c && c.slot === slot && this.ownedCosmetics.includes(c.id) ? c.id : null;
         }
         this.cosFx = [];
-        for (let i = 0; i < COSMETIC_FX_POOL; i++) this.cosFx.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 1, size: 10, grow: 0, gravity: 0, sprite: null });
+        for (let i = 0; i < COSMETIC_FX_POOL; i++) {
+            this.cosFx.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 1, size: 10, grow: 0, gravity: 0, sprite: null,
+                rot: 0, vrot: 0, drag: 1, delay: 0, aspect: 1, align: false, add: false, ax: 0, wf: 0, ph: 0, fade: 1.4 });
+        }
         this.cosFxNext = 0;
+        this.cosCount = 0; // steps a trail has run: colours and wave phase
         this.cosmeticSprites = new Map();
-        for (const c of COSMETICS) this.cosmeticSprites.set(c.id, c.colors.map(col => paintCosmeticSprite(c.shape, col)));
+        for (const c of COSMETICS) {
+            this.cosmeticSprites.set(c.id, c.colors.map(col => paintCosmeticSprite(c.shape, col)));
+            for (const shape of c.extra || []) this.cosmeticSprites.set(c.id + ':' + shape, c.colors.map(col => paintCosmeticSprite(shape, col)));
+        }
     }
 
     saveCosmetics() {
@@ -13770,33 +13837,63 @@ class GameCosmetics {
     }
 
     // ----------------------------------------------------------------- fx
+    // One pooled sprite. Returns it so the caller can set the extras: rot and
+    // vrot (spin), drag (velocity kept per step), delay (steps before it
+    // shows: how a timed effect is scripted), aspect (height / width), align
+    // (turned along its motion, for streaks), add (glows over what is
+    // behind), ax / wf / ph (a sideways wave: amplitude, speed, phase), fade
+    // (alpha = life left x fade).
     emitCosFx(sprite, x, y, vx, vy, life, size, grow, gravity) {
         const f = this.cosFx[this.cosFxNext];
         this.cosFxNext = (this.cosFxNext + 1) % this.cosFx.length;
         f.on = true; f.sprite = sprite;
         f.x = x; f.y = y; f.vx = vx; f.vy = vy;
         f.life = f.max = life; f.size = size; f.grow = grow; f.gravity = gravity;
+        f.rot = 0; f.vrot = 0; f.drag = 1; f.delay = 0; f.aspect = 1; f.align = false; f.add = false;
+        f.ax = 0; f.wf = 0; f.ph = 0; f.fade = 1.4;
+        return f;
     }
 
     updateCosFx(dt) {
         for (const f of this.cosFx) {
             if (!f.on) continue;
+            if (f.delay > 0) { f.delay -= dt; continue; }
             f.life -= dt;
             if (f.life <= 0) { f.on = false; continue; }
             f.vy += f.gravity * dt;
+            if (f.drag !== 1) {
+                const k = Math.pow(f.drag, dt);
+                f.vx *= k; f.vy *= k;
+            }
             f.x += f.vx * dt;
             f.y += f.vy * dt;
             f.size += f.grow * dt;
+            f.rot += f.vrot * dt;
         }
     }
 
     drawCosFx(ctx) {
+        let add = false;
         for (const f of this.cosFx) {
-            if (!f.on || !f.sprite) continue;
-            const s = Math.max(1, f.size);
-            ctx.globalAlpha = Math.max(0, Math.min(1, f.life / f.max * 1.4));
-            ctx.drawImage(f.sprite, f.x - s / 2, f.y - s / 2, s, s);
+            if (!f.on || !f.sprite || f.delay > 0) continue;
+            const w = Math.max(1, f.size), h = w * f.aspect;
+            if (f.add !== add) {
+                add = f.add;
+                ctx.globalCompositeOperation = add ? 'lighter' : 'source-over';
+            }
+            ctx.globalAlpha = Math.max(0, Math.min(1, f.life / f.max * f.fade));
+            const x = f.ax ? f.x + Math.sin(f.ph + (f.max - f.life) * f.wf) * f.ax * (f.life / f.max) : f.x;
+            if (f.align || f.rot !== 0) {
+                ctx.save();
+                ctx.translate(x, f.y);
+                ctx.rotate(f.align ? Math.atan2(f.vy, f.vx) : f.rot);
+                ctx.drawImage(f.sprite, -w / 2, -h / 2, w, h);
+                ctx.restore();
+            } else {
+                ctx.drawImage(f.sprite, x - w / 2, f.y - h / 2, w, h);
+            }
         }
+        if (add) ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = 1;
     }
 
@@ -13804,20 +13901,52 @@ class GameCosmetics {
         for (const f of this.cosFx) if (f.on) f.y += diff;
     }
 
-    // A sprite of cosmetic `id`, cycling through its colours.
-    cosSprite(id, k) {
-        const list = this.cosmeticSprites.get(id);
+    // A sprite of cosmetic `id`, cycling through its colours; `shape` picks
+    // one of its extra sprites instead of the main one.
+    cosSprite(id, k, shape) {
+        const list = this.cosmeticSprites.get(shape ? id + ':' + shape : id);
         return list ? list[k % list.length] : null;
     }
 
-    // Trail: a few sprites behind a Pixel on the move (every other step,
-    // on the timer `tickName`: one per Pixel).
+    // Trail: each is its own effect, not a recolour. Sparks fling streaks
+    // back that arc down; the Comet Tail is a tapering glowing tail; the
+    // Rainbow is a two-strand ribbon of coloured squares weaving behind.
+    // Runs on the timer `tickName` (one per Pixel); the effect sits a little
+    // behind the Pixel so its body stays clear.
     trailFx(p, id, tickName, dt) {
-        if (!id || !this.tick(tickName, dt, 2)) return;
-        if (Math.abs(p.vx) + Math.abs(p.vy) < 3) return;
-        const k = Math.floor(this.state.time);
-        this.emitCosFx(this.cosSprite(id, k), p.x + p.w / 2, p.y + p.h / 2,
-            (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, 22, 12, -0.35, 0);
+        if (!id) return;
+        const every = id === 'trail_spark' ? 2 : 1;
+        if (!this.tick(tickName, dt, every)) return;
+        const speed = Math.abs(p.vx) + Math.abs(p.vy);
+        if (speed < 3) return;
+        const n = this.cosCount++;
+        const len = Math.hypot(p.vx, p.vy) || 1;
+        const x = p.x + p.w / 2 - p.vx / len * 7, y = p.y + p.h / 2 - p.vy / len * 7;
+        let f;
+        if (id === 'trail_spark') {
+            const back = Math.atan2(-p.vy, -p.vx);
+            for (let i = 0; i < 3; i++) {
+                const a = back + (Math.random() - 0.5) * 1.5, s = 1.5 + Math.random() * 3.5;
+                f = this.emitCosFx(this.cosSprite(id, n + i), x, y, Math.cos(a) * s, Math.sin(a) * s, 16 + Math.random() * 8, 24, -0.8, 0.14);
+                f.align = true; f.aspect = 0.5; f.add = true; f.fade = 1.2;
+            }
+        } else if (id === 'trail_comet') {
+            f = this.emitCosFx(this.cosSprite(id, 1), x, y, -p.vx * 0.03, -p.vy * 0.03, 30, 46, -1.5, 0);
+            f.add = true; f.fade = 1.1;
+            f = this.emitCosFx(this.cosSprite(id, 0), x, y, -p.vx * 0.05, -p.vy * 0.05, 20, 30, -1.4, 0);
+            f.add = true;
+            f = this.emitCosFx(this.cosSprite(id, 2), x, y, 0, 0, 9, 16, -1.7, 0);
+            f.add = true;
+            if (n % 3 === 0) {
+                f = this.emitCosFx(this.cosSprite(id, 0), x, y, (Math.random() - 0.5) * 1.6, (Math.random() - 0.5) * 1.6, 26, 9, -0.3, 0.02);
+                f.add = true;
+            }
+        } else {
+            for (let i = 0; i < 2; i++) {
+                f = this.emitCosFx(this.cosSprite(id, n + i * 3), x, y, 0, 0, 36, 24, -0.55, 0);
+                f.ax = 13; f.wf = 0.26; f.ph = n * 0.33 + i * Math.PI; f.vrot = 0.08; f.fade = 1.1;
+            }
+        }
     }
 
     // Landing: by the cosmetic's shape, a ring, a star burst or a quake.
@@ -13840,35 +13969,113 @@ class GameCosmetics {
         }
     }
 
-    // Death: a burst in the cosmetic's sprites on top of the usual shatter
-    // (which keeps its slow motion and what got you).
+    // Death: its own animation on top of the usual shatter (which keeps its
+    // slow motion and what got you). Timed in whole steps (`delay`); the
+    // run card comes DEATH_ANIM_FRAMES after the hit, so each plays out in
+    // about 55. Reduced Motion drops the flashes and the wind-up.
     deathFx(p, id) {
         if (!cosmeticById(id)) return;
         const x = p.x + p.w / 2, y = Math.min(p.y, CONFIG.HEIGHT - p.h) + p.h / 2;
-        for (let i = 0; i < 24; i++) {
-            const a = i * Math.PI * 2 / 24, v = 2 + (i % 3);
-            this.emitCosFx(this.cosSprite(id, i), x, y, Math.cos(a) * v, Math.sin(a) * v - 1, 60, 14, -0.12, 0.08);
+        const calm = this.settings && this.settings.reducedMotion;
+        let f;
+        if (id === 'death_confetti') {
+            for (let i = 0; i < 46; i++) {
+                const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.6, s = 2 + Math.random() * 6;
+                f = this.emitCosFx(this.cosSprite(id, i), x, y, Math.cos(a) * s, Math.sin(a) * s, 46 + Math.random() * 12, 20, 0, 0.07);
+                f.drag = 0.97; f.rot = Math.random() * 6; f.vrot = (Math.random() - 0.5) * 0.5;
+                f.ax = 5; f.wf = 0.3; f.ph = Math.random() * 6; f.fade = 1.1;
+            }
+        } else if (id === 'death_ghost') {
+            // The Pixel's ghost slips out of the body and drifts up, swaying,
+            // with wisps trailing after it.
+            f = this.emitCosFx(this.cosSprite(id, 0), x, y, 0, -1.2, 58, 76, 0.3, 0);
+            f.ax = 12; f.wf = 0.11; f.fade = 1.0;
+            for (let i = 0; i < 8; i++) {
+                f = this.emitCosFx(this.cosSprite(id, 1, 'dot'), x + (Math.random() - 0.5) * 30, y + 8 + Math.random() * 10, (Math.random() - 0.5) * 0.5, -0.5 - Math.random() * 1.2, 40, 11, -0.15, 0);
+                f.delay = i * 3; f.add = true; f.ax = 6; f.wf = 0.2; f.ph = i;
+            }
+            for (let i = 0; i < 3; i++) {
+                f = this.emitCosFx(this.cosSprite(id, 1), x + (i - 1) * 16, y + 14, 0, -0.7 - i * 0.2, 44, 22, 0, 0);
+                f.delay = 6 + i * 5; f.ax = 8; f.wf = 0.14; f.ph = i * 2; f.fade = 1.2;
+            }
+        } else {
+            // Supernova: the Pixel's light is pulled in (the wind-up),
+            // flashes white, then blasts out in shards and shock rings.
+            const T = calm ? 0 : 22;
+            if (!calm) {
+                for (let i = 0; i < 28; i++) {
+                    const a = i * 2.399 + Math.random() * 0.4, r = 80 + Math.random() * 60;
+                    f = this.emitCosFx(this.cosSprite(id, i), x + Math.cos(a) * r, y + Math.sin(a) * r, -Math.cos(a) * r / T, -Math.sin(a) * r / T, T, 15, -0.25, 0);
+                    f.add = true; f.vrot = 0.2; f.fade = 3;
+                }
+                f = this.emitCosFx(this.cosSprite(id, 0, 'flash'), x, y, 0, 0, T, 14, 0.9, 0);
+                f.add = true; f.fade = 3;
+                f = this.emitCosFx(this.cosSprite(id, 0, 'flash'), x, y, 0, 0, 10, 60, 30, 0);
+                f.delay = T; f.add = true;
+                f = this.emitCosFx(this.cosSprite(id, 1, 'flash'), x, y, 0, 0, 26, 90, 14, 0);
+                f.delay = T; f.add = true;
+            }
+            f = this.emitCosFx(this.cosSprite(id, 2, 'ring'), x, y, 0, 0, 30, 14, 9, 0);
+            f.delay = T; f.add = true;
+            f = this.emitCosFx(this.cosSprite(id, 0, 'ring'), x, y, 0, 0, 26, 10, 7, 0);
+            f.delay = T + 4; f.add = true;
+            for (let i = 0; i < 30; i++) {
+                const a = i * Math.PI * 2 / 30 + Math.random() * 0.2, s = 3.5 + Math.random() * 5;
+                f = this.emitCosFx(this.cosSprite(id, i), x, y, Math.cos(a) * s, Math.sin(a) * s, 30 + Math.random() * 8, 20, -0.3, 0.03);
+                f.delay = T; f.drag = 0.95; f.add = true; f.vrot = (Math.random() - 0.5) * 0.4;
+            }
         }
     }
 
-    // Boss kill: the finisher's effect where the boss went down.
+    // Boss kill: the finisher's effect where the boss went down (x, y).
     bossFx(x, y, id) {
         const c = cosmeticById(id);
         if (!c) return;
-        if (c.shape === 'ring') {
-            for (let i = 0; i < 3; i++) this.emitCosFx(this.cosSprite(id, i), x, y, 0, 0, 30 + i * 10, 20, 7 + i * 2, 0);
-        } else if (c.shape === 'gem') {
-            for (let i = 0; i < 30; i++) {
-                this.emitCosFx(this.cosSprite(id, i), x + (Math.random() - 0.5) * 300, y - 80 - Math.random() * 120,
-                    (Math.random() - 0.5) * 1.5, Math.random() * 2, 80, 16, 0, 0.12);
+        const calm = this.settings && this.settings.reducedMotion;
+        let f;
+        if (id === 'boss_fireworks') {
+            // Three rockets climb and each bursts in its own colour: a ring
+            // of stars inside a slower ring, with a falling glitter.
+            for (let b = 0; b < 3; b++) {
+                const sx = Math.max(60, Math.min(CONFIG.WIDTH - 60, x + (b - 1) * 130));
+                const T = 20 + b * 9, top = Math.max(80, y - 150 - b * 40);
+                const rise = (top - y) / T;
+                f = this.emitCosFx(this.cosSprite(id, b), sx, y, 0, rise, T, 16, 0, 0);
+                f.add = true; f.fade = 3;
+                for (let k = 1; k <= 6; k++) {
+                    f = this.emitCosFx(this.cosSprite(id, b, 'dot'), sx, y + rise * (k * T / 6), 0, 0, 9, 10, -0.9, 0);
+                    f.delay = k * T / 6; f.add = true;
+                }
+                f = this.emitCosFx(this.cosSprite(id, 2, 'dot'), sx, top, 0, 0, 9, 34, 3, 0);
+                f.delay = T; f.add = true;
+                for (let i = 0; i < 24; i++) {
+                    const a = i * Math.PI * 2 / 24, s = i % 2 ? 4.2 : 2.6;
+                    f = this.emitCosFx(this.cosSprite(id, b), sx, top, Math.cos(a) * s, Math.sin(a) * s, 46, 26, -0.4, 0.07);
+                    f.delay = T; f.drag = 0.955; f.add = true; f.vrot = 0.1;
+                }
+            }
+        } else if (id === 'boss_gemrain') {
+            // A shower from the top of the screen, spinning and swaying down.
+            for (let i = 0; i < 46; i++) {
+                f = this.emitCosFx(this.cosSprite(id, i), Math.random() * CONFIG.WIDTH, -20 - Math.random() * 40, 0, 2.5 + Math.random() * 2, 120, 22 + Math.random() * 8, 0, 0.05);
+                f.delay = Math.random() * 50; f.rot = Math.random() * 6; f.vrot = (Math.random() - 0.5) * 0.2;
+                f.ax = 8; f.wf = 0.12; f.ph = Math.random() * 6; f.fade = 2;
             }
         } else {
-            for (let b = 0; b < 3; b++) {
-                const bx = x + (b - 1) * 90, by = y - b * 30;
-                for (let i = 0; i < 14; i++) {
-                    const a = i * Math.PI * 2 / 14;
-                    this.emitCosFx(this.cosSprite(id, i + b), bx, by, Math.cos(a) * 3.5, Math.sin(a) * 3.5, 45, 14, -0.15, 0.05);
-                }
+            // Shockwave: rings roll out from the kill, with a flash and
+            // speed lines thrown out ahead of them.
+            if (!calm) {
+                f = this.emitCosFx(this.cosSprite(id, 1, 'flash'), x, y, 0, 0, 12, 60, 14, 0);
+                f.add = true;
+            }
+            for (let i = 0; i < 4; i++) {
+                f = this.emitCosFx(this.cosSprite(id, i), x, y, 0, 0, 32, 20, 12, 0);
+                f.delay = i * 5; f.add = true; f.fade = 1.2;
+            }
+            for (let i = 0; i < 24; i++) {
+                const a = i * Math.PI * 2 / 24;
+                f = this.emitCosFx(this.cosSprite(id, i, 'streak'), x + Math.cos(a) * 24, y + Math.sin(a) * 24, Math.cos(a) * 10, Math.sin(a) * 10, 22, 44, -0.8, 0);
+                f.align = true; f.aspect = 0.35; f.drag = 0.93; f.add = true;
             }
         }
     }
@@ -14825,6 +15032,7 @@ class GameRun {
         this.state.score = 0;
         this.state.dying = 0; // a run ended mid-shatter must not carry it over
         this.state.pulseTimer = 0;
+        if (this.cosFx) for (const f of this.cosFx) f.on = false; // the last run's effects end with it
         this.state.empLast = {}; // host: when each guest's EMP last went off
         this.state.bossActive = false;
         this.state.time = 0;
@@ -15095,7 +15303,7 @@ class GameRun {
     updateDying(dt) {
         const slow = dt * DEATH_SLOWMO;
         this.particles.update(slow);
-        this.updateCosFx(slow);
+        this.updateCosFx(dt); // the death effect keeps real time: it is scripted to fit the beat
         this.updateFx(dt);
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             this.projectiles[i].update(slow);

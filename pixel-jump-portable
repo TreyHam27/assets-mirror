@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.42.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.43.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -4501,7 +4501,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.42.0';
+    const EMBEDDED = '1.43.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4704,7 +4704,7 @@ const GEM_HOUR_COST = 4000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.42.0';
+const GAME_VERSION = '1.43.0';
 const NET_PROTOCOL = 17;
 
 // Game logic runs in fixed steps of STEP_MS (ADR-0007); a frame runs at most
@@ -7592,6 +7592,7 @@ const INPUT_UI_SELECTOR = 'button, input, a, #menus-wrapper, #revive-overlay, .o
 class InputHandler {
     constructor() {
         this.keys = { left: false, right: false, jump: false, buffer: 0 };
+        this.bufferSet = false; // see press()
 
         // Gameplay input only counts while a run is live. The Game replaces
         // this; until then nothing is intercepted, so the menus behave like a
@@ -7681,7 +7682,7 @@ class InputHandler {
             e.preventDefault();
         }
         // Key autorepeat doesn't re-press: holding jump re-jumps only on a landing.
-        if (role === 'jump' && !e.repeat) this.keys.buffer = 6;
+        if (role === 'jump' && !e.repeat) this.press();
         // Jump is tracked as held too (every Pixel re-jumps on landing while it is held).
         this.heldCodes.set(InputHandler.keyId(e), role);
         this.syncDirections();
@@ -7748,7 +7749,7 @@ class InputHandler {
             e.preventDefault();
             const zone = this.zoneAt(e.clientX);
             this.pointers.set(e.pointerId, zone);
-            if (zone === 'jump') this.keys.buffer = 6;
+            if (zone === 'jump') this.press();
             this.syncDirections();
         });
 
@@ -7831,7 +7832,7 @@ class InputHandler {
         ev.start = start && !p.start;
         ev.prev = (left && !p.left) || (up && !p.up);
         ev.next = (right && !p.right) || (down && !p.down);
-        if (ev.a && this.isActive()) this.keys.buffer = 6;
+        if (ev.a && this.isActive()) this.press();
         const changed = left !== p.left || right !== p.right || jump !== p.jump;
         p.left = left; p.right = right; p.up = up; p.down = down; p.jump = jump; p.back = back; p.start = start;
         if (changed) this.syncDirections();
@@ -7849,6 +7850,15 @@ class InputHandler {
         this.keys.right = false;
         this.keys.jump = false;
         this.keys.buffer = 0;
+        this.bufferSet = true;
+    }
+
+    // A fresh jump press: buffered for a few steps (Player.update spends it).
+    // bufferSet tells the run recording the buffer changed from outside the
+    // simulation since the last step.
+    press() {
+        this.keys.buffer = 6;
+        this.bufferSet = true;
     }
 }
 
@@ -8757,7 +8767,10 @@ class Player extends Entity {
         this.squash = 0;
         this.squashV = 0;
         this.blink = 0;
-        this.blinkIn = 120 + Math.random() * 180;
+        this.blinkIn = 120 + Math.random() * 180; // drawing only
+        // Gameplay draws (the power a box gives): the run's seeded stream,
+        // set by Game.reset() (Math.random for a Pixel made on its own).
+        this.rand = Math.random;
         this.justLanded = 0;
         this.standOn = null;
         // Set by the Game each frame: the ice hazard is on for this Pixel.
@@ -8791,7 +8804,7 @@ class Player extends Entity {
         this.blinkIn -= dt;
         if (this.blinkIn <= 0) {
             this.blink = 7;
-            this.blinkIn = 120 + Math.random() * 240;
+            this.blinkIn = 120 + Math.random() * 240; // drawing only
         }
     }
 
@@ -8923,7 +8936,7 @@ class Player extends Entity {
             // landing, but not the pickups below (returning early here used
             // to fly straight through gems). It also clears any standing
             // state, or the Pixel got a free mid-air jump once it ran out.
-            if (Math.random() < 0.5) event = "thrust";
+            if (Math.random() < 0.5) event = "thrust"; // drawing only: the flame
             this.grounded = false;
             this.coyote = 0;
         } else {
@@ -9098,7 +9111,7 @@ class Player extends Entity {
         const covered = skinPerks(ability).map(({ perk }) => POWERS[perk.covers]).filter(Boolean);
         const types = Object.values(POWERS).filter(p => !covered.includes(p) && !this.powers.has(p));
         if (!types.length) return null;
-        const p = types[Math.floor(Math.random() * types.length)];
+        const p = types[Math.floor(this.rand() * types.length)];
         this.grantPower(p);
         return p;
     }
@@ -9249,21 +9262,25 @@ class ParticleSystem {
     }
 }
 
+// Drones, laser drones and black holes draw from `rand`: the run's seeded
+// stream (Game.rng.next) for the ones a run spawns; a guest's mirrored copy
+// keeps Math.random, since the host's snapshots move it.
 class Drone extends Entity {
-    constructor(y, difficulty = 1) {
-        const side = Math.random() < 0.5 ? -40 : CONFIG.WIDTH + 40;
+    constructor(y, difficulty = 1, rand = Math.random) {
+        const side = rand() < 0.5 ? -40 : CONFIG.WIDTH + 40;
         super(side, y, 30, 20, "#ff0000");
         this.targetX = side < 0 ? CONFIG.WIDTH + 100 : -100;
 
         // Scale speed with difficulty
         const baseSpeed = CONFIG.DRONE_BASE_VELOCITY || 2;
         const maxSpeed = CONFIG.DRONE_MAX_VELOCITY || 8;
-        let speed = (baseSpeed + Math.random() * 3) * difficulty;
+        let speed = (baseSpeed + rand() * 3) * difficulty;
         if (speed > maxSpeed) speed = maxSpeed;
 
         this.v = speed * (side < 0 ? 1 : -1);
-        this.sinOffset = Math.random() * Math.PI * 2;
+        this.sinOffset = rand() * Math.PI * 2;
         this.difficulty = difficulty;
+        this.rand = rand;
         this.t = 0; // animation clock (guests advance it in followNetEnemy)
     }
 
@@ -9277,8 +9294,8 @@ class Drone extends Entity {
             this.hidden = false;
             this.x = this.exitSide < 0 ? -40 : CONFIG.WIDTH + 40;
             this.v = -this.v;
-            this.y += (Math.random() < 0.5 ? -1 : 1) * (30 + Math.random() * 30);
-            this.sinOffset = Math.random() * Math.PI * 2;
+            this.y += (this.rand() < 0.5 ? -1 : 1) * (30 + this.rand() * 30);
+            this.sinOffset = this.rand() * Math.PI * 2;
             return;
         }
 
@@ -9287,7 +9304,7 @@ class Drone extends Entity {
         if ((this.v > 0 && this.x > CONFIG.WIDTH + 50) || (this.v < 0 && this.x < -100)) {
             this.hidden = true;
             this.exitSide = this.v > 0 ? 1 : -1;
-            this.respawnTimer = 45 + Math.random() * 45;
+            this.respawnTimer = 45 + this.rand() * 45;
         }
     }
 
@@ -9354,10 +9371,10 @@ class Projectile extends Entity {
 }
 
 class ShooterDrone extends Drone {
-    constructor(y, difficulty = 1) {
-        super(y, difficulty);
+    constructor(y, difficulty = 1, rand = Math.random) {
+        super(y, difficulty, rand);
         this.color = "#ffaa00";
-        this.shootTimer = 60 + Math.random() * 60;
+        this.shootTimer = 60 + rand() * 60;
         this.w = 34; // Slightly larger
         this.h = 24;
     }
@@ -9369,7 +9386,7 @@ class ShooterDrone extends Drone {
         this.shootTimer -= dt;
         if (this.shootTimer <= 0) {
             this.shoot(player, projectiles);
-            this.shootTimer = Math.max(40, 120 - (this.difficulty * 10)) + Math.random() * 60;
+            this.shootTimer = Math.max(40, 120 - (this.difficulty * 10)) + this.rand() * 60;
         }
     }
 
@@ -9425,14 +9442,15 @@ class LaserDrone extends Entity {
     // While firing, its own x/y/w/h expand into a full-width beam rect, so
     // the game's generic rectsIntersect(player, enemy) collision check just
     // works without any special-casing (same as every other enemy type).
-    constructor(y) {
+    constructor(y, rand = Math.random) {
         const bodyW = 34, bodyH = 20;
         super(CONFIG.WIDTH / 2 - bodyW / 2, y, bodyW, bodyH, "#ff0055");
         this.bodyW = bodyW;
         this.bodyH = bodyH;
-        this.driftPhase = Math.random() * Math.PI * 2;
+        this.driftPhase = rand() * Math.PI * 2;
         this.phase = "cooldown"; // cooldown -> telegraph -> firing -> cooldown
-        this.timer = 90 + Math.random() * 90;
+        this.timer = 90 + rand() * 90;
+        this.rand = rand;
         this.t = 0; // animation clock (guests advance it in followNetEnemy)
     }
 
@@ -9459,7 +9477,7 @@ class LaserDrone extends Entity {
                 this.h = 8;
             } else {
                 this.phase = "cooldown";
-                this.timer = 150 + Math.random() * 90;
+                this.timer = 150 + this.rand() * 90;
             }
         }
 
@@ -9567,9 +9585,9 @@ const BLACK_HOLE_ARM_COLORS = [0, 1, 2].map(i => 'rgba(179, 136, 255, ' + (0.15 
 // centre, which is a hit; within BLACK_HOLE_RADIUS it pulls the Pixel and
 // gems (Game.updateBlackHolePull). Host-run in co-op, like the drones.
 class BlackHole extends Entity {
-    constructor(cx, y) {
+    constructor(cx, y, rand = Math.random) {
         super(cx - PIXEL_SIZE / 2, y, PIXEL_SIZE, PIXEL_SIZE, "#b388ff");
-        this.vx = (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.4);
+        this.vx = (rand() < 0.5 ? -1 : 1) * (0.3 + rand() * 0.4);
         this.t = 0; // animation clock (guests advance it in followNetEnemy)
     }
 
@@ -10234,6 +10252,239 @@ class LayoutGenerator {
         if (last !== null && last !== undefined && last - wy < HEART_MIN_GAP) return false;
         const ramp = Math.min(1, meters / HEART_RAMP_METERS);
         return this.random() < HEART_CHANCE_START + (HEART_CHANCE_END - HEART_CHANCE_START) * ramp;
+    }
+}
+
+</script>
+<script>/* ---- js/record.js ---- */
+// Seeded gameplay randomness and run recording (ADR-0010).
+//
+// A run is two seeds plus its inputs. The layout seed (`state.runSeed`)
+// feeds the LayoutGenerator and nothing else (js/layout.js). The play seed
+// (`state.playSeed`, fresh each run) feeds `this.rng`, the run's gameplay
+// stream: drone sides, speeds and respawns, shooter and laser timers, black
+// holes, meteors, power-up draws and run-perk offers. Drawing-only
+// randomness (particles, shake, blinks, cosmetics, the menu scene) stays on
+// Math.random, so drawing can never change a run.
+//
+// A solo run records the inputs each fixed step sees, and the few things
+// that happen between steps (a run-perk pick, a revive, quitting, the gem
+// booster running out), into `this.lastRunRecord` when it ends. Replaying
+// that record on a fresh Game (replayRunRecord) runs the same steps and
+// ends in the same state: the base for checking runs on the server.
+
+const RUN_RECORD_VERSION = 1;
+// Held keys in a step's input code (bits 0-2). A step that also had the jump
+// buffer set from outside the simulation (a fresh press: 6, a reset: 0)
+// adds (buffer + 1) << 3.
+const REC_LEFT = 1, REC_RIGHT = 2, REC_JUMP = 4;
+// Facts about a step that come from outside the simulation, sampled at its
+// start: the 2X GEMS booster is running, reduced motion is on (it sets how
+// long the death beat lasts).
+const REC_FLAG_BOOST = 1, REC_FLAG_MOTION = 2;
+// Two hours of steps: a run left running longer stops recording.
+const RUN_RECORD_MAX_STEPS = 60 * 60 * 60 * 2;
+
+// mulberry32, as one run's gameplay stream. `next` is a bound function, so
+// entities can keep it and draw without a reference to the Game.
+class RunRandom {
+    constructor(seed) {
+        this.state = seed | 0;
+        this.next = () => {
+            let t = this.state = (this.state + 0x6D2B79F5) | 0;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+}
+
+// A new run's play seed (an unsigned 32-bit number). From Math.random, so a
+// test that seeds Math.random still gets the same run every time.
+function newPlaySeed() {
+    return Math.floor(Math.random() * 4294967296) >>> 0;
+}
+
+// FNV-1a over whole numbers (floats are kept to 1/1000 of a px).
+function hashRunNums(h, nums) {
+    for (let i = 0; i < nums.length; i++) {
+        let n = Math.round((Number(nums[i]) || 0) * 1000) | 0;
+        for (let b = 0; b < 4; b++) {
+            h ^= n & 0xff;
+            h = Math.imul(h, 16777619);
+            n >>>= 8;
+        }
+    }
+    return h >>> 0;
+}
+
+// GameRecord is never instantiated: app.js copies these methods onto
+// Game.prototype, so `this` is always the Game.
+class GameRecord {
+    // The facts a step samples from outside the simulation (REC_FLAG_*).
+    liveRunFlags() {
+        return (this.gemBoostLeft() > 0 ? REC_FLAG_BOOST : 0) | (this.settings.reducedMotion ? REC_FLAG_MOTION : 0);
+    }
+
+    // In a run, the 2X GEMS booster as the current step saw it (so a
+    // replay pays the same); between runs, the clock.
+    runBoosted() {
+        if (this.state.running && Number.isFinite(this.state.runFlags)) return (this.state.runFlags & REC_FLAG_BOOST) !== 0;
+        return this.gemBoostLeft() > 0;
+    }
+
+    // End of startGame(): a solo run (not co-op, not Freeplay, not a
+    // replay) starts recording.
+    startRunRecord() {
+        this.state.runFlags = this.replayRun ? this.replayRun.flags : this.liveRunFlags();
+        this.runRec = null;
+        // The last record is only ever the run that just ended.
+        if (!this.replayRun) this.lastRunRecord = null;
+        if (this.replayRun || this.state.multiplayer || this.freeplay) return;
+        const skin = SKINS[this.viewParams.skinIndex] || SKINS[0];
+        this.runRec = {
+            bits: 0, flags: this.state.runFlags,
+            rec: {
+                v: RUN_RECORD_VERSION, game: GAME_VERSION, gen: PLATFORM_GEN_VERSION,
+                seed: this.state.runSeed, playSeed: this.state.playSeed, start: this.state.startMeters || 0,
+                skin: skin.id, hearts: this.state.hearts, ltm: this.state.ltm ? this.state.ltm.id : null,
+                flags: this.state.runFlags,
+                steps: 0, inputs: [], events: [], end: null
+            }
+        };
+    }
+
+    // The start of every live step (update()): what the step's input is,
+    // recorded or (in a replay) played back, and the sampled flags.
+    stepInputs() {
+        const rp = this.replayRun;
+        if (rp) { this.replayStepInputs(rp); return; }
+        this.state.runFlags = this.liveRunFlags();
+        const r = this.runRec;
+        if (!r) return;
+        const rec = r.rec, input = this.input, k = input.keys;
+        if (rec.steps >= RUN_RECORD_MAX_STEPS) { this.runRec = null; return; }
+        const bits = (k.left ? REC_LEFT : 0) | (k.right ? REC_RIGHT : 0) | (k.jump ? REC_JUMP : 0);
+        let code = bits;
+        if (input.bufferSet) {
+            code |= (Math.max(0, Math.round(k.buffer)) + 1) << 3;
+            input.bufferSet = false;
+        }
+        if (code !== r.bits) rec.inputs.push(rec.steps, code);
+        r.bits = bits;
+        if (this.state.runFlags !== r.flags) {
+            rec.events.push([rec.steps, 'flags', this.state.runFlags]);
+            r.flags = this.state.runFlags;
+        }
+        rec.steps++;
+    }
+
+    // Something between steps that changes the run (kinds: perk, revive,
+    // quit), at the step it happened before.
+    recordRunEvent(kind, value = 0) {
+        if (this.runRec) this.runRec.rec.events.push([this.runRec.rec.steps, kind, value]);
+    }
+
+    // gameOver(): the finished run's record, kept in lastRunRecord.
+    finishRunRecord() {
+        const r = this.runRec;
+        this.runRec = null;
+        if (!r) return null;
+        r.rec.end = this.runRecordEnd();
+        this.lastRunRecord = r.rec;
+        return r.rec;
+    }
+
+    // What a run ended with, which a replay must match.
+    runRecordEnd() {
+        return {
+            meters: this.runScore(), gems: this.state.runGems || 0, deaths: this.state.runDeaths || 0,
+            hash: this.runStateHash()
+        };
+    }
+
+    // A checksum of the simulation: the camera, the Pixel, the run's
+    // counters, both random streams, and everything in the level.
+    runStateHash() {
+        const s = this.state, p = this.player;
+        let h = hashRunNums(2166136261, [
+            s.score, p.x, p.y, p.vx, p.vy, s.hearts, s.runGems || 0, s.runDeaths || 0, s.runLoops || 0,
+            this.rng ? this.rng.state : 0, this.layout ? this.layout.seed : 0,
+            this.enemies.length, this.projectiles.length, this.platforms.length, this.powerups.length
+        ]);
+        for (const e of this.enemies) h = hashRunNums(h, [e.x, e.y, e.hp || 0]);
+        for (const e of this.projectiles) h = hashRunNums(h, [e.x, e.y]);
+        for (const e of this.platforms) h = hashRunNums(h, [e.x, e.y, e.w]);
+        for (const e of this.powerups) h = hashRunNums(h, [e.x, e.y]);
+        if (p.powers) p.powers.forEach((left, power) => { h = hashRunNums(h, [power.id, left]); });
+        if (p.runPerks) h = hashRunNums(h, Object.keys(p.runPerks).sort().map(k => k.length + k.charCodeAt(0)));
+        return h;
+    }
+
+    // ------------------------------------------------------------- replay
+    // Plays `rec` back on this Game and returns how it ended (as
+    // runRecordEnd(), plus the steps run), or null for a record it can't
+    // play (another game version or level generator, an unknown Pixel or
+    // mode, a mode that is switched off). It starts a
+    // real run, so use a throwaway Game (a test, or the server), never the
+    // player's: the run writes the same saves a live one would.
+    replayRunRecord(rec) {
+        if (!rec || rec.v !== RUN_RECORD_VERSION || rec.gen !== PLATFORM_GEN_VERSION || rec.game !== GAME_VERSION) return null;
+        if (!Array.isArray(rec.inputs) || !Array.isArray(rec.events) || !(rec.steps >= 0)) return null;
+        const skinIndex = SKINS.findIndex(s => s.id === rec.skin);
+        const ltm = rec.ltm ? ltmById(rec.ltm) : null;
+        if (skinIndex < 0 || (rec.ltm && !ltm)) return null;
+        const rp = { rec, s: 0, i: 0, e: 0, bits: 0, flags: rec.flags | 0 };
+        this.replayRun = rp;
+        try {
+            this.viewParams.skinIndex = skinIndex;
+            this.ltmArmed = ltm;
+            this.settings.reducedMotion = (rp.flags & REC_FLAG_MOTION) !== 0;
+            this.state.hearts = 0; // nothing bought: the record says what the run started with
+            this.startGame(false, rec.seed, rec.playSeed);
+            if (!this.state.running || (ltm && this.state.ltm !== ltm)) return null;
+            this.setHearts(rec.hearts);
+            this.state.runFlags = rp.flags;
+            let stalled = 0;
+            while (rp.s < rec.steps && stalled < 3) {
+                this.applyReplayEvents(rp);
+                const before = rp.s;
+                this.update(1);
+                stalled = rp.s === before ? stalled + 1 : 0;
+            }
+            this.applyReplayEvents(rp); // a quit after the last step
+            return { ...this.runRecordEnd(), steps: rp.s };
+        } finally {
+            this.replayRun = null;
+        }
+    }
+
+    // The events recorded before step rp.s.
+    applyReplayEvents(rp) {
+        const ev = rp.rec.events;
+        while (rp.e < ev.length && ev[rp.e][0] <= rp.s) {
+            const [, kind, value] = ev[rp.e++];
+            if (kind === 'flags') rp.flags = value | 0;
+            else if (kind === 'perk') this.pickRunPerk(value);
+            else if (kind === 'revive') this.revive();
+            else if (kind === 'quit') this.state.running = false;
+        }
+    }
+
+    replayStepInputs(rp) {
+        const ins = rp.rec.inputs, k = this.input.keys;
+        if (rp.i < ins.length && ins[rp.i] === rp.s) {
+            const code = ins[rp.i + 1];
+            rp.i += 2;
+            rp.bits = code & 7;
+            if (code >= 8) k.buffer = (code >> 3) - 1;
+        }
+        k.left = (rp.bits & REC_LEFT) !== 0;
+        k.right = (rp.bits & REC_RIGHT) !== 0;
+        k.jump = (rp.bits & REC_JUMP) !== 0;
+        this.state.runFlags = rp.flags;
+        this.settings.reducedMotion = (rp.flags & REC_FLAG_MOTION) !== 0;
+        rp.s++;
     }
 }
 
@@ -12597,7 +12848,7 @@ class GameShop {
     // A gem pickup's worth: its biome value, times a GEMS x2 perk, times the
     // booster (so Crystal Hoarder with a booster collects 4x).
     gemPickupValue(value, perks) {
-        return (value || 1) * (perks.gemMult || 1) * (this.gemBoostLeft() > 0 ? 2 : 1) * this.ltmRule('gemMult', 1);
+        return (value || 1) * (perks.gemMult || 1) * (this.runBoosted() ? 2 : 1) * this.ltmRule('gemMult', 1);
     }
 
     canWatchGemBoost() {
@@ -14897,6 +15148,7 @@ class GameRun {
             this.leaveParty("LEFT THE PARTY");
             return;
         }
+        this.recordRunEvent('quit');
         this.state.running = false;
         this.gameOver();
     }
@@ -14969,7 +15221,7 @@ class GameRun {
             this.stats.coopBosses += 1;
             saveItem('lp_stats', JSON.stringify(this.stats));
         }
-        const bounty = bossBountyFor(this.player.ability, this.gemBoostLeft() > 0);
+        const bounty = bossBountyFor(this.player.ability, this.runBoosted());
         // Pick a run perk (after the bounty, so it is paid at the old rate).
         // A co-op player who is down picks too: it's theirs once they're back.
         this.offerRunPerks();
@@ -15028,7 +15280,9 @@ class GameRun {
         sounds.play('jump');
     }
 
-    reset(seed = null) {
+    // `seed` is the layout's (null: today's), `playSeed` the gameplay
+    // stream's (null: a fresh one).
+    reset(seed = null, playSeed = null) {
         this.state.score = 0;
         this.state.dying = 0; // a run ended mid-shatter must not carry it over
         this.state.pulseTimer = 0;
@@ -15046,6 +15300,9 @@ class GameRun {
         // here on; runSeed and startMeters identify the layout (for the ghost).
         this.layout = new LayoutGenerator(seed !== null ? seed : this.getDailySeed());
         this.state.runSeed = this.state.seed;
+        // The run's gameplay randomness, a stream of its own (js/record.js).
+        this.state.playSeed = playSeed !== null ? playSeed >>> 0 : newPlaySeed();
+        this.rng = new RunRandom(this.state.playSeed);
         this.state.startMeters = Math.floor(this.state.score / 10);
         // Bosses beaten this run (drives drone difficulty) and where the next
         // one appears, measured from the start height.
@@ -15083,6 +15340,7 @@ class GameRun {
 
         // Standing on the launch pad, where the menu showed it waiting.
         this.player = new Player(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 40 - 26, this.viewParams.skinIndex);
+        this.player.rand = this.rng.next;
 
         saveItem('lp_skin', SKINS[this.viewParams.skinIndex].id);
 
@@ -15177,7 +15435,9 @@ class GameRun {
         saveItem('lp_ghost', JSON.stringify(ghost)); // storage full: the old one stays
     }
 
-    startGame(isMp = false, mpSeed = null) {
+    // `seed`: the layout's (co-op's shared one, a replay's); null is today's.
+    // `playSeed`: the gameplay stream's (a replay's); null is a fresh one.
+    startGame(isMp = false, seed = null, playSeed = null) {
         // A limited-time mode armed by requestLtmStart(): a solo run only.
         const ltm = this.ltmArmed || null;
         this.ltmArmed = null;
@@ -15199,7 +15459,7 @@ class GameRun {
         this.state.multiplayer = isMp;
         this.state.deathCount = 0;
         this.runSerial = (this.runSerial || 0) + 1;
-        this.reset(isMp ? mpSeed : null);
+        this.reset(seed, playSeed);
         // RACE #1 only on a solo run of the Ghost's own layout.
         if (this.raceGhost && (isMp || this.state.runSeed !== this.raceGhost.ghost.seed || this.state.startMeters !== 0)) this.raceGhost = null;
         // Every run starts with the free heart plus the hearts bought for it;
@@ -15238,6 +15498,7 @@ class GameRun {
         this.updateTouchControls();
         this.updateAdButtons();
         this.startChallenge();
+        this.startRunRecord();
     }
 
     // The pickups this player can see and collect. Hearts are part of every
@@ -15317,6 +15578,8 @@ class GameRun {
         this.state.dying = 0;
         this.state.running = false;
         this.updateTouchControls(); // not over a revive prompt
+        // A replay stops here: its record says whether a revive came next.
+        if (this.replayRun) return;
 
         if (this.canOfferRevive()) this.offerRevive();
         else this.gameOver();
@@ -15395,6 +15658,7 @@ class GameRun {
     }
 
     revive() {
+        this.recordRunEvent('revive');
         this.state.revived = true;
         this.state.running = true;
         // Keys pressed on the revive prompt (Space on WATCH AD, mashing)
@@ -15410,6 +15674,7 @@ class GameRun {
     }
 
     gameOver() {
+        this.finishRunRecord();
         this.state.dying = 0;
         this.saveBest();
         let finalScore = this.runScore();
@@ -15517,8 +15782,8 @@ class GameRun {
     // After a boss kill: two run perks to choose from (drawRunPerks), for
     // RUN_PERK_PICK_MS, then one of the two at random. Solo pauses while the
     // cards are up; co-op carries on, and each player picks their own.
-    offerRunPerks(rand = Math.random) {
-        const choices = drawRunPerks(this.player.ability, rand);
+    offerRunPerks(rand = null) {
+        const choices = drawRunPerks(this.player.ability, rand || (this.rng ? this.rng.next : Math.random));
         if (!choices.length) return null;
         this.perkPick = { choices, left: RUN_PERK_PICK_MS, solo: !this.state.multiplayer };
         if (this.perkPick.solo) {
@@ -15557,6 +15822,7 @@ class GameRun {
         const pick = this.perkPick;
         if (!pick || !pick.choices[i]) return;
         const key = pick.choices[i];
+        this.recordRunEvent('perk', i);
         this.closeRunPerks();
         this.player.addRunPerk(key);
         if (key === 'heartCap') this.updateHeartUI();
@@ -15581,6 +15847,8 @@ class GameRun {
         const pick = this.perkPick;
         if (!pick || this.pauseMenuOpen) return;
         pick.left -= Math.max(0, Math.min(ms, 250));
+        // Not the run's stream: it runs on real time, between steps. The
+        // pick is recorded like the player's own.
         if (pick.left <= 0) this.pickRunPerk(Math.random() < 0.5 ? 0 : 1);
     }
 
@@ -16891,6 +17159,11 @@ class Game {
         this.hourlyRecord = this.loadHourlyUnlock();
 
         this.layout = new LayoutGenerator(this.getDailySeed());
+        // Gameplay randomness (js/record.js): reset() gives each run its own.
+        this.rng = new RunRandom(0);
+        this.runRec = null;        // the solo run being recorded
+        this.replayRun = null;     // set while replayRunRecord() plays one back
+        this.lastRunRecord = null; // the last finished solo run's record
         this.state = {
             running: false,
             revived: false,
@@ -17782,6 +18055,9 @@ class Game {
         // Freeplay's others keep climbing through the banner between runs.
         if (this.freeplay) this.updateFreeplayOthers(dt);
         if (!this.state.running || this.state.paused) return;
+        // This step's input: recorded in a solo run, or played back
+        // (js/record.js). The death beat's steps count too.
+        this.stepInputs();
         if (this.state.dying) { this.updateDying(dt); return; }
 
         this.state.time += dt;
@@ -17854,23 +18130,25 @@ class Game {
             // Spawned relative to the camera's player (the lowest living one
             // in co-op), so everyone sees them arrive.
             const spawnY = this.bossFocus().y - 500;
-            if (scoreMeters > 300 && Math.random() < Math.min(0.5, (scoreMeters - 300) / 2400)) {
-                this.enemies.push(new ShooterDrone(spawnY, difficulty));
+            const rand = this.rng.next;
+            if (scoreMeters > 300 && rand() < Math.min(0.5, (scoreMeters - 300) / 2400)) {
+                this.enemies.push(new ShooterDrone(spawnY, difficulty, rand));
             } else {
-                this.enemies.push(new Drone(spawnY, difficulty));
+                this.enemies.push(new Drone(spawnY, difficulty, rand));
             }
         }
 
         const laserDose = hazardDose(biome, 'laser');
         if (authority && !this.state.bossActive && laserDose && this.tick('laser', dt, LASER_EVERY / laserDose)
             && this.countEnemies(LaserDrone) < CONFIG.LASER_CAP) {
-            this.enemies.push(new LaserDrone(this.bossFocus().y - 500));
+            this.enemies.push(new LaserDrone(this.bossFocus().y - 500, this.rng.next));
         }
         // Black holes drift in from above (host-run; guests mirror them).
         const holeDose = hazardDose(biome, 'blackHole');
         if (authority && !this.state.bossActive && holeDose && this.tick('blackHole', dt, BLACK_HOLE_EVERY / holeDose)
             && this.countEnemies(BlackHole) < BLACK_HOLE_CAP) {
-            this.enemies.push(new BlackHole(Math.random() * (CONFIG.WIDTH - 120) + 60, this.bossFocus().y - 700));
+            const rand = this.rng.next;
+            this.enemies.push(new BlackHole(rand() * (CONFIG.WIDTH - 120) + 60, this.bossFocus().y - 700, rand));
         }
     }
 
@@ -17922,9 +18200,10 @@ class Game {
         // marker shows them coming (drawMeteorMarkers).
         const meteorDose = hazardDose(biome, 'meteor');
         if (authority && meteorDose && this.tick('meteor', dt, METEOR_EVERY / meteorDose)) {
-            const vy = METEOR_VY[0] + Math.random() * (METEOR_VY[1] - METEOR_VY[0]);
-            const vx = (Math.random() * 2 - 1) * METEOR_VX;
-            const x = 20 + Math.random() * (CONFIG.WIDTH - 54);
+            const rand = this.rng.next;
+            const vy = METEOR_VY[0] + rand() * (METEOR_VY[1] - METEOR_VY[0]);
+            const vx = (rand() * 2 - 1) * METEOR_VX;
+            const x = 20 + rand() * (CONFIG.WIDTH - 54);
             // Above the tallest possible view, so the marker always shows
             // first (drawMeteorMarkers starts METEOR_WARN steps before it
             // enters the view, whatever its height).
@@ -18243,7 +18522,7 @@ class Game {
         const shaking = this.shake > 0;
         if (shaking) {
             ctx.save();
-            ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
+            ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake); // drawing only
         }
         this.renderer.drawGrid(this.state.bgOffset);
         if (this.state.running && this.settings.showTips) this.drawTips();
@@ -18462,7 +18741,7 @@ function blendedY(o, y) {
 // (loaded before this file). They're written as classes so they
 // run in strict mode like the rest of Game, and copied onto it here exactly
 // as if they were written in the class above.
-for (const part of [GameCoop, GameShop, GameShare, GameHourly, GameLeaderboard, GameMeta, GameCosmetics, GameMenus, GameRun, GameEffects, GameFreeplay]) {
+for (const part of [GameRecord, GameCoop, GameShop, GameShare, GameHourly, GameLeaderboard, GameMeta, GameCosmetics, GameMenus, GameRun, GameEffects, GameFreeplay]) {
     for (const name of Object.getOwnPropertyNames(part.prototype)) {
         if (name === 'constructor') continue;
         if (Object.prototype.hasOwnProperty.call(Game.prototype, name)) throw new Error('Game.' + name + ' is defined twice');

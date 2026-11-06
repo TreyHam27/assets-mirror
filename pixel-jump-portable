@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Pixel Jump portable 1.40.0, built by tools/build-portable.mjs -->
+<!-- Pixel Jump portable 1.41.0, built by tools/build-portable.mjs -->
 <html lang="en">
 
 <head>
@@ -2856,13 +2856,28 @@ body.reduce-motion #skin-preview-box {
     background: var(--gem);
 }
 
-/* The Streak: a line under the menu scores, and a pay line on the run card. */
+/* The Streak: a button under the menu scores that opens the claim card, and
+   the card itself. */
 .menu-streak {
+    width: 100%;
+    padding: 4px 8px;
+    border: 0;
+    background: none;
     color: var(--gold);
+    font-family: var(--font-display);
     font-size: 13px;
     font-weight: 900;
     letter-spacing: 1px;
     text-align: center;
+    cursor: pointer;
+}
+
+.menu-streak.claimable {
+    animation: streak-nudge 1.6s ease-in-out infinite;
+}
+
+@keyframes streak-nudge {
+    50% { text-shadow: 0 0 10px var(--gold); }
 }
 
 .menu-streak .streak-next {
@@ -2875,16 +2890,110 @@ body.reduce-motion #skin-preview-box {
     letter-spacing: 0;
 }
 
-.run-card-streak {
-    margin: 10px 0 2px;
+.streak-box {
+    max-width: 380px;
+}
+
+.streak-day {
     color: var(--gold);
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.streak-road {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    margin: 12px 0 8px;
+    padding: 0;
+    list-style: none;
+}
+
+.streak-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.18));
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.streak-step-day {
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.streak-step-gems {
+    color: var(--gem);
+}
+
+.streak-step--done {
+    border-color: var(--gold);
+    opacity: 0.7;
+}
+
+.streak-step--done .streak-step-day {
+    color: var(--gold);
+}
+
+.streak-step--now {
+    border-color: var(--teal);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.35);
+}
+
+.streak-bar {
+    width: 100%;
+    height: 6px;
+    margin-bottom: 8px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+
+.streak-bar span {
+    display: block;
+    height: 100%;
+    background: var(--gold);
+}
+
+.run-card-ltm {
+    margin: 10px 0 2px;
+    color: var(--teal);
     font-size: 14px;
     font-weight: 900;
     letter-spacing: 1px;
 }
 
-.run-card-streak .streak-reward {
-    color: var(--gem);
+.run-card-ltm .ltm-best {
+    color: var(--gold);
+}
+
+/* LIMITED MODE: this slot's rule twist, under PLAY. */
+.ltm-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.ltm-btn .ltm-name {
+    color: var(--teal);
+}
+
+.ltm-btn .ltm-sub {
+    color: var(--muted);
+    font-family: var(--font-text);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
 }
 
 /* An achievement's reward, hard right of its row. */
@@ -4076,9 +4185,10 @@ body.reduce-motion *::after {
                             <span id="menu-highscore">BEST HEIGHT: 0m</span>
                             <span id="menu-lastscore" hidden>LAST RUN: 0m</span>
                         </div>
-                        <div id="menu-streak" class="menu-streak" hidden></div>
+                        <button id="menu-streak" class="menu-streak" type="button" aria-haspopup="dialog" hidden></button>
                         <button id="start-prompt" class="btn btn--primary btn--big">PLAY</button>
                         <button id="race-btn" class="btn btn--gold" type="button" hidden>RACE TODAY'S #1</button>
+                        <button id="ltm-btn" class="btn ltm-btn" type="button" hidden></button>
                         <button id="to-mp-btn" class="btn"><svg class="ico" aria-hidden="true"><use href="#i-coop"/></svg> MULTIPLAYER</button>
                         <div class="menu-actions">
                             <button id="shop-open-btn" class="btn"><svg class="ico ico-gem" aria-hidden="true"><use href="#i-gem"/></svg> SHOP<span class="shop-badge" hidden>BUY</span></button>
@@ -4175,6 +4285,14 @@ body.reduce-motion *::after {
 
                 <div id="records-stats" class="records-stats"></div>
 
+                <div id="ltm-records" class="panel panel--gold" hidden>
+                    <div class="panel-head">
+                        <span class="panel-title"><svg class="ico ico-gold" aria-hidden="true"><use href="#i-trophy"/></svg> LIMITED MODES</span>
+                        <span class="panel-sub">best climbs</span>
+                    </div>
+                    <div id="ltm-records-list" class="records-stats"></div>
+                </div>
+
                 <div class="panel panel--gold records-panel">
                     <button id="records-toggle" class="panel-head records-toggle" type="button" aria-expanded="false" aria-controls="records-list">
                         <span class="panel-title"><svg class="ico ico-gold" aria-hidden="true"><use href="#i-medal"/></svg> Achievements</span>
@@ -4257,7 +4375,7 @@ body.reduce-motion *::after {
                 <div id="run-card-distance" class="run-card-distance">0m</div>
                 <div id="run-card-best" class="run-card-best" hidden>★ NEW BEST ★</div>
                 <div id="run-card-stats" class="run-card-stats"></div>
-                <div id="run-card-streak" class="run-card-streak" hidden></div>
+                <div id="run-card-ltm" class="run-card-ltm" hidden></div>
                 <div id="run-card-lb" class="run-card-lb" hidden>
                     <div id="run-card-lb-title" class="run-card-lb-title"></div>
                     <div id="run-card-lb-row" class="run-card-lb-row">
@@ -4274,6 +4392,19 @@ body.reduce-motion *::after {
                 </div>
                 <button id="run-share-btn" class="btn btn--gold overlay-btn share-btn">SHARE RUN</button>
                 <div id="share-toast" class="overlay-note" role="status" aria-live="polite" hidden></div>
+            </div>
+        </div>
+
+        <!-- DAILY STREAK: the claim card (js/meta.js) -->
+        <div id="streak-overlay" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="streak-title">
+            <div class="panel overlay-box streak-box">
+                <div id="streak-title" class="overlay-title">DAILY STREAK</div>
+                <div id="streak-day" class="streak-day"></div>
+                <ol id="streak-road" class="streak-road"></ol>
+                <div id="streak-bar" class="streak-bar" role="progressbar" aria-label="Streak progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="streak-bar-fill"></span></div>
+                <div id="streak-note" class="overlay-note"></div>
+                <button id="streak-claim-btn" class="btn btn--gem overlay-btn"></button>
+                <button id="streak-close-btn" class="btn overlay-btn">CLOSE</button>
             </div>
         </div>
 
@@ -4353,7 +4484,7 @@ body.reduce-motion *::after {
 // both ends against each other.
 
 const PortableLoader = (() => {
-    const EMBEDDED = '1.40.0';
+    const EMBEDDED = '1.41.0';
     const PUBKEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKp8bov8+P9xiTk6of+yh6iIf/NTUndujP44qMTqrHGedcMEyuwI5WrHtCTL8lzugChBCfblfLYlDmfFjJGqGbQ==';
     const READY_KEY = 'lp_update_ready';
     const UPDATES_OFF_KEY = 'lp_update_off';
@@ -4556,7 +4687,7 @@ const GEM_HOUR_COST = 4000;
 // deploy never mixes cached old scripts with new ones; NET_PROTOCOL must
 // match for two players to share a co-op run. Bump NET_PROTOCOL whenever the
 // co-op messages, level generation, or the SKINS/POWERS order change.
-const GAME_VERSION = '1.40.0';
+const GAME_VERSION = '1.41.0';
 const NET_PROTOCOL = 17;
 
 // Game logic runs in fixed steps of STEP_MS (ADR-0007); a frame runs at most
@@ -4987,8 +5118,9 @@ const COSMETICS = [
 ];
 const cosmeticById = (id) => COSMETICS.find(c => c.id === id) || null;
 
-// The Streak: a run of at least STREAK_MIN_METERS (any mode) on a new local
-// day continues it; missing a day starts again at day 1. Day n pays
+// The Streak: claimed once a local day from the menu's claim card (no run
+// needed; GameMeta.claimStreak) and it continues the Streak; missing a day
+// starts again at day 1. Day n pays
 // STREAK_REWARDS[n - 1] gems, and every day after the table's end pays its
 // last value. (A launch table, meant to be cut once the game has players.)
 // Saved as lp_streak { day: YYYYMMDD of the last counted day, count }.
@@ -4998,15 +5130,49 @@ const cosmeticById = (id) => COSMETICS.find(c => c.id === id) || null;
 // nearest of FPS_BUCKETS.
 const ERROR_REPORTS_MAX = 5;
 const FPS_BUCKETS = [15, 30, 45, 60, 75, 90, 120, 144, 165, 240];
-const STREAK_MIN_METERS = 100;
 // Vibration (where the device has it, and the Settings switch is on): a hit
 // a shield or Jetpack took, a spent heart, and a run-ending death (ms, or an
 // on/off pattern).
 const VIBRATE_HIT = 30;
 const VIBRATE_HEART = [40, 40, 40];
 const VIBRATE_DEATH = 120;
-const STREAK_REWARDS = [10, 200, 500, 1000, 2000, 5000];
+const STREAK_REWARDS = [50, 200, 500, 1000, 2000, 5000];
 const streakRewardFor = (count) => STREAK_REWARDS[Math.min(Math.max(1, count), STREAK_REWARDS.length) - 1];
+
+// Limited-time modes (LTMs): rule twists on a normal climb, one on offer at a
+// time, rotating every LTM_SLOT_HOURS on the local clock (like the Rental).
+// Played from their own menu button; their climbs never touch the daily
+// layout's records (best height, Ghost, Online board, Personal board): each
+// mode keeps its own best (lp_ltm_best). LTM_ENABLED is the one switch: false
+// hides every part of it and the game plays exactly as before.
+// Rules: gravity (a multiplier on the Pixel's gravity), bossEvery (metres
+// between bosses), ice (a floor for the ice dose), gemMult (gem pickups),
+// oneHeart (one heart, no bought or found hearts).
+const LTM_ENABLED = true;
+const LTM_SLOT_HOURS = 3;
+const LTMS = [
+    { id: 'lowgrav', name: 'Low Gravity', note: 'Floaty jumps, long falls', rules: { gravity: 0.6 } },
+    { id: 'bossrush', name: 'Boss Rush', note: 'A Titan every 600m', rules: { bossEvery: 600 } },
+    { id: 'iceall', name: 'Ice Everywhere', note: 'Every platform is slippery', rules: { ice: 1 } },
+    { id: 'frenzy', name: 'Gem Frenzy', note: 'Gems pay triple', rules: { gemMult: 3 } },
+    { id: 'oneheart', name: 'One Heart', note: 'No second chances', rules: { oneHeart: true } }
+];
+// The mode on offer at `now` (null with LTM_ENABLED off). Every mode comes
+// round, in an order that shifts each day.
+function ltmAt(now = Date.now()) {
+    if (!LTM_ENABLED) return null;
+    const d = new Date(now);
+    const day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+    const slotsPerDay = Math.floor(24 / LTM_SLOT_HOURS);
+    return LTMS[(day * slotsPerDay + Math.floor(d.getHours() / LTM_SLOT_HOURS)) % LTMS.length];
+}
+// When it changes: the next slot boundary on the local clock.
+function nextLtmAt(now = Date.now()) {
+    const d = new Date(now);
+    const h = (Math.floor(d.getHours() / LTM_SLOT_HOURS) + 1) * LTM_SLOT_HOURS;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h).getTime();
+}
+const ltmById = (id) => LTMS.find(m => m.id === id) || null;
 // The local calendar day before a YYYYMMDD day, as YYYYMMDD.
 function dayBefore(day) {
     const d = new Date(Math.floor(day / 10000), Math.floor(day / 100) % 100 - 1, day % 100 - 1);
@@ -8577,6 +8743,8 @@ class Player extends Entity {
         this.standOn = null;
         // Set by the Game each frame: the ice hazard is on for this Pixel.
         this.icy = 0;
+        // Set by the Game each frame: a limited-time mode's gravity multiplier.
+        this.ltmGravity = 1;
         // NINJA: frames left in which a wall touch still allows a wall jump,
         // which way it pushes (+1 right, -1 left), and the jumps left.
         this.wallContact = 0;
@@ -8726,7 +8894,7 @@ class Player extends Entity {
             this.vy = -16;
             this.y += this.vy * dt;
         } else {
-            this.vy += CONFIG.GRAVITY * (ability.gravityMult || 1) * dt;
+            this.vy += CONFIG.GRAVITY * (ability.gravityMult || 1) * this.ltmGravity * dt;
             this.y += this.vy * dt;
         }
 
@@ -11848,6 +12016,7 @@ class GameShop {
             [fmtDuration(st.seconds), 'TIME PLAYED']
         ];
         this.ui.recordsStats.innerHTML = this.statTilesHTML(rows);
+        this.renderLtmRecords();
 
         const earned = ACHIEVEMENTS.filter(a => this.achievements.includes(a.id)).length;
         this.ui.recordsCount.innerText = `${earned}/${ACHIEVEMENTS.length}`;
@@ -12409,7 +12578,7 @@ class GameShop {
     // A gem pickup's worth: its biome value, times a GEMS x2 perk, times the
     // booster (so Crystal Hoarder with a booster collects 4x).
     gemPickupValue(value, perks) {
-        return (value || 1) * (perks.gemMult || 1) * (this.gemBoostLeft() > 0 ? 2 : 1);
+        return (value || 1) * (perks.gemMult || 1) * (this.gemBoostLeft() > 0 ? 2 : 1) * this.ltmRule('gemMult', 1);
     }
 
     canWatchGemBoost() {
@@ -12631,7 +12800,7 @@ class GameShare {
         const base = (typeof location !== 'undefined' && /^https?:$/.test(location.protocol || ''))
             ? location.origin + location.pathname
             : SITE_URL;
-        if (!run.multiplayer && !run.start && run.seed === this.getDailySeed() && run.score > 0) {
+        if (!run.multiplayer && !run.ltm && !run.start && run.seed === this.getDailySeed() && run.score > 0) {
             return base + '?beat=' + run.score + '&d=' + run.seed;
         }
         return base;
@@ -13083,7 +13252,7 @@ class GameLeaderboard {
         const s = this.state;
         const day = String(s.runSeed);
         // A solo run's seed is the day it was played; co-op seeds aren't days.
-        if (s.multiplayer || !/^\d{8}$/.test(day)) return;
+        if (s.multiplayer || this.lastRunLtmId() || !/^\d{8}$/.test(day)) return;
         const meters = Math.max(0, Math.floor(s.score / 10) - (s.startMeters || 0));
         // Leaving Freeplay offers the session's best climb, if it beats this one.
         const offer = this.takeFreeplayOffer(day, meters) ||
@@ -13231,11 +13400,18 @@ class GameMeta {
         return { count: 0, done: false };
     }
 
-    // After any run: one of STREAK_MIN_METERS or more on a day not yet
-    // counted moves the Streak on (or starts it again) and pays its gems.
-    // Returns { count, reward } when it paid, else null.
-    advanceStreak(runMeters, today = this.getDailySeed()) {
-        if (!(runMeters >= STREAK_MIN_METERS)) return null;
+    // The claim card's numbers: the Streak's count so far, whether today is
+    // claimed, the day a claim now would be, and what it pays.
+    streakStatus(today = this.getDailySeed()) {
+        const now = this.streakToday(today);
+        const next = now.count + 1;
+        return { count: now.count, done: now.done, next, reward: streakRewardFor(next) };
+    }
+
+    // CLAIM on a new local day moves the Streak on (or starts it again) and
+    // pays its gems; no run is needed. Returns { count, reward }, or null
+    // when today is already claimed.
+    claimStreak(today = this.getDailySeed()) {
         const now = this.streakToday(today);
         if (now.done) return null;
         const count = now.count + 1;
@@ -13247,19 +13423,132 @@ class GameMeta {
         return { count, reward };
     }
 
-    // The menu line: the Streak's day and what the next counted day pays.
+    // Local midnight after `now`: when the next claim opens.
+    nextClaimAt(now = Date.now()) {
+        const d = new Date(now);
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+    }
+
+    // The menu line (a button that opens the claim card).
     updateStreakUI() {
         const el = this.ui.menuStreak;
         if (!el) return;
-        const now = this.streakToday();
-        const next = now.count + 1;
-        const reward = counted(fmtNum(streakRewardFor(next)), 'gem');
-        el.innerHTML = now.done
-            ? `STREAK DAY ${now.count} <span class="streak-next">TOMORROW: DAY ${next} +${reward}</span>`
-            : now.count
-                ? `STREAK DAY ${now.count} <span class="streak-next">CLIMB ${STREAK_MIN_METERS}m TODAY: +${reward}</span>`
-                : `START A STREAK <span class="streak-next">CLIMB ${STREAK_MIN_METERS}m: +${reward}</span>`;
+        const st = this.streakStatus();
+        const reward = counted(fmtNum(st.reward), 'gem');
+        setHTML(el, st.done
+            ? `STREAK DAY ${st.count} <span class="streak-next">NEXT: DAY ${st.next} +${reward} IN ${fmtClock(this.nextClaimAt() - Date.now())}</span>`
+            : st.count
+                ? `STREAK DAY ${st.count} <span class="streak-next">CLAIM DAY ${st.next}: +${reward}</span>`
+                : `START A STREAK <span class="streak-next">CLAIM DAY 1: +${reward}</span>`);
+        el.classList.toggle('claimable', !st.done);
         el.hidden = false;
+        this.updateStreakCard();
+    }
+
+    // The claim card: the reward to take (or the wait for the next one) and
+    // the roadmap, every step of STREAK_REWARDS with a bar of how far along.
+    openStreakCard() {
+        if (!this.ui.streakOverlay || this.state.running || this.inParty()) return;
+        this.streakCardOpen = true;
+        this.ui.streakOverlay.hidden = false;
+        this.updateStreakCard();
+    }
+
+    closeStreakCard() {
+        this.streakCardOpen = false;
+        if (this.ui.streakOverlay) this.ui.streakOverlay.hidden = true;
+    }
+
+    updateStreakCard() {
+        const ui = this.ui;
+        if (!this.streakCardOpen || !ui.streakOverlay) return;
+        const st = this.streakStatus();
+        const last = STREAK_REWARDS.length;
+        // Steps already claimed: the whole Streak so far (capped at the table).
+        const claimed = Math.min(st.count, last);
+        const pct = Math.round(100 * claimed / last);
+        setHTML(ui.streakRoad, STREAK_REWARDS.map((r, i) => {
+            const day = i + 1;
+            const state = day <= claimed ? 'done' : day === Math.min(st.next, last) ? 'now' : 'todo';
+            const label = day === last ? `DAY ${day}+` : `DAY ${day}`;
+            return `<li class="streak-step streak-step--${state}"><span class="streak-step-day">${label}</span>` +
+                `<span class="streak-step-gems">${counted(fmtNum(r), 'gem')}</span></li>`;
+        }).join(''));
+        if (ui.streakFill) ui.streakFill.style.width = pct + '%';
+        setText(ui.streakDay, st.done ? `DAY ${st.count} CLAIMED` : st.count ? `DAY ${st.next} OF YOUR STREAK` : 'START YOUR STREAK');
+        ui.streakClaimBtn.hidden = st.done;
+        setHTML(ui.streakClaimBtn, `CLAIM ${counted(fmtNum(st.reward), 'gem')}`);
+        setText(ui.streakNote, st.done
+            ? `Next: day ${st.next}, ${fmtNum(st.reward)} gems, in ${fmtClock(this.nextClaimAt() - Date.now())}.`
+            : st.count ? 'Claim today to keep your Streak. Miss a day and it starts again at day 1.'
+                : 'Come back every day. A missed day starts again at day 1.');
+    }
+
+    claimStreakTap() {
+        const paid = this.claimStreak();
+        if (!paid) return;
+        sounds.play('reward');
+        this.notify(`STREAK DAY ${paid.count}  +${fmtNum(paid.reward)} GEMS`, 'reward');
+        this.checkAchievements();
+    }
+
+    // Once a second: the countdown (and the claim button at midnight).
+    tickStreak() {
+        if (this.ui.menuStreak && !this.state.running) this.updateStreakUI();
+    }
+
+    // -------------------------------------------------- limited-time modes
+    // The rule value for the run being played, or `fallback` outside an LTM.
+    ltmRule(key, fallback) {
+        const m = this.state.ltm;
+        return m && m.rules[key] !== undefined ? m.rules[key] : fallback;
+    }
+
+    loadLtmBests() {
+        return loadJSON('lp_ltm_best', {}, v => isPlainObject(v));
+    }
+
+    // After an LTM run: its climb into that mode's best. Returns true when
+    // it is a new best.
+    recordLtmRun(meters) {
+        const m = this.state.ltm;
+        if (!m || !(meters > 0)) return false;
+        const bests = this.loadLtmBests();
+        if (meters <= (Number(bests[m.id]) || 0)) return false;
+        bests[m.id] = meters;
+        saveItem('lp_ltm_best', JSON.stringify(bests));
+        return true;
+    }
+
+    // Arms the mode on offer for the next startGame() (which takes it).
+    requestLtmStart() {
+        const m = ltmAt();
+        if (!m || this.state.running || this.inParty() || this.installGated) return;
+        this.ltmArmed = m;
+        this.enterFullscreen();
+        this.startGame();
+    }
+
+    // The menu's LIMITED MODE button: this slot's mode and the time left.
+    updateLtmButton() {
+        const btn = this.ui.ltmBtn;
+        if (!btn) return;
+        const m = ltmAt();
+        btn.hidden = !m || this.state.running || this.inParty();
+        if (!m) return;
+        const left = fmtClock(nextLtmAt() - Date.now());
+        setHTML(btn, `<span class="ltm-name">${icon('play')} ${this.escapeHtml(m.name.toUpperCase())}</span>` +
+            `<span class="ltm-sub">${this.escapeHtml(m.note)} &middot; CHANGES IN ${left}</span>`);
+    }
+
+    // Records: each mode's best climb.
+    renderLtmRecords() {
+        const box = this.ui.ltmRecords;
+        if (!box) return;
+        box.hidden = !LTM_ENABLED;
+        if (!LTM_ENABLED) return;
+        const bests = this.loadLtmBests();
+        setHTML(this.ui.ltmRecordsList, this.statTilesHTML(LTMS.map(m => [fmtNum(Number(bests[m.id]) || 0) + 'm', m.name.toUpperCase()])));
     }
 
     // Vibrates where the device can, if the player hasn't switched it off.
@@ -13770,12 +14059,16 @@ class GameMenus {
         this.ui.runCardDistance.innerText = fmtNum(finalScore) + "m";
         this.ui.runCardBest.hidden = !s.isNewBest;
         this.ui.runCardStats.innerHTML = this.statTilesHTML(stats);
-        // The Streak paid for this run (GameMeta.advanceStreak).
-        const streak = this.streakPaid;
-        if (this.ui.runCardStreak) {
-            this.ui.runCardStreak.hidden = !streak;
-            if (streak) this.ui.runCardStreak.innerHTML = 'STREAK DAY ' + streak.count + ' <span class="streak-reward">+' + counted(fmtNum(streak.reward), 'gem') + '</span>';
+        // A limited-time mode run says so and shows its own best.
+        const mode = ltmById(this.lastRunLtmId());
+        if (this.ui.runCardLtm) {
+            this.ui.runCardLtm.hidden = !mode;
+            if (mode) {
+                const best = Number(this.loadLtmBests()[mode.id]) || 0;
+                this.ui.runCardLtm.innerHTML = this.escapeHtml(mode.name.toUpperCase()) + ' <span class="ltm-best">BEST ' + fmtNum(best) + 'm</span>';
+            }
         }
+        if (mode) this.ui.runCardBest.hidden = !this.ltmNewBest;
         this.updateRunCardActions();
         this.ui.runCard.hidden = false;
         this.runCardOpen = true;
@@ -13787,6 +14080,11 @@ class GameMenus {
     // the card is up: in co-op only a leader with someone to play with can
     // restart, a guest waits for the leader, and once the party is gone the
     // card says why instead of waiting forever.
+    // The limited-time mode of the run just finished (null for a normal one).
+    lastRunLtmId() {
+        return this.lastRun && !this.state.multiplayer ? this.lastRun.ltm : null;
+    }
+
     updateRunCardActions() {
         let note = '';
         if (this.state.multiplayer) {
@@ -13834,6 +14132,9 @@ class GameMenus {
         this.closeRunCard();
         if (this.state.multiplayer) {
             if (this.state.isHost) this.ui.mpStartBtn.onclick();
+        } else if (this.lastRun && this.lastRun.ltm && ltmAt() && ltmAt().id === this.lastRun.ltm && !this.inParty()) {
+            // PLAY AGAIN after a limited-time mode: the same mode, while it lasts.
+            this.requestLtmStart();
         } else {
             this.requestSoloStart();
         }
@@ -13849,7 +14150,7 @@ class GameMenus {
     // The same rules for any menu panel's keys (the solo menu, the shop).
     canMenuKey(e, panel) {
         if (e.repeat || this.state.running || this.ads.playing) return false;
-        if (this.activeMenuPanel !== panel || this.runCardOpen || this.settingsOpen || this.buyConfirmOpen) return false;
+        if (this.activeMenuPanel !== panel || this.runCardOpen || this.settingsOpen || this.buyConfirmOpen || this.streakCardOpen) return false;
         const revive = this.ads && this.ads.reviveOverlay;
         if (revive && revive.style.display === 'flex') return false;
         const t = e.target;
@@ -14432,6 +14733,7 @@ class GameRun {
     // The equipped Pixel's heart cap (heartCapFor).
     // (In a run, with any 5 HEARTS run perk; between runs, the Pixel picked.)
     heartCap() {
+        if (this.state.running && this.ltmRule('oneHeart', false)) return 1;
         if (this.state.running && this.player) return heartCapFor(this.player);
         return heartCapFor(SKINS[this.viewParams.skinIndex] || SKINS[0]);
     }
@@ -14466,7 +14768,7 @@ class GameRun {
         this.offerRunPerks();
         this.addGems(bounty);
         this.setHearts(this.heartCap());
-        this.state.nextBossAt = Math.floor(this.state.score / 10) + CONFIG.BOSS_LOOP_DISTANCE;
+        this.state.nextBossAt = Math.floor(this.state.score / 10) + this.ltmRule('bossEvery', CONFIG.BOSS_LOOP_DISTANCE);
         this.notify(`TITAN DOWN  +${fmtNum(bounty)} GEMS  HEARTS FULL`, 'reward');
         if (this.freeplay) this.fpFeedOut('boss', this.fpMeters());
         sounds.play('reward');
@@ -14540,7 +14842,7 @@ class GameRun {
         // Bosses beaten this run (drives drone difficulty) and where the next
         // one appears, measured from the start height.
         this.state.runLoops = 0;
-        this.state.nextBossAt = this.state.startMeters + CONFIG.BOSS_LOOP_DISTANCE;
+        this.state.nextBossAt = this.state.startMeters + this.ltmRule('bossEvery', CONFIG.BOSS_LOOP_DISTANCE);
         this.state.powersCollected = 0;
         this.state.isNewBest = false;
         this.state.paused = false;
@@ -14549,8 +14851,11 @@ class GameRun {
         this.state.runDeaths = 0;
         // Solo runs race (and record) a ghost of your previous run on this
         // exact layout (see saveGhost); co-op has none.
-        this.ghostRec = this.state.multiplayer ? null : { nextT: 0, pts: [] };
-        this.ghostPlayback = this.state.multiplayer ? null : this.loadGhost();
+        // A limited-time mode has neither: its layout is the daily one but its
+        // rules aren't.
+        const noGhost = this.state.multiplayer || !!this.state.ltm;
+        this.ghostRec = noGhost ? null : { nextT: 0, pts: [] };
+        this.ghostPlayback = noGhost ? null : this.loadGhost();
 
         const startDisplayScore = Math.floor(this.state.score / 10);
         this.renderer.updateBiome(startDisplayScore);
@@ -14665,7 +14970,11 @@ class GameRun {
     }
 
     startGame(isMp = false, mpSeed = null) {
+        // A limited-time mode armed by requestLtmStart(): a solo run only.
+        const ltm = this.ltmArmed || null;
+        this.ltmArmed = null;
         if (this.installGated) return;
+        this.state.ltm = LTM_ENABLED && ltm && !isMp && !this.freeplay ? ltm : null;
         // A Rental whose hour ended a moment ago comes off first.
         const equipped = SKINS[this.viewParams.skinIndex];
         if (equipped && equipped.hourly && this.isSkinLocked()) this.updateSkinUI();
@@ -14675,6 +14984,7 @@ class GameRun {
         this.input.resetInput();
         this.closeRunCard();
         this.closeSettings();
+        this.closeStreakCard();
         this.showLeftover = true;
         this.setMenuOpen(false);
         this.state.running = true;
@@ -14898,9 +15208,7 @@ class GameRun {
         this.closePauseUI();
         const runMeters = Math.max(0, Math.floor(this.state.score / 10) - (this.state.startMeters || 0));
         this.recordRunStats(runMeters);
-        // Any run of STREAK_MIN_METERS on a new day moves the Streak on;
-        // run totals can earn achievements too.
-        this.streakPaid = this.advanceStreak(runMeters);
+        // Run totals can earn achievements.
         this.checkAchievements();
         this.sendRunStats(runMeters);
 
@@ -14910,7 +15218,10 @@ class GameRun {
         this.saveGhost(finalScore);
         // A RACE #1 run races once.
         this.raceGhost = null;
-        if (!this.state.multiplayer) {
+        // A limited-time mode keeps its own best instead of the Personal
+        // leaderboard's.
+        this.ltmNewBest = this.recordLtmRun(runMeters);
+        if (!this.state.multiplayer && !this.state.ltm) {
             this.updateFame(finalScore);
         }
 
@@ -14976,15 +15287,18 @@ class GameRun {
             start: this.state.startMeters || 0,
             biome: this.renderer.currentBiome.name,
             skinName: skin.name, color: skin.color, eye: skin.eye, color2: skin.color2, pattern: skin.pattern,
+            ltm: this.state.ltm ? this.state.ltm.id : null,
             date: daily ? `${seed.slice(0, 4)}-${seed.slice(4, 6)}-${seed.slice(6)}` : fmtDate(new Date())
         };
+        // The mode ends with the run (its hearts rule must not reach the shop).
+        this.state.ltm = null;
         if (this.ui.shareToast) this.ui.shareToast.hidden = true;
         this.updateTouchControls();
         if (this.ui.challengeHud) this.ui.challengeHud.hidden = true;
         if (this.ui.spectateHud) this.ui.spectateHud.hidden = true;
         this.spectating = null;
         this.spectatingPlayer = null;
-        if (this.state.isNewBest && !this.state.multiplayer) portal.happytime();
+        if ((this.state.isNewBest || this.ltmNewBest) && !this.state.multiplayer) portal.happytime();
         // Between rounds the party can take new friends again.
         if (this.state.multiplayer) this.syncPortalRoom();
         this.showRunCard(finalScore);
@@ -16436,7 +16750,17 @@ class Game {
             perkPickCards: document.getElementById("perk-pick-cards"),
             perkPickBar: document.getElementById("perk-pick-bar"),
             firstGoal: document.getElementById("first-goal"),
-            runCardStreak: document.getElementById("run-card-streak"),
+            runCardLtm: document.getElementById("run-card-ltm"),
+            ltmBtn: document.getElementById("ltm-btn"),
+            ltmRecords: document.getElementById("ltm-records"),
+            ltmRecordsList: document.getElementById("ltm-records-list"),
+            streakOverlay: document.getElementById("streak-overlay"),
+            streakDay: document.getElementById("streak-day"),
+            streakRoad: document.getElementById("streak-road"),
+            streakFill: document.getElementById("streak-bar-fill"),
+            streakNote: document.getElementById("streak-note"),
+            streakClaimBtn: document.getElementById("streak-claim-btn"),
+            streakCloseBtn: document.getElementById("streak-close-btn"),
             skinName: document.getElementById("skin-name"),
             skinStatus: document.getElementById("skin-status"),
             preview: document.getElementById("skin-preview-box"),
@@ -16676,6 +17000,10 @@ class Game {
         const backPay = this.payAchievementRewards();
         if (backPay) this.notify('ACHIEVEMENT REWARDS +' + fmtNum(backPay) + ' GEMS', 'reward');
         this.updateStreakUI();
+        this.updateLtmButton();
+        // The first visit of a day opens the claim card (not in a run, and
+        // not under the install card).
+        if (!this.state.running && !this.installGated && !this.installSuggested && !this.streakStatus().done) this.openStreakCard();
 
         // Rewarded ads: silence the game and drop held keys while one plays,
         // and keep the ad buttons (and the booster countdown) current.
@@ -16683,7 +17011,7 @@ class Game {
         this.ads.onAdStart = () => { this.input.resetInput(); this.applySettings(); };
         this.ads.onAdEnd = () => { this.applySettings(); this.resetFrameClock(); };
         this.ads.onChange = () => this.updateAdButtons();
-        setInterval(() => { this.updateAdButtons(); this.tickHourly(); }, 1000);
+        setInterval(() => { this.updateAdButtons(); this.tickHourly(); this.tickStreak(); this.updateLtmButton(); }, 1000);
         this.updateAdButtons();
         this.tickHourly();
         this.makePickupSprites();
@@ -16720,6 +17048,11 @@ class Game {
         if (this.ui.shopTabs) this.ui.shopTabs.onkeydown = (e) => this.onShopTabsKey(e);
         onTap(this.ui.buyConfirmYes, () => this.confirmBuyPixel());
         onTap(this.ui.buyConfirmNo, () => this.closeBuyConfirm());
+        onTap(this.ui.menuStreak, () => this.openStreakCard());
+        onTap(this.ui.streakClaimBtn, () => this.claimStreakTap());
+        onTap(this.ui.streakCloseBtn, () => this.closeStreakCard());
+        if (this.ui.streakOverlay) this.ui.streakOverlay.onclick = (e) => { if (e.target === this.ui.streakOverlay) this.closeStreakCard(); };
+        onTap(this.ui.ltmBtn, () => this.requestLtmStart());
         if (this.ui.buyConfirm) this.ui.buyConfirm.onclick = (e) => { if (e.target === this.ui.buyConfirm) this.closeBuyConfirm(); };
 
         if (this.ui.shopLifeBtn) {
@@ -16853,6 +17186,7 @@ class Game {
             if (e.code !== 'Escape' && e.code !== 'KeyP') return;
             if (e.target && e.target.closest && e.target.closest('input')) return;
             const esc = e.code === 'Escape';
+            if (this.streakCardOpen) { if (esc) this.closeStreakCard(); return; }
             if (this.settingsOpen) { if (esc) this.closeSettings(); return; }
             if (this.state.running) { e.preventDefault(); this.togglePause(); return; }
             if (this.runCardOpen) { if (esc) this.closeRunCard(); return; }
@@ -17339,7 +17673,8 @@ class Game {
         this.player.prevBottom = this.player.y + this.player.h;
         // Ice hazard: platforms are slippery, by the biome's dose (see
         // Player.update()).
-        this.player.icy = envImmune ? 0 : hazardDose(biome, 'ice');
+        this.player.icy = envImmune ? 0 : Math.max(hazardDose(biome, 'ice'), this.ltmRule('ice', 0));
+        this.player.ltmGravity = this.ltmRule('gravity', 1);
         // A dead co-op player's body is gone until they respawn: no physics,
         // no landing on platforms, no pickups.
         const event = this.player.isDead ? null : this.player.update(dt, this.input, this.platforms, this.visiblePickups());
@@ -17635,7 +17970,7 @@ class Game {
             this.notify(fmtNum(this.state.nextMilestone) + "m!", 'reward');
             this.state.nextMilestone = nextMilestone(heightMeters);
         }
-        if (heightMeters > this.state.bestHeight) {
+        if (heightMeters > this.state.bestHeight && !this.state.ltm) {
             this.state.bestHeight = heightMeters;
             this.bestDirty = true;
             this.state.isNewBest = true;

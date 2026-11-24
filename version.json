@@ -1,8 +1,8 @@
 {
-  "version": "1.64.0",
+  "version": "1.64.1",
   "protocol": 24,
-  "bytes": 1404759,
-  "sha256": "acfe704720ae033adf53c8d895ce0b198b1b17b9fa0bdeabc88dcbad78f8e9c6",
-  "sig": "VBjFXjcjOtanTazymSiJ8OYQZWW2RLfv6DPn1lbMwizbK/Uz7RdiZR+fTChA7gkYa4S+8I55ofFYQjrR24jp9A==",
+  "bytes": 1406327,
+  "sha256": "cc987ab06d5889617ddbb0f160e741299b1ee9d62d4fb9ad940e3afd8fda216e",
+  "sig": "4S7vwTD7LvxHSTZFGeYH/+1CyhcFEw8NDSBbqgcTA6vxKlaXHz1uFlJb3GuSf1o/NJdSZswLepau2X6DqegZsw==",
   "page": "https://pixeljump.online/portable/"
 }
